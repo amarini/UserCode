@@ -5,6 +5,7 @@
 #include "TStyle.h"
 #include "TCanvas.h"
 #include "TLegend.h"
+//#include "QuarkGluonDiscrimination.h"
 void Plot()
 {
 gROOT->SetBatch();
@@ -12,9 +13,7 @@ gROOT->SetStyle("Plain");
 gStyle->SetPalette(1);
 gStyle->SetOptStat(0);
 gStyle->SetOptTitle(kFALSE);
-
-const int NBins=13;
-Double_t PtBins[]={15,30,50,80,100,120,150,170,200,210,300,470,600};
+#include "PtBins.h"
 char  targetfile[255];
 TFile *f;
 TH1F *h,*hq,*hg,*hr;
@@ -63,7 +62,7 @@ for(int i=0;i<NBins-1;i++)
 	
 	hr->Draw("same");
 	
-	TLegend *L=new TLegend(0.35,0.65,0.65,0.85);
+	TLegend *L=new TLegend(0.35,0.70,0.55,0.85);
 	L->AddEntry("Likelihood","MC mix");
 	L->AddEntry("Likelihood_quark","quark");
 	L->AddEntry("Likelihood_gluon","gluon");

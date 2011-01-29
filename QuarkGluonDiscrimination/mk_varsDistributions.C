@@ -6,12 +6,12 @@
 #include "TTree.h"
 #include "TH1F.h"
 #include "TROOT.h"
+
 void mkvarsdistributions(const char * filename)
 {
 gROOT->SetBatch();
-const int NBins=13;
-Double_t PtBins[]={15,30,50,80,100,120,150,170,200,210,300,470,600};
-TFile *f=new TFile(filename);
+#include "PtBins.h"
+TFile *f=TFile::Open(filename);
 TTree *t=(TTree*)f->Get("demo/t");
 char targetfile[255];
 char cut[255];

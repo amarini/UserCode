@@ -75,8 +75,8 @@ Double_t Discrimination::IndipendentLikelihood(const Double_t jtpt,
 						const char*filename
 						)const
 {
-const int NBins=13;
-const Double_t PtBins[]={15,30,50,80,100,120,150,170,200,210,300,470,600};
+#include "PtBins.h"
+
 char  filename2[255];
 for(int i=0;i<NBins-1;i++)
 	{

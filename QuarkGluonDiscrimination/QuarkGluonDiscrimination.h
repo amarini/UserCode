@@ -65,7 +65,6 @@ private:
 	std::vector<SpaceStructure*> *Space;
 };
 
-
 Discrimination::Discrimination()
 	{
 	Space=new std::vector<SpaceStructure*> ;
@@ -79,4 +78,5 @@ Discrimination::~Discrimination()
 		}
 	delete Space;
 	}
+
 #endif
