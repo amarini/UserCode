@@ -6,6 +6,11 @@
 #include "PtBins.h"
 #include "TROOT.h"
 #include "TStyle.h"
+#include "TTree.h"
+#include "TGraph.h"
+#include "TLegend.h"
+#include "TLatex.h"
+#include "TCanvas.h"
 inline double gammadistr_(double* x, double* par)
 {
 	return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;		
@@ -37,9 +42,11 @@ char canvasname[1023];
 char histoname[1023];
 
 FILE *R=fopen("/tmp/amarini/fitresults.txt","w");
-TString VarNames[] ={"ncharged","nneutral","rRMS","PtD"};
+TString VarNames[] ={"ncharged","nneutral","PtD","rRMS"};
 TF1 *gammadistr=new TF1("gamma",gammadistr_,0,100,2);
 TF1 *functionPtD=new TF1("functionPtD",functionPtD_,0,1,5);
+TFile *F=TFile::Open("/home/Giochi/flat_Z2_nopileup_new.root");
+TTree *t=(TTree*)F->Get("demo/t");
 
 for(int j=0; j<4;j++)
 {
@@ -52,8 +59,8 @@ TGraph*Mean_quark=new TGraph();//alpha*alpha = par[0]
 TGraph*Mean_gluon=new TGraph();
 TGraph*alpha_quark=new TGraph();//alpha= par[1]/par[0]
 TGraph*alpha_gluon=new TGraph();
-TGraph PtD_quark[5];
-TGraph PtD_gluon[5];
+TGraph *PtD_quark[5];
+TGraph *PtD_gluon[5];
 char str[1023];
 for(int k=0; k<5;k++)
 	{
@@ -67,16 +74,35 @@ for(int k=0; k<5;k++)
 
 for(int i=0; i<NBins-1;i++)
 {
-sprintf(filename,"nopileup/VarDistribution/VarDistribution_%03.0lf_%03.0lf.root",PtBins[i],PtBins[i+1]);
-fprintf(stderr,"Opening file: %s\n",filename);
-TFile *f=TFile::Open(filename);
-
+//sprintf(filename,"nopileup/VarDistribution/VarDistribution_%03.0lf_%03.0lf.root",PtBins[i],PtBins[i+1]);
+//fprintf(stderr,"Opening file: %s\n",filename);
+//TFile *f=TFile::Open(filename);
+char cut[1023];
+char sel[1023];
 
 sprintf(histoname,"%s_quark",VarNames[j].Data());
-fprintf(stderr,"Getting Histo:%s\n",histoname);
-TH1F *Histo_quark=(TH1F*)f->Get(histoname)->Clone();
+
+if( (VarNames[j].Data())[0] =='P') sprintf(sel,"%s>>%s(100,0,1)",VarNames[j].Data(),histoname);
+else sprintf(sel,"%s>>%s(100,0,100)",VarNames[j].Data(),histoname);
+
+sprintf(cut,"%lf<jtpt&&jtpt<%lf &&abs(jteta)<2.0 && abs(pdgid)<5",PtBins[i],PtBins[i+1]);
+t->Draw(sel,cut);
+//fprintf(stderr,"Getting Histo:%s\n",histoname);
+TH1F *Histo_quark=(TH1F*)gDirectory->Get(histoname)->Clone();
 sprintf(histoname,"%s_gluon",VarNames[j].Data());
-TH1F *Histo_gluon=(TH1F*)f->Get(histoname)->Clone();
+
+if( (VarNames[j].Data())[0] =='P') sprintf(sel,"%s>>%s(100,0,1)",VarNames[j].Data(),histoname);
+else sprintf(sel,"%s>>%s(100,0,100)",VarNames[j].Data(),histoname);
+sprintf(cut,"%lf<jtpt&&jtpt<%lf &&abs(jteta)<2.0 && abs(pdgid)==21",PtBins[i],PtBins[i+1]);
+t->Draw(sel,cut);
+TH1F *Histo_gluon=(TH1F*)gDirectory->Get(histoname)->Clone();
+
+sprintf(sel,"jtpt>>pthisto(50,%lf,%lf)",PtBins[i],PtBins[i+1]);
+sprintf(cut,"%lf<jtpt&&jtpt<%lf &&abs(jteta)<2.0 ",PtBins[i],PtBins[i+1]);
+t->Draw(sel,cut);
+TH1F *Histo_pt=(TH1F*)gDirectory->Get("pthisto")->Clone();
+double ptmean=Histo_pt->GetMean();
+
 
 Histo_quark->Scale(1./Histo_quark->Integral("width"));
 Histo_gluon->Scale(1./Histo_gluon->Integral("width"));
@@ -120,10 +146,10 @@ fprintf(R,"%s_quark %03.0lf_%03.0lf: %lf %lf %lf %lf\n",VarNames[j].Data(),
 							gammadistr->GetParameter(1),
 							gammadistr->GetParError(0),
 							gammadistr->GetParError(1));
-Mean_quark->SetPoint(count,(PtBins[i]+PtBins[i+1])/2,gammadistr->GetParameter(1));
-alpha_quark->SetPoint(count,(PtBins[i]+PtBins[i+1])/2,gammadistr->GetParameter(0));
+Mean_quark->SetPoint(count,ptmean,gammadistr->GetParameter(1));
+alpha_quark->SetPoint(count,ptmean,gammadistr->GetParameter(0));
 
-for(int k=0;k<5;k++)PtD_quark[k]->SetPoint(count,(PtBins[i]+PtBins[i+1])/2,functionPtD->GetParameter(k));
+for(int k=0;k<5;k++)PtD_quark[k]->SetPoint(count,ptmean,functionPtD->GetParameter(k));
 
 TCanvas *c1 =new TCanvas();
 Histo_quark->Draw();
@@ -147,9 +173,9 @@ fprintf(R,"%s_gluon %03.0lf_%03.0lf: %lf %lf %lf %lf\n",VarNames[j].Data(),
 							gammadistr->GetParameter(1),
 							gammadistr->GetParError(0),
 							gammadistr->GetParError(1));
-Mean_gluon->SetPoint(count,(PtBins[i]+PtBins[i+1])/2,gammadistr->GetParameter(1));
-alpha_gluon->SetPoint(count,(PtBins[i]+PtBins[i+1])/2,gammadistr->GetParameter(0));
-for(int k=0;k<5;k++)PtD_gluon[k]->SetPoint(count,(PtBins[i]+PtBins[i+1])/2,functionPtD->GetParameter(k));
+Mean_gluon->SetPoint(count,ptmean,gammadistr->GetParameter(1));
+alpha_gluon->SetPoint(count,ptmean,gammadistr->GetParameter(0));
+for(int k=0;k<5;k++)PtD_gluon[k]->SetPoint(count,ptmean,functionPtD->GetParameter(k));
 count++;
 
 Histo_gluon->SetLineColor(kRed);
@@ -165,7 +191,7 @@ else
 sprintf(canvasname,"/tmp/amarini/%s_%03.0lf_%03.0lf.png",VarNames[j].Data(),PtBins[i],PtBins[i+1]);
 c1->SaveAs(canvasname);
 delete c1;
-f->Close();
+//f->Close();
 }
 
 
@@ -194,7 +220,7 @@ alpha_gluon->SetMarkerColor(kOrange);
 alpha_gluon->SetMarkerStyle(20);
 
 Mean_gluon->SetMaximum(25);
-Mean_gluon->TGraph::SetMininum(0.0);
+Mean_gluon->TGraph::SetMinimum(0.0);
 Mean_gluon->GetXaxis()->SetMoreLogLabels();
 Mean_gluon->GetXaxis()->SetNoExponent();
 Mean_gluon->GetXaxis()->SetTitle("P_{T} [GeV/c]");
@@ -214,36 +240,28 @@ L->AddEntry("alpha_quark","#alpha quark","P");
 L->AddEntry("alpha_gluon","#alpha gluon","P");
 L->Draw();
 
-sprintf(canvasname,"/tmp/amarini/%s_fitresults.png",VarNames[j].Data(),PtBins[i],PtBins[i+1]);
+sprintf(canvasname,"/tmp/amarini/%s_fitresults.png",VarNames[j].Data());
 c1->SaveAs(canvasname);
-sprintf(canvasname,"/tmp/amarini/%s_fitresults.root",VarNames[j].Data(),PtBins[i],PtBins[i+1]);
+sprintf(canvasname,"/tmp/amarini/%s_fitresults.root",VarNames[j].Data());
 TFile *fr=new TFile(canvasname,"RECREATE");
 if( (VarNames[j].Data())[0] =='P')
 	{
 		fr->cd();
 		for(int k=0;k<5;k++)
 		{
-			//PtD_quark[k]->SetDirectory(fr->GetDirectory(""));
-			//PtD_gluon[k]->SetDirectory(fr->GetDirectory(""));
 			PtD_quark[k]->Write();
 			PtD_gluon[k]->Write();
-			//functionPtD->SetDirectory(fr->GetDirectory(""));
 			functionPtD->Write();
 		}
 	}
 else
 	{
 		fr->cd();
-	//	alpha_quark->SetDirectory(fr->GetDirectory(""));
-	//	alpha_gluon->SetDirectory(fr->GetDirectory(""));
-	//	Mean_quark->SetDirectory(fr->GetDirectory(""));
-	//	Mean_gluon->SetDirectory(fr->GetDirectory(""));
 		alpha_quark->Write();
                 alpha_gluon->Write();
                 Mean_quark->Write();
                 Mean_gluon->Write();
 
-	//	gammadistr->SetDirectory(fr->GetDirectory(""));
 		gammadistr->Write();
 	}
 fr->Close();
