@@ -4,22 +4,12 @@
 #include <fstream>
 #include <cstdlib>
 #include "TMath.h"
-inline double QGLikelihoodCalculator::gammadistr_(double* x, double* par)
-{
-        return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;
-}
+//static double QGLikelihoodCalculator::gammadistr_(double* x, double* par)
 
-inline double QGLikelihoodCalculator::functionPtD_(double * x ,double*par)
-{
-        return TMath::Exp ( (x[0]-par[0])/par[1] *(
-                                                -(x[0]-par[0])/par[1]+ TMath::Sqrt( TMath::Power( (x[0]-par[0])/par[1],2) +par[4] ) -par[2]
-                                                )
-
-        ) //* par[3];
-                * par[1]*(TMath::Sqrt(2*TMath::Pi())/2*par[3] +1./par[2] ); //normalizzazione a meta' (quasi 1 a parte per par3 che e' un'integrazione di una gauss)
-}
+//static double QGLikelihoodCalculator::functionPtD_(double * x ,double*par)
 
 //constructor
+using namespace std;
 QGLikelihoodCalculator::QGLikelihoodCalculator(const char * nchargedFileName,const char * nneutralFileName,const char * PtDFileName)
 {
 nchargedFile=TFile::Open(nchargedFileName);
@@ -28,35 +18,74 @@ PtDFile=TFile::Open(PtDFileName);
 nChargedPar= new double[2];
 nNeutralPar= new double[2];
 PtDPar= new double[5];
+
+//graph=new std::map<const char*,TGraph*>;
+graph["alpha_quark_nc"]=(TGraph*)nchargedFile->Get("alpha_quark")->Clone("alpha_quark_nc");
+graph["mean_quark_nc"]=(TGraph*)nchargedFile->Get("mean_quark")->Clone("mean_quark_nc");
+graph["alpha_gluon_nc"]=(TGraph*)nchargedFile->Get("alpha_gluon")->Clone("alpha_gluon_nc");
+graph["mean_gluon_nc"]=(TGraph*)nchargedFile->Get("mean_gluon")->Clone("mean_gluon_nc");
+
+graph["alpha_quark_nn"]=(TGraph*)nneutralFile->Get("alpha_quark")->Clone("alpha_quark_nn");
+graph["mean_quark_nn"]=(TGraph*)nneutralFile->Get("mean_quark")->Clone("mean_quark_nn");
+graph["alpha_gluon_nn"]=(TGraph*)nneutralFile->Get("alpha_gluon")->Clone("alpha_gluon_nn");
+graph["mean_gluon_nn"]=(TGraph*)nneutralFile->Get("mean_gluon")->Clone("mean_gluon_nn");
+
+graph["PtD0_quark"]=(TGraph*)PtDFile->Get("PtD0_quark")->Clone("PtD0_quark");
+graph["PtD1_quark"]=(TGraph*)PtDFile->Get("PtD1_quark")->Clone("PtD1_quark");
+graph["PtD2_quark"]=(TGraph*)PtDFile->Get("PtD2_quark")->Clone("PtD2_quark");
+graph["PtD3_quark"]=(TGraph*)PtDFile->Get("PtD3_quark")->Clone("PtD3_quark");
+graph["PtD4_quark"]=(TGraph*)PtDFile->Get("PtD4_quark")->Clone("PtD4_quark");
+
+graph["PtD0_gluon"]=(TGraph*)PtDFile->Get("PtD0_gluon")->Clone("PtD0_gluon");
+graph["PtD1_gluon"]=(TGraph*)PtDFile->Get("PtD1_gluon")->Clone("PtD1_gluon");
+graph["PtD2_gluon"]=(TGraph*)PtDFile->Get("PtD2_gluon")->Clone("PtD2_gluon");
+graph["PtD3_gluon"]=(TGraph*)PtDFile->Get("PtD3_gluon")->Clone("PtD3_gluon");
+graph["PtD4_gluon"]=(TGraph*)PtDFile->Get("PtD4_gluon")->Clone("PtD4_gluon");
+}
+
+QGLikelihoodCalculator::~QGLikelihoodCalculator()
+{
+nchargedFile->Close();
+nneutralFile->Close();
+PtDFile->Close();
+delete nChargedPar;
+delete nNeutralPar;
+delete PtDPar;
+//delete graph;
+std::map<const char*,TGraph *>::iterator it;
+for(it=graph.begin();it!=graph.end();it++)
+{
+	delete it->second;
+}
 }
 
 float QGLikelihoodCalculator::computeQGLikelihood( float pt, int nCharged, int nNeutral, float ptD ) {
 	double q,g;
 	//setting parameters
-	nChargedPar[0]=Interpolate(pt,(TGraph*)nchargedFile->Get("alpha_quark"));
-	nChargedPar[1]=Interpolate(pt,(TGraph*)nchargedFile->Get("mean_quark"));
-	nNeutralPar[0]=Interpolate(pt,(TGraph*)nneutralFile->Get("alpha_quark"));
-	nNeutralPar[1]=Interpolate(pt,(TGraph*)nneutralFile->Get("mean_quark"));
-	PtDPar[0]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD0_quark"));
-	PtDPar[1]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD1_quark"));
-	PtDPar[2]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD2_quark"));
-	PtDPar[3]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD3_quark"));
-	PtDPar[4]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD4_quark"));
+	nChargedPar[0]=Interpolate(pt,graph["alpha_quark_nc"]);
+	nChargedPar[1]=Interpolate(pt,graph["mean_quark_nc"]);
+	nNeutralPar[0]=Interpolate(pt,graph["alpha_quark_nn"]);
+	nNeutralPar[1]=Interpolate(pt,graph["mean_quark_nn"]);
+	PtDPar[0]=Interpolate(pt,graph["PtD0_quark"]);
+	PtDPar[1]=Interpolate(pt,graph["PtD1_quark"]);
+	PtDPar[2]=Interpolate(pt,graph["PtD2_quark"]);
+	PtDPar[3]=Interpolate(pt,graph["PtD3_quark"]);
+	PtDPar[4]=Interpolate(pt,graph["PtD4_quark"]);
 	x=(double)nCharged;//it reads directly 
 	q = gammadistr_(&x,nChargedPar);
 	x=(double)nNeutral;
 	q *= gammadistr_(&x,nNeutralPar);
 	x=(double)ptD;
 	q*= functionPtD_(&x,PtDPar);
-	nChargedPar[0]=Interpolate(pt,(TGraph*)nchargedFile->Get("alpha_gluon"));
-	nChargedPar[1]=Interpolate(pt,(TGraph*)nchargedFile->Get("mean_gluon"));
-	nNeutralPar[0]=Interpolate(pt,(TGraph*)nneutralFile->Get("alpha_gluon"));
-	nNeutralPar[1]=Interpolate(pt,(TGraph*)nneutralFile->Get("mean_gluon"));
-	PtDPar[0]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD0_gluon"));
-	PtDPar[1]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD1_gluon"));
-	PtDPar[2]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD2_gluon"));
-	PtDPar[3]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD3_gluon"));
-	PtDPar[4]=Interpolate(pt,(TGraph*)PtDFile->Get("PtD4_gluon"));
+	nChargedPar[0]=Interpolate(pt,graph["alpha_gluon_nc"]);
+	nChargedPar[1]=Interpolate(pt,graph["mean_gluon_nc"]);
+	nNeutralPar[0]=Interpolate(pt,graph["alpha_gluon_nn"]);
+	nNeutralPar[1]=Interpolate(pt,graph["mean_gluon_nn"]);
+	PtDPar[0]=Interpolate(pt,graph["PtD0_gluon"]);
+	PtDPar[1]=Interpolate(pt,graph["PtD1_gluon"]);
+	PtDPar[2]=Interpolate(pt,graph["PtD2_gluon"]);
+	PtDPar[3]=Interpolate(pt,graph["PtD3_gluon"]);
+	PtDPar[4]=Interpolate(pt,graph["PtD4_gluon"]);
 	x=(double)nCharged;//it reads directly 
 	g = gammadistr_(&x,nChargedPar);
 	x=(double)nNeutral;

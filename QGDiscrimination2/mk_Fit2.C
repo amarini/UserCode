@@ -11,20 +11,24 @@
 #include "TLegend.h"
 #include "TLatex.h"
 #include "TCanvas.h"
-inline double gammadistr_(double* x, double* par)
-{
-	return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;		
-}
 
-inline double functionPtD_(double * x ,double*par)
-{
-	return TMath::Exp ( (x[0]-par[0])/par[1] *(
-						-(x[0]-par[0])/par[1]+ TMath::Sqrt( TMath::Power( (x[0]-par[0])/par[1],2) +par[4] ) -par[2]
-						) 
-			
-	) //* par[3];
-		* par[1]*(TMath::Sqrt(2*TMath::Pi())/2*par[3] +1./par[2] ); //normalizzazione a meta' (quasi 1 a parte per par3 che e' un'integrazione di una gauss)
-}
+#include "QGLikelihoodCalculator.h"
+#include "QGLikelihoodCalculator.C"
+
+//inline double gammadistr_(double* x, double* par)
+//{
+//	return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;		
+//}
+//
+//inline double functionPtD_(double * x ,double*par)
+//{
+//	return TMath::Exp ( (x[0]-par[0])/par[1] *(
+//						-(x[0]-par[0])/par[1]+ TMath::Sqrt( TMath::Power( (x[0]-par[0])/par[1],2) +par[4] ) -par[2]
+//						) 
+//			
+//	) * par[3]
+//		* par[1]*(TMath::Sqrt(2*TMath::Pi())/2 +1./par[2] ); //normalizzazione a meta' (quasi 1 a parte per par3 che e' un'integrazione di una gauss)
+//}
 
 
 void mk_Fit2()
@@ -42,13 +46,15 @@ char canvasname[1023];
 char histoname[1023];
 
 FILE *R=fopen("/tmp/amarini/fitresults.txt","w");
-TString VarNames[] ={"ncharged","nneutral","PtD","rRMS"};
-TF1 *gammadistr=new TF1("gamma",gammadistr_,0,100,2);
-TF1 *functionPtD=new TF1("functionPtD",functionPtD_,0,1,5);
+TString VarNames[] ={"ncharged","nneutral","PtD"};//,"rRMS"};
+//double (*gammadistr_1)(double *, double *)= &(QGLikelihoodCalculator::gammadistr_);
+//double (*functionPtD_1)(double *, double *)= &(QGLikelihoodCalculator::functionPtD_);
+TF1 *gammadistr=new TF1("gamma",QGLikelihoodCalculator::gammadistr_,0,100,2);
+TF1 *functionPtD=new TF1("functionPtD",QGLikelihoodCalculator::functionPtD_,0,1,5);
 TFile *F=TFile::Open("/home/Giochi/flat_Z2_nopileup_new.root");
 TTree *t=(TTree*)F->Get("demo/t");
 
-for(int j=0; j<4;j++)
+for(int j=0; j<3;j++)
 {
 //il set dei parametri e' messo qui in modo da 'seguire' i risultati dei fit precedenti
 gammadistr->SetParLimits(0,1,20);
@@ -119,9 +125,9 @@ if( (VarNames[j].Data())[0] =='r')
 	}
 	
 	functionPtD->SetParameter(0,0.4);
-	functionPtD->SetParLimits(0,0.1,0.8);
+	functionPtD->SetParLimits(0,0.1,0.9);//media
 
-	functionPtD->SetParameter(1,0.5);
+	functionPtD->SetParameter(1,0.5);//sigma gaus
 	functionPtD->SetParLimits(1,0.,1.);
 
 	functionPtD->SetParameter(2,5);
@@ -131,13 +137,19 @@ if( (VarNames[j].Data())[0] =='r')
 	functionPtD->SetParLimits(3,0.,500);//fattore di normalizzazione ~1
 
 	functionPtD->SetParameter(4,2);
-	functionPtD->SetParLimits(4,0.2,50);//fattore di normalizzazione ~1
+	functionPtD->SetParLimits(4,0.1,50.);
 
 
 if( (VarNames[j].Data())[0] =='P')
+{
 	Histo_quark->Fit("functionPtD","N");
+	Histo_quark->Fit("functionPtD","NM");
+}
 else
+	{
 	Histo_quark->Fit("gamma","N");//N=Don't Draw
+	Histo_quark->Fit("gamma","NM");//N=Don't Draw
+	}
 
 fprintf(R,"%s_quark %03.0lf_%03.0lf: %lf %lf %lf %lf\n",VarNames[j].Data(),
 							PtBins[i],
@@ -152,6 +164,7 @@ alpha_quark->SetPoint(count,ptmean,gammadistr->GetParameter(0));
 for(int k=0;k<5;k++)PtD_quark[k]->SetPoint(count,ptmean,functionPtD->GetParameter(k));
 
 TCanvas *c1 =new TCanvas();
+//c1->SetLogy();
 Histo_quark->Draw();
 gammadistr->SetLineColor(kBlack);
 functionPtD->SetLineColor(kBlack);
@@ -162,9 +175,16 @@ else
 	gammadistr->DrawCopy("SAME C");
 
 if( (VarNames[j].Data())[0] =='P')
+	{
 	Histo_gluon->Fit("functionPtD","N");
+	Histo_gluon->Fit("functionPtD","N");
+	Histo_gluon->Fit("functionPtD","NM");
+	}
 else
+	{
 	Histo_gluon->Fit("gamma","N");
+	Histo_gluon->Fit("gamma","NM");
+	}
 	
 fprintf(R,"%s_gluon %03.0lf_%03.0lf: %lf %lf %lf %lf\n",VarNames[j].Data(),
 							PtBins[i],
