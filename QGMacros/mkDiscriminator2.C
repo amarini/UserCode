@@ -54,10 +54,10 @@ while(sscanf(VariablesPointer,"%s%n",VarName,&n)==1)
 	float xMin=0,xMax=1;
 	switch(VarName[1])
 	{
-	case 't': nBinsX=200;xMin=0;xMax=1.0;Variable=new float;t->SetBranchAddress(VarName,Variable);break;//ptD
-	case 'C': nBinsX=200;xMin=0;xMax=200;Variable=new int  ;t->SetBranchAddress(VarName,Variable);break;//nCharged
-	case 'N': nBinsX=200;xMin=0;xMax=200;Variable=new int  ;t->SetBranchAddress(VarName,Variable);break;//nNeutral
-	case 'm': nBinsX=200;xMin=0;xMax=1.0;Variable=new int  ;t->SetBranchAddress(VarName,Variable);break;//rmsCand
+	case 't': nBinsX=50;xMin=0;xMax=1.0;Variable=new float;t->SetBranchAddress(VarName,Variable);break;//ptD
+	case 'C': nBinsX=101;xMin=-.5;xMax=100.5;Variable=new int  ;t->SetBranchAddress(VarName,Variable);break;//nCharged
+	case 'N': nBinsX=101;xMin=-.5;xMax=100.5;Variable=new int  ;t->SetBranchAddress(VarName,Variable);break;//nNeutral
+	case 'm': nBinsX=100;xMin=0;xMax=1.0;Variable=new int  ;t->SetBranchAddress(VarName,Variable);break;//rmsCand
 	default: break;
 	}
 	//for each bins in pt
@@ -70,12 +70,13 @@ while(sscanf(VariablesPointer,"%s%n",VarName,&n)==1)
 	F->cd(str);
 	for(int r=0;r<nRhoBins;r++)
 	{
-	sprintf(plotName,"%s_gluon_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(PtBins[p]),ceil(PtBins[p+1]),ceil(RhoBins[r]));//construction of plot name
+	sprintf(plotName,"%s_gluon_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(PtBins[p]),ceil(PtBins[p+1]),floor(RhoBins[r]));//construction of plot name
 	plots[string(plotName)]=new TH1F(plotName,plotName,nBinsX,xMin,xMax);
 	sprintf(str,"%s>>%s",VarName,plotName);
 	sprintf(cut,"eventWeight*(pdgIdPart==21 && %lf< ptJetReco && ptJetReco<%lf && %lf< rhoPF && rhoPF<%lf && abs(etaJetReco)<2.4)",PtBins[p],PtBins[p+1],RhoBins[r],RhoBins[r+1]);
 	//quark
-	sprintf(plotName,"%s_quark_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(PtBins[p]),ceil(PtBins[p+1]),ceil(RhoBins[r]));//construction of plot name
+	sprintf(plotName,"%s_quark_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(PtBins[p]),ceil(PtBins[p+1]),floor(RhoBins[r]));//construction of plot name
+
 	plots[string(plotName)]=new TH1F(plotName,plotName,nBinsX,xMin,xMax);
 	sprintf(str,"%s>>%s",VarName,plotName);
 	//quark = uds not cb
@@ -90,12 +91,12 @@ while(sscanf(VariablesPointer,"%s%n",VarName,&n)==1)
 		if(getBin(nPtBins,PtBins,ptJetReco,&ptBin0,&ptBin1)<0)continue;
 		if(getBin(nRhoBins,RhoBins,rhoPF,&rhoBin0,&rhoBin1)<0)continue;
 		//construct plotname
-		if(pdgIdPart==21)sprintf(plotName,"%s_gluon_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(ptBin0),ceil(ptBin1),ceil(rhoBin0));
-		else if((-4<pdgIdPart)&&(pdgIdPart)<4)sprintf(plotName,"%s_quark_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(ptBin0),ceil(ptBin1),ceil(rhoBin0));
+		if(pdgIdPart==21)sprintf(plotName,"%s_gluon_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(ptBin0),ceil(ptBin1),floor(rhoBin0));
+		else if((-4<pdgIdPart)&&(pdgIdPart)<4)sprintf(plotName,"%s_quark_pt%.0lf_%.0lf_rho%.0lf",VarName,ceil(ptBin0),ceil(ptBin1),floor(rhoBin0));
 		else continue;
 		//selection
-		if(etaJetReco>2.4)continue;
-		if(etaJetReco<-2.4)continue;
+		if(etaJetReco>2.0)continue;
+		if(etaJetReco<-2.0)continue;
 		//Fill
 		//plots[PlotName]->Fill(*(int)Variable,eventWeight);
 		switch(VarName[1])

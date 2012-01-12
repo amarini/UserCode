@@ -7,7 +7,7 @@
 //
 #include <stdlib.h>
 //.h -> only headers
-#include "QGLikelihood/QGLikelihoodCalculator.C"
+//#include "QGLikelihood/QGLikelihoodCalculator.C"
 
 //root Di_mc_88_110.root Di_data_B_88_110.root Ph_mc_88_110.root Ph_data_B_88_110.root
 void PlotChiSquare(const char *mcFile, const char *dataFile,
@@ -44,8 +44,9 @@ const char selection[]=" && abs(etaJetReco)<2.4 && passedPhotonID_medium && trac
  TH1F* LDiMCQ=new TH1F("LDiMCQ","LDiMCQ",nBins,xMin,xMax);
  LDiMCQ->Sumw2();
  sprintf(str,"%s>>LDiMCQ",Name);
- sprintf(cut,"eventWeight*(%lf<ptJetReco && ptJetReco <%lf && abs(pdgIdPart)<4) %s ",PtMin,PtMax,selection);
+ sprintf(cut,"eventWeight*(%lf<ptJetReco && ptJetReco <%lf && abs(pdgIdPart)<4 %s)",PtMin,PtMax,selection);
  tmc->Draw(str,cut,"goff E");
+ //tmc->Draw(str,cut," E");
  LDiMCQ->SetLineColor(kBlack);
  LDiMCQ->SetFillColor(kGray);
  LDiMCQ->GetXaxis()->SetTitle(Title);
@@ -57,6 +58,7 @@ const char selection[]=" && abs(etaJetReco)<2.4 && passedPhotonID_medium && trac
  sprintf(str,"%s>>LDiMCG",Name);
  sprintf(cut,"eventWeight*(%lf<ptJetReco && ptJetReco <%lf && abs(pdgIdPart)==21 %s)",PtMin,PtMax,selection);
  tmc->Draw(str,cut,"goff E");
+ //tmc->Draw(str,cut," E");
  LDiMCG->SetLineColor(kRed);
  LDiMCG->SetFillColor(kRed-9);
  LDiMCG->Scale(1./LDiMCG->Integral());

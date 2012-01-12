@@ -11,10 +11,28 @@
 using namespace std;
 
 int AddLikelihood(	const char * FileName="ntuple.root", //File name
+			const char * What="L C N P R",//what I will add 
 			const char* TreeName="jetTree", // Tree Name in the directory Chosen
 			const char *QGFile=""
 		   	)
 {
+	//reading what
+	const char *pointer=What;
+	int n;char a;
+	bool L=false,C=false,N=false,P=false,R=false;
+	while(sscanf(pointer,"%c %n",&a,&n)==1)
+		{
+		pointer+=n;
+		switch (a){
+		case 'L': L=true;fprintf(stderr,"L ");break;
+		case 'C': C=true;fprintf(stderr,"C ");break;
+		case 'N': N=true;fprintf(stderr,"N ");break;
+		case 'P': P=true;fprintf(stderr,"P ");break;
+		case 'R': R=true;fprintf(stderr,"R ");break;
+		}
+		};
+	fprintf(stderr,"\n");	
+	//
 	fprintf(stderr,"creating the qgDiscr\n");
 	QGLikelihoodCalculator *qglikeli;
 	if(QGFile[0]=='\0')	qglikeli = new QGLikelihoodCalculator();
@@ -41,11 +59,11 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 	int nNeutral;
 	//Creating an empty branch in the tree
 	fprintf(stderr,"Creating the branches and setting the address\n");
-	TBranch *b0=t->Branch("Likelihood",&Likelihood,"Likelihood/F");
-	TBranch *b1=t->Branch("ptD",&ptD,"ptD/F"); //used ptD
-	TBranch *b2=t->Branch("nCharged",&nCharged,"nCharged/I"); //used nCharged
-	TBranch *b3=t->Branch("nNeutral",&nNeutral,"nNeutral/I"); //used nNeutral
-	TBranch *b4=t->Branch("rmsCand",&rmsCand,"rmsCand/I"); //used rmsCand
+	TBranch *b0;if(L)b0=t->Branch("Likelihood",&Likelihood,"Likelihood/F");
+	TBranch *b1;if(P)b1=t->Branch("ptD",&ptD,"ptD/F"); //used ptD
+	TBranch *b2;if(C)b2=t->Branch("nCharged",&nCharged,"nCharged/I"); //used nCharged
+	TBranch *b3;if(N)b3=t->Branch("nNeutral",&nNeutral,"nNeutral/I"); //used nNeutral
+	TBranch *b4;if(R)b4=t->Branch("rmsCand",&rmsCand,"rmsCand/I"); //used rmsCand
 	
 	//Getting the Number of entries in the tree
 	long long int NumberEntries=t->GetEntries();
@@ -78,14 +96,14 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 		rmsCand=rmsCandJetReco;
 		nCharged=nMuonsReco+nElectronsReco+nTracksReco;
 		nNeutral=nNeutralHadronsReco+nPhotonsReco;
-		Likelihood=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nMuonsReco+nElectronsReco+nTracksReco,nNeutralHadronsReco+nPhotonsReco,ptDJetReco);
+		if(L)Likelihood=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nMuonsReco+nElectronsReco+nTracksReco,nNeutralHadronsReco+nPhotonsReco,ptDJetReco);
 		if((i&131071)==1)fprintf(stderr,"entry %lld of %lld: Likelihood=%f,ptJet=%f,rho=%f\n",i,NumberEntries,Likelihood,ptJetReco,rhoPF);
 		
-		b0->Fill();
-		b1->Fill();
-		b2->Fill();
-		b3->Fill();
-		b4->Fill();
+		if(L)b0->Fill();
+		if(P)b1->Fill();
+		if(C)b2->Fill();
+		if(N)b3->Fill();
+		if(R)b4->Fill();
 		}
 	//Write the Tree (With OverWrite Option)
 	t->Write("",TObject::kOverwrite);
