@@ -7,11 +7,14 @@
 #include <stdlib.h>
 #include <vector>
 
-#include "QGLikelihood/QGLikelihoodCalculator.C"
+//#include "QGLikelihood/QGLikelihoodCalculator.C"
+
+#include "QGLikelihoodCalculator.C"
+
 using namespace std;
 
 int AddLikelihood(	const char * FileName="ntuple.root", //File name
-			const char * What="L C N P R",//what I will add 
+			const char * What="L C N P R",//what I will add F:LikelihoodFit
 			const char* TreeName="jetTree", // Tree Name in the directory Chosen
 			const char *QGFile=""
 		   	)
@@ -19,7 +22,7 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 	//reading what
 	const char *pointer=What;
 	int n;char a;
-	bool L=false,C=false,N=false,P=false,R=false;
+	bool L=false,C=false,N=false,P=false,R=false,F=false;
 	while(sscanf(pointer,"%c %n",&a,&n)==1)
 		{
 		pointer+=n;
@@ -29,6 +32,7 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 		case 'N': N=true;fprintf(stderr,"N ");break;
 		case 'P': P=true;fprintf(stderr,"P ");break;
 		case 'R': R=true;fprintf(stderr,"R ");break;
+		case 'F': F=true;fprintf(stderr,"F ");break;
 		}
 		};
 	fprintf(stderr,"\n");	
@@ -37,6 +41,7 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 	QGLikelihoodCalculator *qglikeli;
 	if(QGFile[0]=='\0')	qglikeli = new QGLikelihoodCalculator();
 	else 			qglikeli = new QGLikelihoodCalculator(QGFile);
+	
 	//declare a temporary string variable
 	char str[255];	
 	//open file
@@ -53,6 +58,7 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 		return 2;
 		}
 	float Likelihood;
+	float LikelihoodFit;
 	float ptD;
 	float rmsCand;
 	int nCharged;
@@ -63,7 +69,8 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 	TBranch *b1;if(P)b1=t->Branch("ptD",&ptD,"ptD/F"); //used ptD
 	TBranch *b2;if(C)b2=t->Branch("nCharged",&nCharged,"nCharged/I"); //used nCharged
 	TBranch *b3;if(N)b3=t->Branch("nNeutral",&nNeutral,"nNeutral/I"); //used nNeutral
-	TBranch *b4;if(R)b4=t->Branch("rmsCand",&rmsCand,"rmsCand/I"); //used rmsCand
+	TBranch *b4;if(R)b4=t->Branch("rmsCand",&rmsCand,"rmsCand/F"); //used rmsCand
+	TBranch *b5;if(F)b5=t->Branch("LikelihoodFit",&LikelihoodFit,"LikelihoodFit/F"); //used LikelihoodFit
 	
 	//Getting the Number of entries in the tree
 	long long int NumberEntries=t->GetEntries();
@@ -97,13 +104,16 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 		nCharged=nMuonsReco+nElectronsReco+nTracksReco;
 		nNeutral=nNeutralHadronsReco+nPhotonsReco;
 		if(L)Likelihood=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nMuonsReco+nElectronsReco+nTracksReco,nNeutralHadronsReco+nPhotonsReco,ptDJetReco);
-		if((i&131071)==1)fprintf(stderr,"entry %lld of %lld: Likelihood=%f,ptJet=%f,rho=%f\n",i,NumberEntries,Likelihood,ptJetReco,rhoPF);
+		if(F)LikelihoodFit=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nMuonsReco+nElectronsReco+nTracksReco,nNeutralHadronsReco+nPhotonsReco,ptDJetReco);
+
+		if((i&131071)==1)fprintf(stderr,"entry %lld of %lld: Likelihood=%f,ptJet=%f,rho=%f, LikelihoodFit=%f\n",i,NumberEntries,Likelihood,ptJetReco,rhoPF,LikelihoodFit);
 		
 		if(L)b0->Fill();
 		if(P)b1->Fill();
 		if(C)b2->Fill();
 		if(N)b3->Fill();
 		if(R)b4->Fill();
+		if(F)b5->Fill();
 		}
 	//Write the Tree (With OverWrite Option)
 	t->Write("",TObject::kOverwrite);

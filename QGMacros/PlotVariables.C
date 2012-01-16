@@ -106,6 +106,15 @@ if(DrawData){
 //========================
 //Confronto MC dati Ph+jet
 //========================
+
+float Max=0;
+Max=(Max>LDiMCQ->GetMaximum())?Max:LDiMCQ->GetMaximum();
+Max=(Max>LDiMCG->GetMaximum())?Max:LDiMCG->GetMaximum();
+Max=(Max>LDiMC->GetMaximum())?Max:LDiMC->GetMaximum();
+if(DrawData)Max=(Max>LDidata->GetMaximum())?Max:LDidata->GetMaximum();
+Max*=1.1;
+LDiMCQ->SetMaximum(Max);
+
 TCanvas *c1=new TCanvas("c2");
 LDiMCQ->GetYaxis()->SetTitle("Normalized to Unity");
 LDiMCQ->Draw("HIST");
@@ -117,12 +126,13 @@ LDiMC->SetFillStyle(3004);
 LDiMC->Draw("HIST SAME");
 if(DrawData)LDidata->Draw("P E 0 SAME");
 
-sprintf(str,"%.0lf < P_{T}[GeV/c]< %.0lf",PtMin,PtMax);
+sprintf(str,"%.0lf < P_{T}[GeV/c]< %.0lf     %.0lf<#rho<%.0lf",PtMin,PtMax,RhoMin,RhoMax);
 TLegend *L=new TLegend(0.6,0.6,0.8,.89,str);
 L->SetFillColor(0);
 L->SetBorderSize(0);
 if(DrawData)L->AddEntry("LDidata","#gamma+jet data","LP");
-L->AddEntry("LDiMC","#gamma+jet MonteCarlo","F");
+//L->AddEntry("LDiMC","#gamma+jet MonteCarlo","F");
+L->AddEntry("LDiMC","MonteCarlo (nat. mixing)","F");
 L->AddEntry("LDiMCQ","Quark MonteCarlo","F");
 L->AddEntry("LDiMCG","Gluon MonteCarlo","F");
 L->Draw();

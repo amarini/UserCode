@@ -21,6 +21,8 @@ t->SetBranchStatus("Likelihood",1);
 t->SetBranchStatus("ptJetReco",1);
 t->SetBranchStatus("etaJetReco",1);
 t->SetBranchStatus("rhoPF",1);
+t->SetBranchStatus("pdgIdPart",1);
+t->SetBranchStatus("trackCountingHighEffBJetTagsJetReco",1);
 
 //PhotonJet_2ndLevelTreeW_QCD_Pt-1000to1400_pfakt5.root
 //getting max pthat from dataset name
