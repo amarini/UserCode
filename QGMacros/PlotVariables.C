@@ -19,7 +19,9 @@ const char outFileName[]="",
 const double PtMin=85,
 const double PtMax=115,
 const double RhoMin=0,
-const double RhoMax=20
+const double RhoMax=20,
+const bool DrawGlobal=true,
+const char *addSel=""
 )
 //=================================================================
 {
@@ -47,7 +49,8 @@ float xMin,xMax;
 sscanf(range,"(%d,%f,%f)",&nBins,&xMin,&xMax);
 //common selection
 //const char selection[]=" && abs(etaJetReco)<2.4 && passedPhotonID_medium && trackCountingHighEffBJetTagsJetReco<1.7";
-const char selection[]=" && abs(etaJetReco)<2.4 && trackCountingHighEffBJetTagsJetReco<1.7";
+ char selection[1023];
+	sprintf(selection," && abs(etaJetReco)<2.4 && trackCountingHighEffBJetTagsJetReco<1.7 %s",addSel);
 //===============================================GETTING HISTOS===================================
 
 // DiJet MC Quark
@@ -123,7 +126,7 @@ TH1F*tmp=(TH1F*)LDiMCQ->Clone("tmp");
 tmp->SetFillColor(0);
 tmp->Draw("HIST SAME");
 LDiMC->SetFillStyle(3004);
-LDiMC->Draw("HIST SAME");
+if(DrawGlobal)LDiMC->Draw("HIST SAME");
 if(DrawData)LDidata->Draw("P E 0 SAME");
 
 sprintf(str,"%.0lf < P_{T}[GeV/c]< %.0lf     %.0lf<#rho<%.0lf",PtMin,PtMax,RhoMin,RhoMax);
@@ -132,7 +135,7 @@ L->SetFillColor(0);
 L->SetBorderSize(0);
 if(DrawData)L->AddEntry("LDidata","#gamma+jet data","LP");
 //L->AddEntry("LDiMC","#gamma+jet MonteCarlo","F");
-L->AddEntry("LDiMC","MonteCarlo (nat. mixing)","F");
+if(DrawGlobal)L->AddEntry("LDiMC","MonteCarlo (nat. mixing)","F");
 L->AddEntry("LDiMCQ","Quark MonteCarlo","F");
 L->AddEntry("LDiMCG","Gluon MonteCarlo","F");
 L->Draw();
@@ -146,5 +149,10 @@ lat->SetTextAlign(23);
 lat->DrawLatex(0.25,.88,"CMS Preliminary");
 lat->DrawLatex(0.25,.82,"#sqrt{s} = 7 TeV");
 
-if(outFileName[0]!='\0')c1->SaveAs(outFileName);
+if(outFileName[0]!='\0'){
+	c1->SaveAs(outFileName);
+	//char str[1023];
+	sprintf(str,"%s.root",outFileName);
+	c1->SaveAs(str);
+	}
 }
