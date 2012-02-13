@@ -113,12 +113,16 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
 	t1->Draw(name,selection,"goff");h1->Scale(1./h1->Integral());
 	fprintf(stderr,"1:===%s===%s===\n",name,selection);
+	fprintf(stderr,"1:ENTRIES:%.3f\n",t1->GetEntries(selection));
 
 	sprintf(name,"%s%s>>var2",varName,jet2);
 	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
-	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	//else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && passed_Photon90_CaloIdVL_IsoL) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	t2->Draw(name,selection,"goff");h2->Scale(1./h2->Integral());
 	fprintf(stderr,"2:===%s===%s===\n",name,selection);
+	fprintf(stderr,"2:ENTRIES:%.3f\n",t2->GetEntries(selection));
+
 //Unfold the distributions
 	TH1F* H=MergeHistos(h1,h2,"merged");
 	//regularisation
@@ -129,6 +133,7 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	TFile *mc;
 	if(MCFile[0]!='\0')mc=TFile::Open(MCFile);
 	TTree *t_mc;
+	TH1F *hh=new TH1F("base","base",nBins,xMin,xMax);
 	if(MCFile[0]!='\0')t_mc=(TTree*)mc->Get(treeName);
 	TH1F *hq=new TH1F("quark","quark",nBins,xMin,xMax);hq->Sumw2();
 	sprintf(name,"%s%s>>quark",varName,jet1);
@@ -144,7 +149,9 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 fprintf(stderr,"=%s==%s=\n",name,selection);//DEBUG
 
 	if(isMC){t1->Draw(name,selection,"goff");hg->Scale(1./hg->Integral());}
-	else if(MCFile[0]!='\0'){t_mc->Draw(name,selection,"goff");hg->Scale(1./hg->Integral());}
+	else if(MCFile[0]!='\0'){t_mc->Draw(name,selection,"goff");hg->Scale(1./hg->Integral());
+		//fprintf(stderr,"ENTRIES G=%.3f\s",t_mc->GetEntries(selection));
+		}
 	
 
 	TCanvas *c=new TCanvas();
@@ -174,11 +181,13 @@ fprintf(stderr,"=%s==%s=\n",name,selection);//DEBUG
 	
 //DEBUG
 	TCanvas *c2=new TCanvas();
+	hh->SetMaximum(TMath::Max(h1->GetMaximum(),h2->GetMaximum()));
+	hh->Draw("AXIS");
 	hq->SetLineWidth(2);
 	hq->SetLineColor(kBlue+2);
 	hq->SetFillColor(kBlue-3);
 	hq->SetFillStyle(3004);
-	hq->Draw("HIST");
+	hq->Draw("HIST SAME");
 	hg->SetLineWidth(2);
 	hg->SetLineColor(kRed+2);
 	hg->SetFillColor(kRed-3);
