@@ -23,6 +23,8 @@ int ComputeMixture(const char*fileName1,
 	  const char*fileName2,
 	  float PtMin=100,float PtMax=110,
 	  float RhoMin=12,float RhoMax=13,
+	  const char jet1[]="Jet0",
+	  const char jet2[]="Jet0",
 	  const char*treeName="tree_passedEvents")
 {
 
@@ -39,20 +41,19 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 //Getting the histograms
 	TTree *t1=(TTree*)f1->Get(treeName);
 	TTree *t2=(TTree*)f2->Get(treeName);
-	const char Jet[]="Jet0";
 	char selection[1023];
 	float q,g,o;
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPartJet0)<4)",PtMin,PtMax,RhoMin,RhoMax); //dijet - file 1
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s)<4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //dijet - file 1
 	TH1F *hq=new TH1F("quark1","quark1",100,0,100);
-		t1->Draw("abs(pdgIdPartJet0)>>quark1",selection,"goff");
+		t1->Draw("abs(pdgIdPartJet0)>>quark1",selection,"goff");// I'm interested only in the integral
 		q=hq->Integral();
 	//q=t1->GetEntries(selection);
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPartJet0)==21)",PtMin,PtMax,RhoMin,RhoMax); //gluon
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s)==21)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //gluon
 	TH1F *hg=new TH1F("gluon1","gluon1",100,0,100);
 		t1->Draw("abs(pdgIdPartJet0)>>gluon1",selection,"goff");
 		g=hg->Integral();
 	//g=t1->GetEntries(selection);	
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPartJet0)!=21 && abs(pdgIdPartJet0)>=4)",PtMin,PtMax,RhoMin,RhoMax); //gluon
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s)!=21 && abs(pdgIdPart%s)>=4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //gluon
 	TH1F *ho=new TH1F("other1","other1",100,0,100);
 		t1->Draw("abs(pdgIdPartJet0)>>other1",selection,"goff");
 		o=ho->Integral();
@@ -60,17 +61,17 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	
 	fprintf(stderr,"DIJET q/q+g=%.3f q/q+g+o=%.3f o/q+g+o=%.3f\n",q/(q+g),q/(q+g+o),o/(q+g+o))	;
 
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged&& abs(pdgIdPartJet0)<4)",PtMin,PtMax,RhoMin,RhoMax);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged&& abs(pdgIdPart%s)<4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 	 	hq=new TH1F("quark2","quark2",100,0,100);
 		t2->Draw("abs(pdgIdPartJet0)>>quark2",selection,"goff");
 		q=hq->Integral();
 
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && abs(pdgIdPartJet0)==21)",PtMin,PtMax,RhoMin,RhoMax);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && abs(pdgIdPart%s)==21)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 		hg=new TH1F("gluon2","gluon2",100,0,100);
 		t2->Draw("abs(pdgIdPartJet0)>>gluon2",selection,"goff");
 		g=hg->Integral();
 
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && abs(pdgIdPartJet0)!=21 && abs(pdgIdPartJet0)>=4)",PtMin,PtMax,RhoMin,RhoMax);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && abs(pdgIdPart%s)!=21 && abs(pdgIdPart%s)>=4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 	TH1F *ho=new TH1F("other2","other2",100,0,100);
 		t2->Draw("abs(pdgIdPartJet0)>>other2",selection,"goff");
 		o=ho->Integral();
