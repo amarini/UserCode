@@ -23,15 +23,6 @@ inline double gammadistr_(double* x, double* par)
 	return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;		
 }
 
-//original 2 - half gaus half exp
-//inline double functionPtD_(double * x ,double*par)
-//{
-//	return ((x[0]<par[0])?( TMath::Exp(-TMath::Power((x[0]-par[0])/par[2],2)) )://gauss
-//				(TMath::Exp(- (x[0]-par[0])/par[1]) ))/
-//		(par[1]+par[2]*TMath::Sqrt(TMath::Pi())/2.0) //unitary normalization
-//		;
-//}
-
 //half gamma+ offset
 inline double functionPtD_(double * x ,double*par)
 {
@@ -119,14 +110,6 @@ for(int PtBin=0; PtBin<20;PtBin++)
 {
 	fprintf(stderr,"Bin: Rho %.0lf Pt %.0lf - %.0lf\n",floor(RhoBins[RhoBin]),ceil(PtBins[PtBin]),ceil(PtBins[PtBin+1]));
 
-//	functionPtD->SetParameter(0,0.4);
-//	functionPtD->SetParLimits(0,0.1,0.9);//media
-//
-//	functionPtD->SetParameter(1,0.2);//sigma gaus
-//	functionPtD->SetParLimits(1,0.001,0.99);
-//
-//	functionPtD->SetParameter(2,0.2);
-//	functionPtD->SetParLimits(2,0.001,0.99);
 //
 	functionPtD->SetParameter(0,0.2);
 	functionPtD->SetParLimits(0,0.,0.4);//offset

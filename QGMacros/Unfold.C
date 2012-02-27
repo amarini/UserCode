@@ -67,6 +67,7 @@ int Unfold(const char*fileName1,
 	  const char*MCFile="",
 	  const char*jet1="Jet0",
 	  const char*jet2="Jet0",
+	  const char *outFileName="",
 	  const char*treeName="tree_passedEvents")
 {
 
@@ -118,7 +119,7 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	sprintf(name,"%s%s>>var2",varName,jet2);
 	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	//else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
-	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && passed_Photon90_CaloIdVL_IsoL) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f && !btagged && passed_Photon90_CaloIdVL_IsoL && (ptJet1<10. || ptJet1<0.2*ptPhot) && passedID_no2ndJet ) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	t2->Draw(name,selection,"goff");h2->Scale(1./h2->Integral());
 	fprintf(stderr,"2:===%s===%s===\n",name,selection);
 	fprintf(stderr,"2:ENTRIES:%.3f\n",t2->GetEntries(selection));
@@ -126,9 +127,9 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 //Unfold the distributions
 	TH1F* H=MergeHistos(h1,h2,"merged");
 	//regularisation
-	for(int i=1;i<H->GetNbinsX();i++)if((H->GetBinContent(i)==0)&&(H->GetBinContent(i-1)==0) && (H->GetBinContent(i+1)==0))H->SetBinError(i,0.0001);
-	RooUnfoldSvd *Unfold=new RooUnfoldSvd(R,H,int(nBins));
-	//RooUnfoldInvert *Unfold=new RooUnfoldInvert(R,H);
+	//for(int i=1;i<H->GetNbinsX();i++)if((H->GetBinContent(i)==0)&&(H->GetBinContent(i-1)==0) && (H->GetBinContent(i+1)==0))H->SetBinError(i,0.0001);
+	//RooUnfoldSvd *Unfold=new RooUnfoldSvd(R,H,int(nBins*1.5));
+	RooUnfoldInvert *Unfold=new RooUnfoldInvert(R,H);
 //Print the output
 	TFile *mc;
 	if(MCFile[0]!='\0')mc=TFile::Open(MCFile);
@@ -219,6 +220,8 @@ fprintf(stderr,"=%s==%s=\n",name,selection);//DEBUG
 	L2->AddEntry("quark","quark","F");
 	L2->AddEntry("gluon","gluon","F");
 	L2->Draw();
+	
+	if(outFileName[0]!='\0')c2->SaveAs(outFileName);
 
 //DEBUG	
 
