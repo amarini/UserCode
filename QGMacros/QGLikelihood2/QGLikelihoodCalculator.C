@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "TMath.h"
+#include "TGraph2D.h"
 
 #include <map>
 using namespace std;
@@ -35,11 +36,6 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& fileName ) {
 	plots["ptD0_gluon"]=(TGraph2D*)histoFile_->Get("ptD0_gluon");
 	plots["ptD1_gluon"]=(TGraph2D*)histoFile_->Get("ptD1_gluon");
 	plots["ptD2_gluon"]=(TGraph2D*)histoFile_->Get("ptD2_gluon");
-	#ifdef DEBUG
-		map<string,TGraph2D*>::iterator it;
-		for(it=plots.begin();it!=plots.end();it++)
-			if(it->second==NULL)fprintf(stderr,"ERROR Object %s is NULL\n",(it->first).c_str());
-	#endif
 
 }
 
@@ -94,28 +90,31 @@ for(int j=0; j<3;j++) //loop on VarNames
 		{
 		double *Pt=plots[plotName]->GetX();
 		double *Rho=plots[plotName]->GetY();
-		double *param=plots[plotName]->GetY();
+		double *param=plots[plotName]->GetZ();
 		int k=0;
 		for(int z=0;z<plots[plotName]->GetN();z++)
 			{
-			if((fabs(pt-Pt[k])>fabs(pt-Pt[z])) && (fabs(rho-Rho[k])>fabs(rho-Rho[z])))k=z;
+			if((fabs(pt-Pt[k])>=fabs(pt-Pt[z])) && (fabs(rhoPF-Rho[k])>=fabs(rhoPF-Rho[z])))k=z;
 			}
 		par_q[i]=param[k];
 		#ifdef DEBUG
-		fprintf(stderr,"pt=%.0f - %.0f Rho=%.0f - %.0f param=%.5f\n",pt,Pt[k],rho,Rho[k],param[k]);
+		fprintf(stderr,"pt=%.0f - %.0f Rho=%.2f - %.2f param=%.5f\n",pt,Pt[k],rhoPF,Rho[k],param[k]);
 		#endif
 		}
 		sprintf(plotName,"%s%d_gluon",VarNames[j].c_str(),i);
 		{
 		double *Pt=plots[plotName]->GetX();
 		double *Rho=plots[plotName]->GetY();
-		double *param=plots[plotName]->GetY();
+		double *param=plots[plotName]->GetZ();
 		int k=0;
 		for(int z=0;z<plots[plotName]->GetN();z++)
 			{
-			if((fabs(pt-Pt[k])>fabs(pt-Pt[z])) && (fabs(rho-Rho[k])>fabs(rho-Rho[z])))k=z;
+			if((fabs(pt-Pt[k])>=fabs(pt-Pt[z])) && (fabs(rhoPF-Rho[k])>=fabs(rhoPF-Rho[z])))k=z;
 			}
 		par_g[i]=param[k];
+		#ifdef DEBUG
+		fprintf(stderr,"pt=%.0f - %.0f Rho=%.2f - %.2f param=%.5f\n",pt,Pt[k],rhoPF,Rho[k],param[k]);
+		#endif
 		}
 	}
 	}
