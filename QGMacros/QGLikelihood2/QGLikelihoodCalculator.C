@@ -10,7 +10,7 @@
 #include <map>
 using namespace std;
 
-//#define DEBUG
+#define DEBUG
 
 
 // constructor:
@@ -75,15 +75,49 @@ double par_q[10];//need do be a double*
 double par_g[10];//need do be a double*
 double x[10];
 string VarNames[]={"nCharged","nNeutral","ptD"};
-for(int j=0; j<3;j++)
+for(int j=0; j<3;j++) //loop on VarNames
 	{
 	for(int i=0; i<3; i++)
 	{
 	if( (VarNames[j].c_str())[0]=='n' && i==2) break;//the only one with 3 par is ptd
-	sprintf(plotName,"%s%d_quark",VarNames[j].c_str(),i);
-	par_q[i]=plots[plotName]->Interpolate(pt,rhoPF);
-	sprintf(plotName,"%s%d_gluon",VarNames[j].c_str(),i);
-	par_g[i]=plots[plotName]->Interpolate(pt,rhoPF);
+	//interpolations
+	bool INTERP=false;
+	if( INTERP )
+	{
+		sprintf(plotName,"%s%d_quark",VarNames[j].c_str(),i);
+		par_q[i]=plots[plotName]->Interpolate(pt,rhoPF);
+		sprintf(plotName,"%s%d_gluon",VarNames[j].c_str(),i);
+		par_g[i]=plots[plotName]->Interpolate(pt,rhoPF);
+	} else {
+	//not interpolate
+		sprintf(plotName,"%s%d_quark",VarNames[j].c_str(),i);
+		{
+		double *Pt=plots[plotName]->GetX();
+		double *Rho=plots[plotName]->GetY();
+		double *param=plots[plotName]->GetY();
+		int k=0;
+		for(int z=0;z<plots[plotName]->GetN();z++)
+			{
+			if((fabs(pt-Pt[k])>fabs(pt-Pt[z])) && (fabs(rho-Rho[k])>fabs(rho-Rho[z])))k=z;
+			}
+		par_q[i]=param[k];
+		#ifdef DEBUG
+		fprintf(stderr,"pt=%.0f - %.0f Rho=%.0f - %.0f param=%.5f\n",pt,Pt[k],rho,Rho[k],param[k]);
+		#endif
+		}
+		sprintf(plotName,"%s%d_gluon",VarNames[j].c_str(),i);
+		{
+		double *Pt=plots[plotName]->GetX();
+		double *Rho=plots[plotName]->GetY();
+		double *param=plots[plotName]->GetY();
+		int k=0;
+		for(int z=0;z<plots[plotName]->GetN();z++)
+			{
+			if((fabs(pt-Pt[k])>fabs(pt-Pt[z])) && (fabs(rho-Rho[k])>fabs(rho-Rho[z])))k=z;
+			}
+		par_g[i]=param[k];
+		}
+	}
 	}
 	//I get all the par for VarNames[j] - Interpolate
 	#ifdef DEBUG
