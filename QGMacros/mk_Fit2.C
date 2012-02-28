@@ -31,7 +31,7 @@ inline double functionPtD_(double * x ,double*par)
 }
 
 
-void mk_Fit2(const char * fileName,const char*outFileName="",const char * WorkingDir=".")
+void mk_Fit2(const char * fileName,const char*outFileName="",const char * txtFileName="tmp.txt")
 {
  gROOT->SetStyle("Plain");
  gStyle->SetPalette(1);
@@ -42,8 +42,6 @@ void mk_Fit2(const char * fileName,const char*outFileName="",const char * Workin
 
 
 char cmd[1023];
-sprintf(cmd,"cd %s",WorkingDir);
-system(cmd);
 
 TString VarNames[] ={"nCharged","nNeutral","ptD"};//,"rRMS"};
 TF1 *gammadistr=new TF1("gamma",gammadistr_,0,100,2);
@@ -53,6 +51,8 @@ fprintf(stderr,"Opening Files\n");
 TFile *f=TFile::Open(fileName);
 
 TFile *F=TFile::Open(outFileName,"RECREATE");
+
+FILE *fw=fopen(txtFileName,"w");
 
 
 fprintf(stderr,"Creating Graphs\n");
@@ -101,6 +101,11 @@ for(int j=0; j<3;j++)
 {
 int count=0;
 fprintf(stderr,"VarName=%s\n",VarNames[j].Data());
+
+//printing on the txt file:
+if(VarNames[j].Data()[0]!='p') fprintf(fw,"{2 JetPt Rho 1 x [ TMath::Exp( - x *[0]/[1] ) * TMath::Power(x,[0]-1) * TMath::Power([1]/[0],-[0])/TMath::Gamma([0])] QGL %s}\n",VarNames[j].Data()); //TXT
+else fprintf(fw,"{2 JetPt Rho 1 x [((x-[0])<0)?0:TMath::Exp( - (x-[0]) *[1]/[2]) * TMath::Power((x-[0]),[1]-1) * TMath::Power([2]/[1],-[1])/TMath::Gamma([1])] QGL %s}\n",VarNames[j].Data()); //TXT 
+
 //il set dei parametri e' messo qui in modo da 'seguire' i risultati dei fit precedenti
 gammadistr->SetParLimits(0,1,20);
 gammadistr->SetParLimits(1,1,50);
@@ -173,7 +178,10 @@ else
 	case 'N':nNeutral_quark[0]->SetPoint(count,(PtBins[PtBin]+PtBins[PtBin+1])/2.0,(RhoBins[RhoBin]+RhoBins[RhoBin+1])/2.0,gammadistr->GetParameter(0));
 		 nNeutral_quark[1]->SetPoint(count,(PtBins[PtBin]+PtBins[PtBin+1])/2.0,(RhoBins[RhoBin]+RhoBins[RhoBin+1])/2.0,gammadistr->GetParameter(1));break;	
 	}
-
+	
+	if(VarNames[j].Data()[0]!='p')fprintf(fw,"%.0f %.0f %.0f %.0f 4 0 100 %.3f %.3f Q\n",PtBins[PtBin],PtBins[PtBin+1],RhoBins[RhoBin],RhoBins[RhoBin+1],gammadistr->GetParameter(0),gammadistr->GetParameter(1));
+	if(VarNames[j].Data()[0]=='p')fprintf(fw,"%.0f %.0f %.0f %.0f 5 0 1 %.3f %.3f %.3f Q\n",PtBins[PtBin],PtBins[PtBin+1],RhoBins[RhoBin],RhoBins[RhoBin+1],functionPtD->GetParameter(0),functionPtD->GetParameter(1),functionPtD->GetParameter(2));
+// GLUON 
 if( (VarNames[j].Data())[0] =='p')
 {
 	Histo_gluon->Fit("functionPtD","N");
@@ -198,7 +206,16 @@ else
 	case 'N':nNeutral_gluon[0]->SetPoint(count,(PtBins[PtBin]+PtBins[PtBin+1])/2.0,(RhoBins[RhoBin]+RhoBins[RhoBin+1])/2.0,gammadistr->GetParameter(0));
 		 nNeutral_gluon[1]->SetPoint(count,(PtBins[PtBin]+PtBins[PtBin+1])/2.0,(RhoBins[RhoBin]+RhoBins[RhoBin+1])/2.0,gammadistr->GetParameter(1));break;	
 	}
+	if(VarNames[j].Data()[0]!='p')fprintf(fw,"%.0f %.0f %.0f %.0f 4 0 100 %.3f %.3f G\n",PtBins[PtBin],PtBins[PtBin+1],RhoBins[RhoBin],RhoBins[RhoBin+1],gammadistr->GetParameter(0),gammadistr->GetParameter(1));
+	if(VarNames[j].Data()[0]=='p')fprintf(fw,"%.0f %.0f %.0f %.0f 5 0 1 %.3f %.3f %.3f G\n",PtBins[PtBin],PtBins[PtBin+1],RhoBins[RhoBin],RhoBins[RhoBin+1],functionPtD->GetParameter(0),functionPtD->GetParameter(1),functionPtD->GetParameter(2));
+
+
+
+
 count++;
+
+
+
 sprintf(plotName,"%s_pt_%.0lf_%.0lf_rho%.0lf",VarNames[j].Data(),ceil(PtBins[PtBin]),ceil(PtBins[PtBin+1]),floor(RhoBins[RhoBin]));
 c1->SetName(plotName);
 c1->Write();
