@@ -58,7 +58,7 @@ int AddLikelihoodFit(	const char * FileName="ntuple.root", //File name
 	int nNeutral;
 	//Creating an empty branch in the tree
 	fprintf(stderr,"Creating the branches and setting the address\n");
-	TBranch *b5;if(F)b5=t->Branch("QGFit2",&LikelihoodFit,"QGFit2/F"); //used LikelihoodFit
+	TBranch *b5;if(F)b5=t->Branch("QGFit3",&LikelihoodFit,"QGFit3/F"); //used LikelihoodFit
 	
 	//Getting the Number of entries in the tree
 	long long int NumberEntries=t->GetEntries();

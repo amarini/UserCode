@@ -70,7 +70,7 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 	TBranch *b2;if(C)b2=t->Branch("nCharged",&nCharged,"nCharged/I"); //used nCharged
 	TBranch *b3;if(N)b3=t->Branch("nNeutral",&nNeutral,"nNeutral/I"); //used nNeutral
 	TBranch *b4;if(R)b4=t->Branch("rmsCand",&rmsCand,"rmsCand/F"); //used rmsCand
-	TBranch *b5;if(F)b5=t->Branch("LikelihoodFit",&LikelihoodFit,"LikelihoodFit/F"); //used LikelihoodFit
+	TBranch *b5;if(F)b5=t->Branch("QGFit",&LikelihoodFit,"QGFit/F"); //used LikelihoodFit
 	
 	//Getting the Number of entries in the tree
 	long long int NumberEntries=t->GetEntries();
@@ -85,26 +85,28 @@ int AddLikelihood(	const char * FileName="ntuple.root", //File name
 	int   nMuonsReco           ;
 	int   nElectronsReco       ;
 	int   nTracksReco          ;
-	t->SetBranchAddress("ptJetReco",&ptJetReco);
-	t->SetBranchAddress("rmsCandJetReco",&rmsCandJetReco);
-	t->SetBranchAddress("etaJetReco",&etaJetReco);
+	t->SetBranchAddress("ptJet0",&ptJetReco);
+	t->SetBranchAddress("rmsCandJet0",&rmsCandJetReco);
+	t->SetBranchAddress("etaJet0",&etaJetReco);
 	t->SetBranchAddress("rhoPF",&rhoPF);
-	t->SetBranchAddress("ptDJetReco",&ptDJetReco);
-	t->SetBranchAddress("nNeutralHadronsReco",&nNeutralHadronsReco);
-	t->SetBranchAddress("nPhotonsReco",&nPhotonsReco);
-	t->SetBranchAddress("nMuonsReco",&nMuonsReco);
-	t->SetBranchAddress("nElectronsReco",&nElectronsReco);
-	t->SetBranchAddress("nTracksReco",&nTracksReco);
+	t->SetBranchAddress("ptDJet0",&ptDJetReco);
+	if(N)t->SetBranchAddress("nNeutralHadronsReco",&nNeutralHadronsReco);
+	if(N)t->SetBranchAddress("nPhotonsReco",&nPhotonsReco);
+	if(C)t->SetBranchAddress("nMuonsReco",&nMuonsReco);
+	if(C)t->SetBranchAddress("nElectronsReco",&nElectronsReco);
+	if(C)t->SetBranchAddress("nTracksReco",&nTracksReco);
+	if(!C)t->SetBranchAddress("nChargedJet0",&nCharged);
+	if(!N)t->SetBranchAddress("nNeutralJet0",&nNeutral);
 	//looping on the entries in order to add the correct number of entries in the branch
 	fprintf(stderr,"Beginning the loop over the entries\n");
 	for(long long int i=0;i<NumberEntries;i++){
 		t->GetEntry(i);
-		ptD=ptDJetReco;
-		rmsCand=rmsCandJetReco;
-		nCharged=nMuonsReco+nElectronsReco+nTracksReco;
-		nNeutral=nNeutralHadronsReco+nPhotonsReco;
-		if(L)Likelihood=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nMuonsReco+nElectronsReco+nTracksReco,nNeutralHadronsReco+nPhotonsReco,ptDJetReco);
-		if(F)LikelihoodFit=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nMuonsReco+nElectronsReco+nTracksReco,nNeutralHadronsReco+nPhotonsReco,ptDJetReco);
+		if(P)ptD=ptDJetReco;
+		if(R)rmsCand=rmsCandJetReco;
+		if(C)nCharged=nMuonsReco+nElectronsReco+nTracksReco;
+		if(N)nNeutral=nNeutralHadronsReco+nPhotonsReco;
+		if(L)Likelihood   =qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nCharged,nNeutral,ptDJetReco);
+		if(F)LikelihoodFit=qglikeli->computeQGLikelihoodPU(ptJetReco,rhoPF,nCharged,nNeutral,ptDJetReco);
 
 		if((i&131071)==1)fprintf(stderr,"entry %lld of %lld: Likelihood=%f,ptJet=%f,rho=%f, LikelihoodFit=%f\n",i,NumberEntries,Likelihood,ptJetReco,rhoPF,LikelihoodFit);
 		

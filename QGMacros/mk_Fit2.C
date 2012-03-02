@@ -94,8 +94,10 @@ for(int k=0; k<3;k++)
 fprintf(stderr,"Getting Bins\n");
 double RhoBins[25];
 double PtBins[25];
-getBins(PtBins,20,15,1000,true);
-getBins(RhoBins,20,0,20,false);
+//getBins(PtBins,20,15,1000,true);
+//getBins(RhoBins,20,0,20,false);
+getBins_int(21,PtBins,15,1000,true);
+getBins_int(21,RhoBins,0,20,false);
 fprintf(stderr,"Starting Loop\n");
 for(int j=0; j<3;j++)
 {
@@ -103,8 +105,8 @@ int count=0;
 fprintf(stderr,"VarName=%s\n",VarNames[j].Data());
 
 //printing on the txt file:
-if(VarNames[j].Data()[0]!='p') fprintf(fw,"{2 JetPt Rho 1 x [ TMath::Exp( - x *[0]/[1] ) * TMath::Power(x,[0]-1) * TMath::Power([1]/[0],-[0])/TMath::Gamma([0])] QGL %s}\n",VarNames[j].Data()); //TXT
-else fprintf(fw,"{2 JetPt Rho 1 x [((x-[0])<0)?0:TMath::Exp( - (x-[0]) *[1]/[2]) * TMath::Power((x-[0]),[1]-1) * TMath::Power([2]/[1],-[1])/TMath::Gamma([1])] QGL %s}\n",VarNames[j].Data()); //TXT 
+if(VarNames[j].Data()[0]!='p') fprintf(fw,"{2 JetPt Rho 1 x TMath::Exp(-1.*x*[0]/[1])*TMath::Power(x,[0]-1)*TMath::Power([1]/[0],-1.*[0])/TMath::Gamma([0]) Correction QGL_%s}\n",VarNames[j].Data()); //TXT
+else fprintf(fw,"{2 JetPt Rho 1 x ((x-[0])<0)?0:TMath::Exp(-1.*(x-[0])*[1]/[2])*TMath::Power((x-[0]),[1]-1)*TMath::Power([2]/[1],-1.*[1])/TMath::Gamma([1]) Correction QGL_%s}\n",VarNames[j].Data()); //TXT 
 
 //il set dei parametri e' messo qui in modo da 'seguire' i risultati dei fit precedenti
 gammadistr->SetParLimits(0,1,20);
@@ -124,6 +126,7 @@ for(int PtBin=0; PtBin<20;PtBin++)
 
 	functionPtD->SetParameter(2,0.2);
 	functionPtD->SetParLimits(2,0.001,0.99);
+	
 
 char plotName[1023];
 	sprintf(plotName,"rhoBins_pt%.0f_%.0f/%s_quark_pt%.0f_%.0f_rho%.0f",ceil(PtBins[PtBin]),ceil(PtBins[PtBin+1]),VarNames[j].Data(),ceil(PtBins[PtBin]),ceil(PtBins[PtBin+1]),floor(RhoBins[RhoBin]));
@@ -155,15 +158,17 @@ TH1F*tmp=(TH1F*)Histo_quark->Clone("tmp"); tmp->SetFillColor(0);tmp->Draw("SAME"
 F->cd();
 if( (VarNames[j].Data())[0] =='p')
 {
-	Histo_quark->Fit("functionPtD","N");
-	Histo_quark->Fit("functionPtD","NM");	
+	Histo_quark->Fit("functionPtD","NQ");
+	Histo_quark->Fit("functionPtD","NMQ");	
 	functionPtD->SetLineColor(kBlack);
 	functionPtD->DrawCopy("SAME");
 }
 else
 	{
-	Histo_quark->Fit("gamma","N");//N=Don't Draw
-	Histo_quark->Fit("gamma","NM");//N=Don't Draw M=More
+	gammadistr->SetParameter(1,Histo_quark->GetMean());
+	gammadistr->SetParameter(0,Histo_quark->GetMean()*Histo_quark->GetMean()/(Histo_quark->GetRMS()*Histo_quark->GetRMS()));
+	Histo_quark->Fit("gamma","NQ");//N=Don't Draw
+	Histo_quark->Fit("gamma","NMQ");//N=Don't Draw M=More
 	gammadistr->SetLineColor(kBlack);
 	gammadistr->DrawCopy("SAME");
 	}
@@ -184,15 +189,15 @@ else
 // GLUON 
 if( (VarNames[j].Data())[0] =='p')
 {
-	Histo_gluon->Fit("functionPtD","N");
-	Histo_gluon->Fit("functionPtD","NM");
+	Histo_gluon->Fit("functionPtD","NQ");
+	Histo_gluon->Fit("functionPtD","NMQ");
 	functionPtD->SetLineColor(kRed);
 	functionPtD->DrawCopy("SAME");
 }
 else
 	{
-	Histo_gluon->Fit("gamma","N");//N=Don't Draw
-	Histo_gluon->Fit("gamma","NM");//N=Don't Draw M=More
+	Histo_gluon->Fit("gamma","NQ");//N=Don't Draw
+	Histo_gluon->Fit("gamma","NMQ");//N=Don't Draw M=More
 	gammadistr->SetLineColor(kRed);
 	gammadistr->DrawCopy("SAME");
 	}
