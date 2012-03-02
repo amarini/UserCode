@@ -96,7 +96,8 @@ double RhoBins[25];
 double PtBins[25];
 //getBins(PtBins,20,15,1000,true);
 //getBins(RhoBins,20,0,20,false);
-getBins_int(21,PtBins,15,1000,true);
+getBins_int(18,PtBins,20,1000,true);
+PtBins[18]=3500;
 getBins_int(21,RhoBins,0,20,false);
 fprintf(stderr,"Starting Loop\n");
 for(int j=0; j<3;j++)
@@ -113,7 +114,7 @@ gammadistr->SetParLimits(0,1,20);
 gammadistr->SetParLimits(1,1,50);
 
 for(int RhoBin=0;RhoBin<20;RhoBin++)
-for(int PtBin=0; PtBin<20;PtBin++)
+for(int PtBin=0; PtBin<18;PtBin++)
 {
 	fprintf(stderr,"Bin: Rho %.0lf Pt %.0lf - %.0lf\n",floor(RhoBins[RhoBin]),ceil(PtBins[PtBin]),ceil(PtBins[PtBin+1]));
 
