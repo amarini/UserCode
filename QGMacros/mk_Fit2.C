@@ -162,7 +162,9 @@ if( (VarNames[j].Data())[0] =='p')
 	Histo_quark->Fit("functionPtD","NQ");
 	Histo_quark->Fit("functionPtD","NMQ");	
 	functionPtD->SetLineColor(kBlack);
+	functionPtD->SetName("functionPtD_quark");
 	functionPtD->DrawCopy("SAME");
+	functionPtD->SetName("functionPtD");
 }
 else
 	{
@@ -171,7 +173,9 @@ else
 	Histo_quark->Fit("gamma","NQ");//N=Don't Draw
 	Histo_quark->Fit("gamma","NMQ");//N=Don't Draw M=More
 	gammadistr->SetLineColor(kBlack);
+	gammadistr->SetName("gamma_quark");
 	gammadistr->DrawCopy("SAME");
+	gammadistr->SetName("gamma");
 	}
 //filling TGraph
 	switch((VarNames[j].Data())[1])
@@ -193,14 +197,18 @@ if( (VarNames[j].Data())[0] =='p')
 	Histo_gluon->Fit("functionPtD","NQ");
 	Histo_gluon->Fit("functionPtD","NMQ");
 	functionPtD->SetLineColor(kRed);
+	functionPtD->SetName("functionPtD_gluon");
 	functionPtD->DrawCopy("SAME");
+	functionPtD->SetName("functionPtD");
 }
 else
 	{
 	Histo_gluon->Fit("gamma","NQ");//N=Don't Draw
 	Histo_gluon->Fit("gamma","NMQ");//N=Don't Draw M=More
 	gammadistr->SetLineColor(kRed);
+	gammadistr->SetName("gamma_gluon");
 	gammadistr->DrawCopy("SAME");
+	gammadistr->SetName("gamma");
 	}
 	switch((VarNames[j].Data())[1])
 	{

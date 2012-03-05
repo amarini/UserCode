@@ -2,8 +2,8 @@
 
 [ -f "$1" ] || exit 1;
 
-cat "$1" | grep "JetPt\|Q$" | sed 's/Q$//g'|sed 's/}/Quark&/g' > Quark.txt
-cat "$1" | grep "JetPt\|G$" | sed 's/G$//g'|sed 's/}/Gluon&/g' > Gluon.txt
+cat "$1" | grep "JetPt\|Q$" | sed 's/Q$//g'|sed 's/}/_quark&/g' > Quark.txt
+cat "$1" | grep "JetPt\|G$" | sed 's/G$//g'|sed 's/}/_gluon&/g' > Gluon.txt
 
 
 NUM=$( (cat Quark.txt | wc -l | tr -d '\n'; echo "/3-1") | bc )
