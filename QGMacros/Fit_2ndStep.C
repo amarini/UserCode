@@ -7,7 +7,8 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "PtBins.h"
-
+#include "TROOT.h"
+#include "TStyle.h"
 
 char GetChar(FILE *fr);
 
@@ -23,6 +24,10 @@ char c; //testing character
 //...
 //[gluon]
 //line
+gROOT->SetStyle("Plain");
+ gStyle->SetPalette(1);
+ gStyle->SetOptTitle(kFALSE);
+ gStyle->SetOptStat(kFALSE);
 
 
 //getting binnig
@@ -81,12 +86,22 @@ fclose(fr);
 //END OF READ FILE -- do something
 TCanvas *c1=new TCanvas("c1","c1",1000,1000);
 c1->Divide(4,5);
+//this histograms will contain the fit results y=ax + b
+TH1F *aq=new TH1F("aq","aq",nPtBins,PtBins);
+TH1F *bq=new TH1F("bq","bq",nPtBins,PtBins);
+TH1F *ag=new TH1F("ag","ag",nPtBins,PtBins);
+TH1F *bg=new TH1F("bg","bg",nPtBins,PtBins);
+TF1 *line=new TF1("line","[1]*x + [0]",0,20);
+
 for(int PtBin=0;PtBin<nPtBins;++PtBin)
 {
 c1->cd(PtBin+1);
 float ChosenPt=(PtBins[PtBin]+PtBins[PtBin+1])/2;
-TH1D *q=(TH1D*)quark->ProjectionY("_py", quark->GetXaxis()->FindBin( ChosenPt),quark->GetXaxis()->FindBin(ChosenPt ) );
-TH1D *g=(TH1D*)gluon->ProjectionY("_py", gluon->GetXaxis()->FindBin( ChosenPt),gluon->GetXaxis()->FindBin(ChosenPt ) );
+char name[1023];
+sprintf(name,"_qpy%.0f",PtBins[PtBin]);
+TH1D *q=(TH1D*)quark->ProjectionY(name, quark->GetXaxis()->FindBin( ChosenPt),quark->GetXaxis()->FindBin(ChosenPt ) );
+sprintf(name,"_gpy%.0f",PtBins[PtBin]);
+TH1D *g=(TH1D*)gluon->ProjectionY(name, gluon->GetXaxis()->FindBin( ChosenPt),gluon->GetXaxis()->FindBin(ChosenPt ) );
 //TH1D *q=(TH1D*)quark->ProjectionY("_py",PtBin,PtBin );
 //TH1D *g=(TH1D*)gluon->ProjectionY("_py",PtBin,PtBin );
 g->SetMarkerColor(kRed);
@@ -108,7 +123,40 @@ lat->SetTextSize(0.08);
 lat->SetTextAlign(23);
 char text[1023];sprintf(text,"P_{T} %.0f - %.0f [GeV]",PtBins[PtBin],PtBins[PtBin+1]);
 lat->DrawLatex(0.5,0.88,text);
+
+//I want to fit with lines and same the parameters in to histos (vs Pt)
+q->Fit("line","QN");
+q->Fit("line","QNM");
+line->SetLineColor(kBlack);line->DrawCopy("SAME");
+aq->SetBinContent(aq->FindBin( (PtBins[PtBin]+PtBins[PtBin+1])/2 ),line->GetParameter(1));
+bq->SetBinContent(bq->FindBin( (PtBins[PtBin]+PtBins[PtBin+1])/2 ),line->GetParameter(0));
+g->Fit("line","QN");
+g->Fit("line","QNM");
+line->SetLineColor(kRed);line->DrawCopy("SAME");
+ag->SetBinContent(ag->FindBin( (PtBins[PtBin]+PtBins[PtBin+1])/2 ),line->GetParameter(1));
+bg->SetBinContent(bg->FindBin( (PtBins[PtBin]+PtBins[PtBin+1])/2 ),line->GetParameter(0));
+
+
 }//loop on the PtBins
+
+aq->SetMarkerStyle(20);
+bq->SetMarkerStyle(20);
+ag->SetMarkerStyle(20);
+bg->SetMarkerStyle(20);
+ag->SetMarkerColor(kRed);
+bg->SetMarkerColor(kRed);
+
+TPad *Pad;
+c1->cd(nPtBins+1);sprintf(name,"c1_%d",nPtBins+1);Pad=(TPad*)c1->FindObject(name);Pad->SetLogx();
+aq->SetMaximum(1.1*TMath::Max(aq->GetMaximum(),ag->GetMaximum()));
+aq->SetMinimum(0.9*TMath::Min(aq->GetMinimum(),ag->GetMinimum()));
+aq->Draw("P");
+ag->Draw("P SAME");
+c1->cd(nPtBins+2);sprintf(name,"c1_%d",nPtBins+2);Pad=(TPad*)c1->FindObject(name);Pad->SetLogx();
+bq->SetMaximum(1.1*TMath::Max(bq->GetMaximum(),bg->GetMaximum()));
+bq->SetMinimum(0.9*TMath::Min(bq->GetMinimum(),bg->GetMinimum()));
+bq->Draw("P");
+bg->Draw("P SAME");
 
 }//enf of Fit_2ndStep function
 
