@@ -167,6 +167,7 @@ ag->SetMarkerColor(kRed);
 bg->SetMarkerColor(kRed);
 TF1 *pol3=new TF1("pol3","[0]+[1]*TMath::Log(x)+[2]*TMath::Log(x)**2+[3]*TMath::Log(x)**3",20,3500);//range in pt
 TF1 *pol1=new TF1("pol1","[0]+[1]*TMath::Log(x)",20,3500);//range in pt
+TF1 *pol2=new TF1("pol2","[0]+[1]*TMath::Log(x)+[2]*TMath::Log(x)*TMath::Log(x)",20,3500);//range in pt
 
 FILE *fw;
 if(outFile[0]!='\0'){
@@ -178,12 +179,12 @@ TPad *Pad;
 c1->cd(nPtBins+1);sprintf(name,"c1_%d",nPtBins+1);Pad=(TPad*)c1->FindObject(name);Pad->SetLogx();
 aq->Draw("AP");
 ag->Draw("P SAME");
-aq->Fit("pol1","NQ");aq->Fit("pol1","NQM");
-pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");
-if(outFile[0]!='\0')fprintf(fw,"%d aq %f %f \n",parameter,pol1->GetParameter(0),pol1->GetParameter(1));
-ag->Fit("pol1","NQ");ag->Fit("pol1","NQM");
-pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");
-if(outFile[0]!='\0')fprintf(fw,"%d ag %f %f \n",parameter,pol1->GetParameter(0),pol1->GetParameter(1));
+aq->Fit("pol3","NQ");aq->Fit("pol3","NQM");
+pol3->SetLineColor(kBlack);pol3->DrawCopy("SAME");
+if(outFile[0]!='\0')fprintf(fw,"%d aq %f %f %f %f\n",parameter,pol3->GetParameter(0),pol3->GetParameter(1),pol3->GetParameter(2),pol3->GetParameter(3));
+ag->Fit("pol3","NQ");ag->Fit("pol3","NQM");
+pol3->SetLineColor(kRed);pol3->DrawCopy("SAME");
+if(outFile[0]!='\0')fprintf(fw,"%d ag %f %f %f %f\n",parameter,pol3->GetParameter(0),pol3->GetParameter(1),pol3->GetParameter(2),pol3->GetParameter(3));
 c1->cd(nPtBins+2);sprintf(name,"c1_%d",nPtBins+2);Pad=(TPad*)c1->FindObject(name);Pad->SetLogx();
 bq->Draw("AP");
 bg->Draw("P SAME");
