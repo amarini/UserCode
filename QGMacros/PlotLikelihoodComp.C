@@ -27,11 +27,11 @@ for(int PtBin=0;PtBin<20;PtBin++)
 	TH1F* fg=new TH1F("FGluon","FGluon",20,0,1.0001);fg->Sumw2();
 
 	sprintf(sel,"eventWeight*(%f<ptJet0 && ptJet0<%f && abs(pdgIdPartJet0)<5 && rhoPF>4 && rhoPF<17 && abs(etaJet0)<2.0)",PtBins[PtBin],PtBins[PtBin+1]);
-	t->Draw("Likelihood>>LQuark",sel);		
-	t->Draw("LikelihoodFit>>FQuark",sel);		
+	t->Draw("QGFit>>LQuark",sel);		
+	t->Draw("QGFit2>>FQuark",sel);		
 	sprintf(sel,"eventWeight*(%f<ptJet0 && ptJet0<%f && abs(pdgIdPartJet0)==21 && rhoPF>4 && rhoPF<17 && abs(etaJet0)<2.0)",PtBins[PtBin],PtBins[PtBin+1]);
-	t->Draw("Likelihood>>LGluon",sel);		
-	t->Draw("LikelihoodFit>>FGluon",sel);
+	t->Draw("QGFit>>LGluon",sel);		
+	t->Draw("QGFit2>>FGluon",sel);
 	//Normalize	
 	lq->Scale(1./lq->Integral());
 	lg->Scale(1./lg->Integral());

@@ -13,10 +13,10 @@
 #include "TMath.h"
 #include "TSystem.h"
 #include "TRandom.h"
-#include "RooUnfold/RooUnfoldResponse.h"
-#ifdef __CINT__
-gSystem->Load("libRooUnfold.so");
-#endif
+//#include "RooUnfold/RooUnfoldResponse.h"
+//#ifdef __CINT__
+//gSystem->Load("libRooUnfold.so");
+//#endif
 
 
 int ComputeMixture(const char*fileName1,
@@ -43,37 +43,37 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	TTree *t2=(TTree*)f2->Get(treeName);
 	char selection[1023];
 	float q,g,o;
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s)<4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //dijet - file 1
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)<4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //dijet - file 1
 	TH1F *hq=new TH1F("quark1","quark1",100,0,100);
-		t1->Draw("abs(pdgIdPartJet0)>>quark1",selection,"goff");// I'm interested only in the integral
+		t1->Draw("abs(pdgIdJet0)>>quark1",selection,"goff");// I'm interested only in the integral
 		q=hq->Integral();
 	//q=t1->GetEntries(selection);
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s)==21)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //gluon
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)==21)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //gluon
 	TH1F *hg=new TH1F("gluon1","gluon1",100,0,100);
-		t1->Draw("abs(pdgIdPartJet0)>>gluon1",selection,"goff");
+		t1->Draw("abs(pdgIdJet0)>>gluon1",selection,"goff");
 		g=hg->Integral();
 	//g=t1->GetEntries(selection);	
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s)!=21 && abs(pdgIdPart%s)>=4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //gluon
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)!=21 && abs(pdgId%s)>=4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //gluon
 	TH1F *ho=new TH1F("other1","other1",100,0,100);
-		t1->Draw("abs(pdgIdPartJet0)>>other1",selection,"goff");
+		t1->Draw("abs(pdgIdJet0)>>other1",selection,"goff");
 		o=ho->Integral();
 	//o=t1->GetEntries(selection);
 	
 	fprintf(stderr,"DIJET q/q+g=%.3f q/q+g+o=%.3f o/q+g+o=%.3f\n",q/(q+g),q/(q+g+o),o/(q+g+o))	;
 
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged&& abs(pdgIdPart%s)<4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& abs(pdgId%s)<4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 	 	hq=new TH1F("quark2","quark2",100,0,100);
-		t2->Draw("abs(pdgIdPartJet0)>>quark2",selection,"goff");
+		t2->Draw("abs(pdgIdJet0)>>quark2",selection,"goff");
 		q=hq->Integral();
 
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && abs(pdgIdPart%s)==21)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f && abs(pdgId%s)==21)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 		hg=new TH1F("gluon2","gluon2",100,0,100);
-		t2->Draw("abs(pdgIdPartJet0)>>gluon2",selection,"goff");
+		t2->Draw("abs(pdgIdJet0)>>gluon2",selection,"goff");
 		g=hg->Integral();
 
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged && abs(pdgIdPart%s)!=21 && abs(pdgIdPart%s)>=4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f && abs(pdgId%s)!=21 && abs(pdgId%s)>=4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 	TH1F *ho=new TH1F("other2","other2",100,0,100);
-		t2->Draw("abs(pdgIdPartJet0)>>other2",selection,"goff");
+		t2->Draw("abs(pdgIdJet0)>>other2",selection,"goff");
 		o=ho->Integral();
 
 	fprintf(stderr,"PHJET q/q+g=%.3f q/q+g+o=%.3f o/q+g+o=%.3f\n",q/(q+g),q/(q+g+o),o/(q+g+o))	;
@@ -82,13 +82,13 @@ c1->Divide(2);
 c1->SetLogx();
 	c1->cd(1);
 	t1->Draw("rhoPF:ptJet0>>dijet1","","BOX");
-	t2->Draw("rhoPF:ptJet0>>phjet1","passedID_FULL && !btagged","BOX SAME");
+	t2->Draw("rhoPF:ptJet0>>phjet1","","BOX SAME");
 	TH1F*ph=gDirectory->Get("phjet1");
 	ph->SetFillColor(kRed);
 	ph->SetLineColor(0);
 	c1->cd(2);
 	t1->Draw("rhoPF:ptJet0>>dijet2","eventWeight","BOX");
-	t2->Draw("rhoPF:ptJet0>>phjet2","eventWeight*(passedID_FULL && !btagged)","BOX SAME");
+	t2->Draw("rhoPF:ptJet0>>phjet2","eventWeight","BOX SAME");
 	TH1F*ph2=gDirectory->Get("phjet2");
 	ph2->SetFillColor(kRed);
 	ph2->SetLineColor(0);

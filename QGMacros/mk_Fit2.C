@@ -159,6 +159,13 @@ TH1F*tmp=(TH1F*)Histo_quark->Clone("tmp"); tmp->SetFillColor(0);tmp->Draw("SAME"
 F->cd();
 if( (VarNames[j].Data())[0] =='p')
 {
+	int w;
+	for( w=0;w<Histo_quark->GetNbinsX() && Histo_quark->GetBinContent(w)<0.01 ; w++);//yes ;
+	fprintf(stderr,"%d ",w);
+	
+	functionPtD->SetParameter(0,Histo_quark->GetBinCenter(w));
+	functionPtD->SetParameter(2,Histo_quark->GetMean()-Histo_quark->GetBinCenter(w));
+	functionPtD->SetParameter(1,(Histo_quark->GetMean()-Histo_quark->GetBinCenter(w))*(Histo_quark->GetMean()-Histo_quark->GetBinCenter(w))/(Histo_quark->GetRMS()*Histo_quark->GetRMS()));
 	Histo_quark->Fit("functionPtD","NQ");
 	Histo_quark->Fit("functionPtD","NMQ");	
 	functionPtD->SetLineColor(kBlack);
