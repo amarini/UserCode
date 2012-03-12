@@ -138,14 +138,14 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	if(MCFile[0]!='\0')t_mc=(TTree*)mc->Get(treeName);
 	TH1F *hq=new TH1F("quark","quark",nBins,xMin,xMax);hq->Sumw2();
 	sprintf(name,"%s%s>>quark",varName,jet1);
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdPart%s) <5) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s) <5) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
 
 	if(isMC){t1->Draw(name,selection,"goff");hq->Scale(1./hq->Integral());}
 	else if(MCFile[0]!='\0'){t_mc->Draw(name,selection,"goff");hq->Scale(1./hq->Integral());}
 	TH1F *hg=new TH1F("gluon","gluon",nBins,xMin,xMax);hg->Sumw2();
 
 	sprintf(name,"%s%s>>gluon",varName,jet1);
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF&&rhoPF<%f && abs(pdgIdPart%s) ==21) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF&&rhoPF<%f && abs(pdgId%s) ==21) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
 
 fprintf(stderr,"=%s==%s=\n",name,selection);//DEBUG
 
