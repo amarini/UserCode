@@ -46,7 +46,7 @@ cout << t2->Add(fileName2)<<" added to PHJET"<<endl;
 	//TTree *t2=(TTree*)f2->Get(treeName);
 	char selection[1023];
 	float q,g,o;
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)<4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //dijet - file 1
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)<=4)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1); //dijet - file 1
 	TH1F *hq=new TH1F("quark1","quark1",100,0,100);
 		t1->Draw("abs(pdgIdJet0)>>quark1",selection,"goff");// I'm interested only in the integral
 		q=hq->Integral();
@@ -58,7 +58,7 @@ cout << t2->Add(fileName2)<<" added to PHJET"<<endl;
 		g=hg->Integral();
 		fprintf(stderr,"selection gluon ==%s==\ng=%f\n",selection,g);
 	//g=t1->GetEntries(selection);	
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)!=21 && abs(pdgId%s)>=4 )",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1,jet1); //gluon
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s)!=21 && abs(pdgId%s)>4 )",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1,jet1); //gluon
 	TH1F *ho=new TH1F("other1","other1",100,0,100);
 		t1->Draw("abs(pdgIdJet0)>>other1",selection,"goff");
 		o=ho->Integral();
@@ -67,7 +67,7 @@ cout << t2->Add(fileName2)<<" added to PHJET"<<endl;
 	
 	fprintf(stderr,"DIJET q/q+g=%.3f q/q+g+o=%.3f o/q+g+o=%.3f\n",q/(q+g),q/(q+g+o),o/(q+g+o))	;
 
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& abs(pdgId%s)<4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& abs(pdgId%s)<=4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2);
 	 	hq=new TH1F("quark2","quark2",100,0,100);
 		t2->Draw("abs(pdgIdJet0)>>quark2",selection,"goff");
 		q=hq->Integral();
@@ -79,7 +79,7 @@ cout << t2->Add(fileName2)<<" added to PHJET"<<endl;
 		g=hg->Integral();
 		fprintf(stderr,"selection gluon ==%s==\ng=%f\n",selection,g);
 
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f && abs(pdgId%s)!=21 && abs(pdgId%s)>=4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2,jet2);
+	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f && abs(pdgId%s)!=21 && abs(pdgId%s)>4)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax,jet2,jet2);
 	TH1F *ho=new TH1F("other2","other2",100,0,100);
 		t2->Draw("abs(pdgIdJet0)>>other2",selection,"goff");
 		o=ho->Integral();

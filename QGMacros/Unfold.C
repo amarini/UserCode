@@ -13,10 +13,12 @@
 #include "TMath.h"
 #include "TSystem.h"
 #include "TRandom.h"
-#include "RooUnfold/RooUnfoldResponse.h"
-#ifdef __CINT__
-gSystem->Load("libRooUnfold.so");
+#ifndef __CINT__
+	#include "RooUnfold/RooUnfoldResponse.h"
 #endif
+//#ifdef __CINT__
+//gSystem->Load("libRooUnfold.so");
+//#endif
 
 TH1F* MergeHistos(TH1F* a,TH1F*b,const char*name="merged")
 {
@@ -70,6 +72,9 @@ int Unfold(const char*fileName1,
 	  const char *outFileName="",
 	  const char*treeName="tree_passedEvents")
 {
+#ifdef __CINT__
+gSystem->Load("/shome/amarini/RooUnfold-1.1.1/libRooUnfold.so");
+#endif
 
  //Some stuff
         gROOT->SetStyle("Plain");
@@ -117,9 +122,9 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	fprintf(stderr,"1:ENTRIES:%.3f\n",t1->GetEntries(selection));
 
 	sprintf(name,"%s%s>>var2",varName,jet2);
-	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	//else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
-	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f && !btagged && passed_Photon90_CaloIdVL_IsoL && (ptJet1<10. || ptJet1<0.2*ptPhot) && passedID_no2ndJet ) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f ) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	t2->Draw(name,selection,"goff");h2->Scale(1./h2->Integral());
 	fprintf(stderr,"2:===%s===%s===\n",name,selection);
 	fprintf(stderr,"2:ENTRIES:%.3f\n",t2->GetEntries(selection));

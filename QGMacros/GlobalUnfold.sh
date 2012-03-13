@@ -24,7 +24,8 @@ else
 VARNAME=$5
 fi;
 
-if[ "$VARNAME" == "ptD" ];then
+if [ "$VARNAME" == "ptD" ];
+then
 RANGE="(50,0,1)"
 else 
 RANGE="(50,0,50)"

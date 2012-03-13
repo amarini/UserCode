@@ -7,7 +7,7 @@ inline double gammadistr_(double* x, double* par)
 {
         return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;
 }
-int PlotUnfoldedParams()
+int PlotUnfoldedParams(const char *varName="nCharged",const char*Directory="Inversion",int PtMin=80,int PtMax=100)
 {
 TFile *f;
 TCanvas *c;
@@ -22,9 +22,13 @@ TCanvas *c0=new TCanvas("c0","c0",800,800);
 c0->Divide(3,3);
 for(int i=0; i<13; i+=2)
 	{
-	sprintf(fileName,"../Svd/Unfold_pt101_127_rho%d_%d.root",i,i+2);
-	sprintf(fileName,"../Inversion/Unfold_pt101_127_rho%d_%d.root",i,i+2);
-//	sprintf(fileName,"../Unfold_pt80_100_rho%d_%d.root",i,i+2);
+	//sprintf(fileName,"../Svd/nCharged_pt101_127_rho%d_%d.root",i,i+2);
+	//sprintf(fileName,"../Svd/nCharged_pt80_100_rho%d_%d.root",i,i+2);
+//	sprintf(fileName,"../Inversion/nCharged_pt80_100_rho%d_%d.root",i,i+2);
+//	sprintf(fileName,"../Inversion/nNeutral_pt80_100_rho%d_%d.root",i,i+2);
+//	sprintf(fileName,"../Inversion/ptD_pt80_100_rho%d_%d.root",i,i+2);
+	sprintf(fileName,"../%s/%s_pt%d_%d_rho%d_%d.root",Directory,varName,PtMin,PtMax,i,i+2);
+	//sprintf(fileName,"../Inversion/nCharged_pt101_127_rho%d_%d.root",i,i+2);
 	f=TFile::Open(fileName);
 	c=(TCanvas*)f->Get("c1_n3");
 	q=(TH1F*)c->FindObject("Unfold_1");
@@ -35,7 +39,7 @@ for(int i=0; i<13; i+=2)
         	gammadistr->SetParameter(0,q->GetMean()*q->GetMean()/(q->GetRMS()*q->GetRMS()));
         	Q->Fit("gamma","N Q");//N=Don't Draw
         	Q->Fit("gamma","N M Q");//N=Don't Draw M=More
-		Q->Draw("* SAME");
+		//Q->Draw("* SAME");
         	gammadistr->SetLineColor(kBlack);
         	gammadistr->SetName("gamma_quark");
         	gammadistr->DrawCopy("SAME");
@@ -52,7 +56,7 @@ for(int i=0; i<13; i+=2)
         	gammadistr->SetParameter(0,g->GetMean()*g->GetMean()/(g->GetRMS()*g->GetRMS()));
         	G->Fit("gamma","N Q");//N=Don't Draw
         	G->Fit("gamma","N M  Q");//N=Don't Draw M=More
-		G->Draw("* SAME");
+		//G->Draw("* SAME");
         	gammadistr->SetLineColor(kRed);
         	gammadistr->SetName("gamma_gluon");
         	gammadistr->DrawCopy("SAME");
