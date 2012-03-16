@@ -3,6 +3,9 @@
 #include "TFile.h"
 #include "TCanvas.h"
 #include "TGraphErrors.h"
+//Fit procedure with points exclusion
+#include "new/FitN.C"
+
 inline double gammadistr_(double* x, double* par)
 {
         return TMath::Exp( - x[0] *par[0]/par[1] ) * TMath::Power(x[0],par[0]-1) * TMath::Power(par[1]/par[0],-par[0])/TMath::Gamma(par[0]) ;
@@ -80,18 +83,39 @@ rg0->SetMarkerStyle(20);
 rg1->SetMarkerStyle(20);
 
 TF1* pol1=new TF1("pol1","[0] +[1]*x",0,20);
+TF1* pol0=new TF1("pol0","[0]",0,20);
 TCanvas *c1=new TCanvas();
 c1->Divide(2);
 c1->cd(1);
 rq0->Draw("P");
 rg0->Draw("P SAME");
-rq0->Fit("pol1","N Q");pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");
-rg0->Fit("pol1","N Q");pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");
+		FitN *B=new FitN();
+		B->SetP(0.05);
+		B->SetE(0.0001);
+		B->SetN(4);
+		B->SetTH1F(rq0);
+		B->SetRange(0,8);
+		B->SetTF1(pol0);
+B->Fit();
+//rq0->Fit("pol1","N Q");
+pol0->SetLineColor(kBlack);pol0->DrawCopy("SAME");printf("==0 %f bq %f==\n==0 %f aq 0==\n",TMath::Log((PtMin+PtMax)/2.),pol0->GetParameter(0),TMath::Log((PtMin+PtMax)/2.));
+//rg0->Fit("pol1","N Q");
+B->SetTH1F(rg0);
+B->Fit();
+pol0->SetLineColor(kRed);pol0->DrawCopy("SAME");printf("==0 %f bg %f==\n==0 %f ag 0==\n",TMath::Log((PtMin+PtMax)/2.),pol0->GetParameter(0),TMath::Log((PtMin+PtMax)/2.));
 
+		B->SetRange(0,12);
+		B->SetTF1(pol1);
 c1->cd(2);
 rq1->Draw("P");
 rg1->Draw("P SAME");
-rq1->Fit("pol1","N Q");pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");
-rg1->Fit("pol1","N Q");pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");
+B->SetTH1F(rq1);
+B->Fit();
+//rq1->Fit("pol1","N Q");
+pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");printf("==1 %f bq %f==\n==1 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+B->SetTH1F(rg1);
+B->Fit();
+//rg1->Fit("pol1","N Q");
+pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");printf("==1 %f bg %f==\n==1 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
 }

@@ -73,7 +73,8 @@ int Unfold(const char*fileName1,
 	  const char*treeName="tree_passedEvents")
 {
 #ifdef __CINT__
-gSystem->Load("/shome/amarini/RooUnfold-1.1.1/libRooUnfold.so");
+//gSystem->Load("/shome/amarini/RooUnfold-1.1.1/libRooUnfold.so");
+gSystem->Load("~/Downloads/RooUnfold-1.1.1/libRooUnfold.so");
 #endif
 
  //Some stuff
@@ -117,7 +118,9 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	sprintf(name,"%s%s>>var1",varName,jet1);
 	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
 	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
-	t1->Draw(name,selection,"goff");h1->Scale(1./h1->Integral());
+	t1->Draw(name,selection,"goff");
+	for(int i=0;i<=h1->GetNbinsX()+1;i++)if(h1->GetBinContent(i)==0)h1->SetBinError(i,1);
+	h1->Scale(1./h1->Integral());
 	fprintf(stderr,"1:===%s===%s===\n",name,selection);
 	fprintf(stderr,"1:ENTRIES:%.3f\n",t1->GetEntries(selection));
 
@@ -125,7 +128,9 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	//else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f ) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
-	t2->Draw(name,selection,"goff");h2->Scale(1./h2->Integral());
+	t2->Draw(name,selection,"goff");
+		for(int i=0;i<=h2->GetNbinsX()+1;i++)if(h2->GetBinContent(i)==0)h2->SetBinError(i,1);
+		h2->Scale(1./h2->Integral());
 	fprintf(stderr,"2:===%s===%s===\n",name,selection);
 	fprintf(stderr,"2:ENTRIES:%.3f\n",t2->GetEntries(selection));
 
