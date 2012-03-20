@@ -92,10 +92,11 @@ fclose(fr);
 TCanvas *c1=new TCanvas("c1","c1",1000,1000);
 c1->Divide(4,5);
 //this histograms will contain the fit results y=ax + b
-TGraphErrors *aq=new TGraphErrors();
-TGraphErrors *bq=new TGraphErrors();
-TGraphErrors *ag=new TGraphErrors();
-TGraphErrors *bg=new TGraphErrors();int graphCount=0;
+TGraphErrors *aq=new TGraphErrors();aq->SetName("aq");
+TGraphErrors *bq=new TGraphErrors();bq->SetName("bq");
+TGraphErrors *ag=new TGraphErrors();ag->SetName("ag");
+TGraphErrors *bg=new TGraphErrors();bg->SetName("bg");
+int graphCount=0;
 TF1 *line=new TF1("line","[1]*x + [0]",3,14);
 
 for(int PtBin=0;PtBin<nPtBins;++PtBin)
@@ -107,8 +108,8 @@ sprintf(name,"_qpy%.0f",PtBins[PtBin]);
 TH1D *q2=(TH1D*)quark->ProjectionY(name, quark->GetXaxis()->FindBin( ChosenPt),quark->GetXaxis()->FindBin(ChosenPt ) );
 sprintf(name,"_gpy%.0f",PtBins[PtBin]);
 TH1D *g2=(TH1D*)gluon->ProjectionY(name, gluon->GetXaxis()->FindBin( ChosenPt),gluon->GetXaxis()->FindBin(ChosenPt ) );
-TGraphErrors *q=new TGraphErrors();
-TGraphErrors *g=new TGraphErrors();
+TGraphErrors *q=new TGraphErrors();q->SetName("q");
+TGraphErrors *g=new TGraphErrors();g->SetName("g");
 int k=0;
 for(int j=0; j<q2->GetNbinsX();++j) {
 					if((q2->GetBinContent(j)==0)||(g2->GetBinContent(j)==0))continue;
