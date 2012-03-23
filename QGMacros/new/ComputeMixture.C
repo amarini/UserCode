@@ -14,6 +14,7 @@
 #include "TSystem.h"
 #include "TRandom.h"
 #include <iostream>
+#include "TChain.h"
 using namespace std;
 int ComputeMixture(const char*fileName1,
 	  float PtMin=100,float PtMax=110,
