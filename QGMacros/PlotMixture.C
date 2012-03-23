@@ -94,11 +94,13 @@ for(int i=0;i<18;i++)
 	
 	
 	}
+
 double a,b;
+
 Di_dn->GetPoint(0,a,b);
-while(b>1.1){Di_dn->RemovePoint(0);Di_dn->GetPoint(0,a,b);}
+while(!(-.1<b && b<1.1)){Di_dn->RemovePoint(0);Di_dn->GetPoint(0,a,b);}
 Di_up->GetPoint(0,a,b);
-while(b>1.1){Di_up->RemovePoint(0);Di_up->GetPoint(0,a,b);}
+while(!(-.1<b && b<1.1)){Di_up->RemovePoint(0);Di_up->GetPoint(0,a,b);}
 
 
 TCanvas *c1=new TCanvas("c1","c1",800,800);

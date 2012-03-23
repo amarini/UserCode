@@ -27,8 +27,11 @@ fi;
 if [ "$VARNAME" == "ptD" ];
 then
 RANGE="(50,0,1)"
-else 
+else if [ "$VARNAME"=="QGLikelihood" ]; then
+RANGE="(50,0,1.0001)"
+else
 RANGE="(50,0,50)"
+fi;
 fi;
 
 ##VAR=$( eval root -l -b -q \'ComputeMixture.C\(\"../Omog_DiJet_QCD_HT_Summer11.root\",\"../Omog_QGStudies_\*_Summer11.root\",$PTMIN,$PTMAX,$RHOMIN,$RHOMAX,\"Jet0\",\"Jet0\",\"omog\"\)\' 2>&1 | grep 'q/q+g' | cut -d ' ' -f 3 | cut -d'=' -f 2 | tr '\n' ' ')
