@@ -64,31 +64,31 @@ for(int i=0;i<18;i++)
 	{
 	double x,ex,y,ey;
 	//Dijet
-	ComputeMixture("~/Documents/QGDiscriminator/QG/Omog_DiJet_QCD_*.root",PtBins[i],PtBins[i+1],0,30,"omog",&x,&ex,&y,&ey);
+	ComputeMixture("/shome/amarini/CMSSW_4_2_8_patch7/src/UserCode/amarini/Omog/Omog_DiJet_QCD_*.root",PtBins[i],PtBins[i+1],0,30,"omog",&x,&ex,&y,&ey);
 	Di_q->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,x);
 	Di_q->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ex);
 	Di_g->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,y);
 	Di_g->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ey);
 	
 	//Photon
-	ComputeMixture("~/Documents/QGDiscriminator/QG/Omog_QGStudies_*_Summer11.root",PtBins[i],PtBins[i+1],0,30,"omog",&x,&ex,&y,&ey);
+	ComputeMixture("/shome/amarini/CMSSW_4_2_8_patch7/src/UserCode/amarini/Omog/Omog_QGStudies_*_Summer11.root",PtBins[i],PtBins[i+1],0,30,"omog",&x,&ex,&y,&ey);
 	Ph_q->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,x);
 	Ph_q->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ex);
 	Ph_g->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,y);
 	Ph_g->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ey);
 	
 	//EM	
-	ComputeMixture("~/Documents/QGDiscriminator/QG/Omog_QGStudies_*EM*_Summer11.root",PtBins[i],PtBins[i+1],0,30,"omog",&x,&ex,&y,&ey);
+	ComputeMixture("/shome/amarini/CMSSW_4_2_8_patch7/src/UserCode/amarini/Omog/Omog_QGStudies_*EM*_Summer11.root",PtBins[i],PtBins[i+1],0,30,"omog",&x,&ex,&y,&ey);
 	EM_q->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,x);
 	EM_q->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ex);
 	EM_g->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,y);
 	EM_g->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ey);
 	//Di UP
-	ComputeMixture("~/Documents/QGDiscriminator/QG/Omog_DiJet_QCD_*.root",PtBins[i],PtBins[i+1],10,30,"omog",&x,&ex,&y,&ey);
+	ComputeMixture("/shome/amarini/CMSSW_4_2_8_patch7/src/UserCode/amarini/Omog/Omog_DiJet_QCD_*.root",PtBins[i],PtBins[i+1],10,30,"omog",&x,&ex,&y,&ey);
 	Di_up->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,x);
 	Di_up->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ex);
 	//Di Down
-	ComputeMixture("~/Documents/QGDiscriminator/QG/Omog_DiJet_QCD_*.root",PtBins[i],PtBins[i+1],0,5,"omog",&x,&ex,&y,&ey);
+	ComputeMixture("/shome/amarini/CMSSW_4_2_8_patch7/src/UserCode/amarini/Omog/Omog_DiJet_QCD_*.root",PtBins[i],PtBins[i+1],0,5,"omog",&x,&ex,&y,&ey);
 	Di_dn->SetPoint(i,(PtBins[i]+PtBins[i+1]) /2.0,x);
 	Di_dn->SetPointError(i,(PtBins[i+1]-PtBins[i]) /2.0,ex);
 	
@@ -124,6 +124,7 @@ L->AddEntry("di_up","Dijet Quark (#rho>10)","F");
 L->AddEntry("di_dn","Dijet Quark (#rho<5)","F");
 L->Draw();
 CMSLatex::DrawSimulation();
+c1->SaveAs("../Inversion/Mixture1.root");
 
 TCanvas *c2=new TCanvas("c2","c2",800,800);
 c2->SetLogx();
@@ -138,5 +139,6 @@ L->AddEntry("ph_q","#gamma Jet Quark","PF");
 L->AddEntry("ph_g","#gamma Jet Gluon","PF");
 L->Draw();
 CMSLatex::DrawSimulation();
+c2->SaveAs("../Inversion/Mixture2.root");
 return 0;
 }

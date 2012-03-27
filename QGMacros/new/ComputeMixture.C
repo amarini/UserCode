@@ -36,7 +36,7 @@ int ComputeMixture(const char*fileName1,
 	char selection[1023];
 	float q,g,o;
 	float eq,eg,eo;
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdJet0)<=4 && pdgIdJet0!=0)",PtMin,PtMax,RhoMin,RhoMax); //dijet - file 1
+	sprintf(selection,"eventWeight*( abs(etaJet0)<2.0 &&%f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdJet0)<=4 && pdgIdJet0!=0)",PtMin,PtMax,RhoMin,RhoMax); //dijet - file 1
 
 	TH1F *hq=new TH1F("quark1","quark1",100,0,100);
 		hq->Sumw2();
@@ -50,7 +50,7 @@ int ComputeMixture(const char*fileName1,
 				);
 		fprintf(stderr,"selection quark ==%s==\nq=%f\n",selection,q);
 
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdJet0)==21)",PtMin,PtMax,RhoMin,RhoMax); //gluon
+	sprintf(selection,"eventWeight*(abs(etaJet0)<2.0 && %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && abs(pdgIdJet0)==21)",PtMin,PtMax,RhoMin,RhoMax); //gluon
 	TH1F *hg=new TH1F("gluon1","gluon1",100,0,100);
 		hg->Sumw2();
 		t1->Draw("abs(pdgIdJet0)>>gluon1",selection,"goff");
@@ -58,7 +58,7 @@ int ComputeMixture(const char*fileName1,
 		eg=hg->GetBinError( hg->FindBin(21));
 		fprintf(stderr,"selection gluon ==%s==\ng=%f\n",selection,g);
 
-	sprintf(selection,"eventWeight*( %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && ((abs(pdgIdJet0)!=21 && abs(pdgIdJet0)>4)||pdgIdJet0==0) )",PtMin,PtMax,RhoMin,RhoMax); //gluon
+	sprintf(selection,"eventWeight*(abs(etaJet0)<2.0 && %f < ptJet0 && ptJet0<%f && %f<rhoPF && rhoPF<%f && ((abs(pdgIdJet0)!=21 && abs(pdgIdJet0)>4)||pdgIdJet0==0) )",PtMin,PtMax,RhoMin,RhoMax); //gluon
 	TH1F *ho=new TH1F("other1","other1",100,0,100);
 		ho->Sumw2();
 		t1->Draw("abs(pdgIdJet0)>>other1",selection,"goff");

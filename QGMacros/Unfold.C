@@ -74,7 +74,7 @@ int Unfold(const char*fileName1,
 {
 #ifdef __CINT__
 //gSystem->Load("/shome/amarini/RooUnfold-1.1.1/libRooUnfold.so");
-gSystem->Load("~/Downloads/RooUnfold-1.1.1/libRooUnfold.so");
+gSystem->Load("~/RooUnfold-1.1.1/libRooUnfold.so");
 #endif
 
  //Some stuff
@@ -116,8 +116,8 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	TH1F *h1=new TH1F("var1","var1",nBins,xMin,xMax);h1->Sumw2();
 	TH1F *h2=new TH1F("var2","var2",nBins,xMin,xMax);h2->Sumw2();
 	sprintf(name,"%s%s>>var1",varName,jet1);
-	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
-	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
+	if(isMC)sprintf(selection,"eventWeight*( abs(etaJet0)<2.0 && %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
+	else sprintf(selection,"(abs(etaJet0)<2.0 && %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f)",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax);
 	t1->Draw(name,selection,"goff");
 	for(int i=0;i<=h1->GetNbinsX()+1;i++)if(h1->GetBinContent(i)==0)h1->SetBinError(i,1);
 	h1->Scale(1./h1->Integral());
@@ -125,9 +125,9 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	fprintf(stderr,"1:ENTRIES:%.3f\n",t1->GetEntries(selection));
 
 	sprintf(name,"%s%s>>var2",varName,jet2);
-	if(isMC)sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	if(isMC)sprintf(selection,"eventWeight*(abs(etaJet0)<2.0 && %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f)",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	//else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f&& passedID_FULL && !btagged) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
-	else sprintf(selection,"( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f ) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
+	else sprintf(selection,"(abs(etaJet0)<2.0 && %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF <%f ) ",PtMin,jet2,jet2,PtMax,RhoMin,RhoMax);
 	t2->Draw(name,selection,"goff");
 		for(int i=0;i<=h2->GetNbinsX()+1;i++)if(h2->GetBinContent(i)==0)h2->SetBinError(i,1);
 		h2->Scale(1./h2->Integral());
@@ -148,14 +148,14 @@ if( (f1==NULL) || (f2==NULL)){fprintf(stderr,"FILES DOES NOT EXIST!\n");return 1
 	if(MCFile[0]!='\0')t_mc=(TTree*)mc->Get(treeName);
 	TH1F *hq=new TH1F("quark","quark",nBins,xMin,xMax);hq->Sumw2();
 	sprintf(name,"%s%s>>quark",varName,jet1);
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s) <5) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
+	sprintf(selection,"eventWeight*(abs(etaJet0)<2.0 && %f < pt%s && pt%s<%f && %f<rhoPF && rhoPF<%f && abs(pdgId%s) <5) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
 
 	if(isMC){t1->Draw(name,selection,"goff");hq->Scale(1./hq->Integral());}
 	else if(MCFile[0]!='\0'){t_mc->Draw(name,selection,"goff");hq->Scale(1./hq->Integral());}
 	TH1F *hg=new TH1F("gluon","gluon",nBins,xMin,xMax);hg->Sumw2();
 
 	sprintf(name,"%s%s>>gluon",varName,jet1);
-	sprintf(selection,"eventWeight*( %f < pt%s && pt%s<%f && %f<rhoPF&&rhoPF<%f && abs(pdgId%s) ==21) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
+	sprintf(selection,"eventWeight*(abs(etaJet0)<2.0 && %f < pt%s && pt%s<%f && %f<rhoPF&&rhoPF<%f && abs(pdgId%s) ==21) ",PtMin,jet1,jet1,PtMax,RhoMin,RhoMax,jet1);
 
 fprintf(stderr,"=%s==%s=\n",name,selection);//DEBUG
 

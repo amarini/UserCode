@@ -77,6 +77,9 @@ case 'N':
 case 't':
 	sprintf(xTitle,"PtD");
 	break;
+case 'G':
+	sprintf(xTitle,"Q-G LD");
+	break;
 }
 
 TCanvas *c1=new TCanvas("c2","c2");
@@ -161,7 +164,12 @@ case 't':
 char title[1023];
 char name[1023];
 sprintf(title,"#splitline{%d<P_{T}[GeV]<%d}{ %d<#rho[GeV/u.a.]<%d}",PtMin,PtMax,RhoMin,RhoMax);
-TLegend *L=new TLegend(0.6,.5,0.88,.88,title);
+TLegend *L;
+if(varName[0]!='Q')
+	L=new TLegend(0.6,.5,0.88,.88,title);
+else
+	L=new TLegend(0.35,.5,0.65,.88,title);
+
 L->SetFillColor(0);
 L->AddEntry("Unfold_1","Quark (DATA)","FP");
 L->AddEntry("Unfold_2","Gluon (DATA)","FP");
@@ -182,7 +190,10 @@ g->Draw("HIST SAME");
 v1->Draw("P SAME");
 v2->Draw("P SAME");
 
-L=new TLegend(.6,.5,0.88,.88,title);
+if(varName[0]!='Q')
+	L=new TLegend(.6,.5,0.88,.88,title);
+else
+	L=new TLegend(0.35,.5,0.65,.88,title);
 L->SetFillColor(0);
 L->AddEntry("var1","dijet","FP");
 L->AddEntry("var2","#gamma jet","FP");
