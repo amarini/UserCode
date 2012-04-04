@@ -40,7 +40,7 @@ int AddLikelihoodFriend(const char * FileName="ntuple.root", //File name
 	fprintf(stderr,"creating the qgDiscr\n");
 	QGLikelihoodCalculator *qglikeli;
 	//qglikeli = new QGLikelihoodCalculator("nCharged_2ndLevel.txt","nNeutral_2ndLevel.txt","ptD_2ndLevel.txt");
-	qglikeli = new QGLikelihoodCalculator("../FitData/nCharged_2ndLevel101_127.txt","../FitData/nNeutral_2ndLevel101_127.txt","../FitData/ptD_2ndLevel101_127.txt");
+	qglikeli = new QGLikelihoodCalculator("FitData/nCharged_2ndLevel_pt101_127_rho4_6.txt","FitData/nNeutral_2ndLevel_pt101_127_rho4_6.txt","FitData/ptD_2ndLevel_pt101_127_rho4_6.txt");
 	
 	//declare a temporary string variable
 	char str[255];	

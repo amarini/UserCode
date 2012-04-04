@@ -79,6 +79,12 @@ case 't':
 	break;
 case 'G':
 	sprintf(xTitle,"Q-G LD");
+	q->Rebin(2);q->Scale(1./2.);
+	g->Rebin(2);g->Scale(1./2.);
+	u1->Rebin(2);u1->Scale(1./2.);u1->SetMarkerSize(1.6);
+	u2->Rebin(2);u2->Scale(1./2.);u2->SetMarkerSize(1.6);
+	v1->Rebin(2);v1->Scale(1./2.);v1->SetMarkerSize(1.6);
+	v2->Rebin(2);v2->Scale(1./2.);v2->SetMarkerSize(1.6);
 	break;
 }
 
@@ -202,5 +208,12 @@ L->AddEntry("gluon","Gluon (MC)","F");
 L->Draw();
 sprintf(name,"../Inversion/%s_pt%d_%d_rho%d_%d_UN2.pdf",varName,PtMin,PtMax,RhoMin,RhoMax);
 c3->SaveAs(name);
+sprintf(name,"../Inversion/%s_pt%d_%d_rho%d_%d_UN.root",varName,PtMin,PtMax,RhoMin,RhoMax);
+TFile *Out=TFile::Open(name,"RECREATE");
+Out->cd();
+c3->Write();
+c1->Write();
+Out->Close();
+
 return 0;
 }
