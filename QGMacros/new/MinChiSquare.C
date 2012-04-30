@@ -32,13 +32,13 @@ double MinChiSquare::GetError(TGraph*graph)
 	graph->Sort();
 	if(graph->GetN()<=0)return -1;
 	//find min
-	int iMin=-1;double alpha;
-	double Min;graph->GetPoint(0,alpha,Min);//initializing
+	int iMin=0;double alpha;
+	double Min;graph->GetPoint(iMin,alpha,Min);//initializing
 	for(int i=0;i<graph->GetN();i++)
 		{
 		double r;
 		graph->GetPoint(i,alpha,r);
-		if(r<=Min){r=Min;iMin=i;}
+		if(r<=Min){Min=r;iMin=i;}
 		}
 	for(int i=1;;i++)
 		{
@@ -52,13 +52,16 @@ double MinChiSquare::GetError(TGraph*graph)
 		switch( boundL | (boundR<<1))
 		{
 		case 0: //no bound
+			//cout<<"NO BOUND"<<endl;
 			if((r2-Min)>1 && (r3-Min)>1)return fabs(alpha2-alpha3)/2.0;
 			break;
 		case 1:	//boundL
+			//cout<<"BOUND L"<<endl;
 			if((r2-Min)>1)return fabs(alpha2-alpha);
 			break;
 			
 		case 2: //boundR
+			//cout<<"BOUND R"<<endl;
 			if((r3-Min)>1)return fabs(alpha3-alpha);
 			break;
 		case 3: return 1.0; //double bound

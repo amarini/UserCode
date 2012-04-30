@@ -28,23 +28,26 @@ char name[1023];
 char sel[1023];
 sprintf(name,"%s>>nC_q",varName);
 sprintf(sel,"eventWeight*(ptJet0>%d && ptJet0<%d && %d<rhoPF && rhoPF<%d && abs(pdgIdJet0)<4 && pdgIdJet0!=0)",PtMin,PtMax,RhoMin,RhoMax);
-b->Draw(name,sel);
+b->Draw(name,sel,"E goff");
 sprintf(name,"%s>>nC_g",varName);
 sprintf(sel,"eventWeight*(ptJet0>%d && ptJet0<%d && %d<rhoPF && rhoPF<%d && pdgIdJet0==21)",PtMin,PtMax,RhoMin,RhoMax) ;
-b->Draw(name,sel);
+b->Draw(name,sel,"E goff");
 sprintf(name,"%s>>nC_t2",varName);
 sprintf(sel,"eventWeight*(ptJet0>%d && ptJet0<%d && %d<rhoPF && rhoPF<%d )",PtMin,PtMax,RhoMin,RhoMax);
-b->Draw(name,sel);
+b->Draw(name,sel,"E goff");
 sprintf(name,"%s>>nC_t",varName);
 sprintf(sel,"(ptJet0>%d && ptJet0<%d && %d<rhoPF && rhoPF<%d )",PtMin,PtMax,RhoMin,RhoMax);
-a->Draw(name,sel);
+a->Draw(name,sel,"E goff");
 
 //.L Macros/new/MinChiSquare.C 
 gSystem->Load("new/MinChiSquare_C.so");
 TGraph *graph=new TGraph();graph->SetName("data");
-MinChiSquare::GetMinChiSquare(Q,G,T,0.01,"WW CHI2",graph);
+cout<<"Min data="<<MinChiSquare::GetMinChiSquare(Q,G,T,0.005,"WW CHI2",graph);
+cout<<"+/-"<<MinChiSquare::GetError(graph)<<endl;
+
 TGraph *graph2=new TGraph();graph2->SetName("mc");
-MinChiSquare::GetMinChiSquare(Q,G,T2,0.01,"WW CHI2",graph2);
+cout<<"Min mc="<<MinChiSquare::GetMinChiSquare(Q,G,T2,0.005,"WW CHI2",graph2);
+cout<<"+/-"<<MinChiSquare::GetError(graph2)<<endl;
 
 graph->SetMarkerStyle(20);
 graph->SetMarkerColor(kBlack);
