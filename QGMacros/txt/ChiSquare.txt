@@ -1,0 +1,23 @@
+### 'D'=68 'P'=80
+
+./CM.sh 101 127 4 6 2>&1 | tail -n 2 | head -n 1 
+
+root -q -l -b  'PlotChiSquare2.C("QGLikelihoodJet0",80,101,127,4,6,"../ChiSquare/QG0_P_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/QG0_P_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+root -q -l -b  'PlotChiSquare2.C("QGLikelihoodJet0",68,101,127,4,6,"../ChiSquare/QG0_D_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/QG0_D_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+
+root -q -l -b  'PlotChiSquare2.C("nChargedJet0",80,101,127,4,6,"../ChiSquare/NC0_P_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/NC0_P_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+root -q -l -b  'PlotChiSquare2.C("nChargedJet0",68,101,127,4,6,"../ChiSquare/NC0_D_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/NC0_D_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+
+root -q -l -b  'PlotChiSquare2.C("nNeutralJet0",80,101,127,4,6,"../ChiSquare/NN0_P_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/NN0_P_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+root -q -l -b  'PlotChiSquare2.C("nNeutralJet0",68,101,127,4,6,"../ChiSquare/NN0_D_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/NN0_D_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+
+root -q -l -b  'PlotChiSquare2.C("QGFit4",80,101,127,4,6,"../ChiSquare/QG4_P_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/QG4_P_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+root -q -l -b  'PlotChiSquare2.C("QGFit4",68,101,127,4,6,"../ChiSquare/QG4_D_pt101_127_rho_4_6.pdf")'  2>/dev/null | grep '+/-' | sed 's/Min\ //g' | sed 's/^/QG4_D_/g' | sed 's:+/-:\ :g'| sed 's/=/\ /g'
+
+##OUTPUT
+##D e - P e - true MC
+##QG0_P_data f e
+##QG0_P_mc f e
+##QG0_D_data f e
+##QG0_D_mc f e
+##..

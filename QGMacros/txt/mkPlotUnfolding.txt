@@ -1,0 +1,20 @@
+root -q -l -b  'mkPlotUnfolding.C("nCharged",101,127,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("nNeutral",101,127,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("ptD",101,127,4,6)'
+
+root -q -l -b  'mkPlotUnfolding.C("nCharged",80,100,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("nNeutral",80,100,4,6)'
+root -q -l -b  	    'mkPlotUnfolding.C("ptD",80,100,4,6)'
+
+root -q -l -b  'mkPlotUnfolding.C("nCharged",200,250,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("nNeutral",200,250,4,6)'
+root -q -l -b  	    'mkPlotUnfolding.C("ptD",200,250,4,6)'
+
+root -q -l -b  'mkPlotUnfolding.C("nCharged",160,200,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("nNeutral",160,200,4,6)'
+root -q -l -b  	    'mkPlotUnfolding.C("ptD",160,200,4,6)'
+
+root -q -l -b  'mkPlotUnfolding.C("QGLikelihood",160,200,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("QGLikelihood",101,127,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("QGLikelihood",200,250,4,6)'
+root -q -l -b  'mkPlotUnfolding.C("QGLikelihood",80,100,4,6)'
