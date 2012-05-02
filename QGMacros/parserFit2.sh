@@ -1,21 +1,23 @@
 #!/bin/bash
 
 [ -f "$1" ] || exit 1;
+[ -z "$2" ] && export DIR="./"
+[ -n "$2" ] && export DIR="$2"
 
-cat "$1" | grep "JetPt\|Q$" | sed 's/Q$//g'|sed 's/}/_quark&/g' > Quark.txt
-cat "$1" | grep "JetPt\|G$" | sed 's/G$//g'|sed 's/}/_gluon&/g' > Gluon.txt
+cat "$1" | grep "JetPt\|Q$" | sed 's/Q$//g'|sed 's/}/_quark&/g' > $DIR/Quark.txt
+cat "$1" | grep "JetPt\|G$" | sed 's/G$//g'|sed 's/}/_gluon&/g' > $DIR/Gluon.txt
 
 
-NUM=$( (cat Quark.txt | wc -l | tr -d '\n'; echo "/3-1") | bc )
-echo "[quark]"> nCharged.txt
-cat Quark.txt | grep -A $NUM nCharged  >> nCharged.txt
-echo "[quark]"> nNeutral.txt
-cat Quark.txt | grep -A $NUM nNeutral  >> nNeutral.txt
-echo "[quark]"> ptD.txt
-cat Quark.txt | grep -A $NUM ptD >> ptD.txt
-echo "[gluon]">> nCharged.txt
-cat Gluon.txt | grep -A $NUM nCharged  >> nCharged.txt
-echo "[gluon]">> nNeutral.txt
-cat Gluon.txt | grep -A $NUM nNeutral  >> nNeutral.txt
-echo "[gluon]">> ptD.txt
-cat Gluon.txt | grep -A $NUM ptD  >> ptD.txt
+NUM=$( (cat $DIR/Quark.txt | wc -l | tr -d '\n'; echo "/3-1") | bc )
+echo "[quark]"> $DIR/nCharged.txt
+cat $DIR/Quark.txt | grep -A $NUM nCharged  >> $DIR/nCharged.txt
+echo "[quark]"> $DIR/nNeutral.txt
+cat $DIR/Quark.txt | grep -A $NUM nNeutral  >> $DIR/nNeutral.txt
+echo "[quark]"> $DIR/ptD.txt
+cat $DIR/Quark.txt | grep -A $NUM ptD >> $DIR/ptD.txt
+echo "[gluon]">> $DIR/nCharged.txt
+cat $DIR/Gluon.txt | grep -A $NUM nCharged  >> $DIR/nCharged.txt
+echo "[gluon]">> $DIR/nNeutral.txt
+cat $DIR/Gluon.txt | grep -A $NUM nNeutral  >> $DIR/nNeutral.txt
+echo "[gluon]">> $DIR/ptD.txt
+cat $DIR/Gluon.txt | grep -A $NUM ptD  >> $DIR/ptD.txt
