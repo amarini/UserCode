@@ -1,8 +1,10 @@
 CFLAGS=--ansi -fPIC
-all: PtBins.o Plot.o SplitTree FitN.o PtMeans.o QQPlot.o CMSLatex.o MinChiSquare.o
+.PHONY:clean all
+
+all: PtBins.o Plot.o SplitTree FitN.o PtMeans.o QQPlot.o CMSLatex.o MinChiSquare.o Fit2.o
 
 clean: 
-	rm PtBins.o Plot.o SplitTree FitN.o PtMeans.o
+	rm PtBins.o Plot.o SplitTree FitN.o PtMeans.o Fit2.o
 
 PtBins.o: PtBins.C PtBins.h Makefile
 	g++ ${CFLAGS} `root-config --libs --cflags` -c PtBins.C
@@ -27,3 +29,6 @@ CMSLatex.o: CMSLatex.C CMSLatex.h Makefile
 
 MinChiSquare.o: MinChiSquare.C MinChiSquare.h Makefile
 	g++ ${CFLAGS} `root-config --libs --cflags` -c MinChiSquare.C
+
+Fit2.o: Fit2.C Fit2.h Makefile
+	g++ ${CFLAGS} `root-config --libs --cflags` -c Fit2.C
