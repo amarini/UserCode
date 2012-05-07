@@ -26,4 +26,3 @@ private:
 	//static float M;// Maximum allowed value for an Histo
 };
 double myfunc(double*x,double*par);
-//float M;
