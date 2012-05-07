@@ -2,6 +2,7 @@
 
 int CompareSpectra(int PtMin=80,int PtMax=100,int RhoMin=4,int RhoMax=6,
 			const char *outFileName="",
+			const char *TxtOut="../Inversion/Means.txt",
 			const char *fileName_Ph_MC="Omog_QGStudies_*_Summer11.root",
 			const char *fileName_Di_MC="Omog_DiJet_QCD_HT_Summer11.root",
 			const char *fileName_Ph_data="Omog_QGStudies_Photon_Run2011_FULL.root",
@@ -26,12 +27,21 @@ TH1F* h_Di_MC  =new TH1F("Di_MC"  ,"Di_MC"  ,40,PtMin,PtMax);
 TH1F* h_Ph_data=new TH1F("Ph_data","Ph_data",40,PtMin,PtMax);
 TH1F* h_Di_data=new TH1F("Di_data","Di_data",40,PtMin,PtMax);
 
+TH1F* h1_Ph_MC  =new TH1F("1_Ph_MC"  ,"1_Ph_MC"  ,40,RhoMin,RhoMax);
+TH1F* h1_Di_MC  =new TH1F("1_Di_MC"  ,"1_Di_MC"  ,40,RhoMin,RhoMax);
+TH1F* h1_Ph_data=new TH1F("1_Ph_data","1_Ph_data",40,RhoMin,RhoMax);
+TH1F* h1_Di_data=new TH1F("1_Di_data","1_Di_data",40,RhoMin,RhoMax);
+
 //Drawing
 Ph_MC->Draw("ptJet0>>Ph_MC",("eventWeight*("+Selection+")").Data(),"NORM GOFF");
 Di_MC->Draw("ptJet0>>Di_MC",("eventWeight*("+Selection+")").Data(),"NORM GOFF");
 Ph_data->Draw("ptJet0>>Ph_data",Selection.Data(),"NORM GOFF");
 Di_data->Draw("ptJet0>>Di_data",Selection.Data(),"NORM GOFF");
 
+Ph_MC->Draw(  "rhoPF>>1_Ph_MC",("eventWeight*("+Selection+")").Data(),"NORM GOFF");
+Di_MC->Draw(  "rhoPF>>1_Di_MC",("eventWeight*("+Selection+")").Data(),"NORM GOFF");
+Ph_data->Draw("rhoPF>>1_Ph_data",Selection.Data(),"NORM GOFF");
+Di_data->Draw("rhoPF>>1_Di_data",Selection.Data(),"NORM GOFF");
 //Setting Colors and stuff
 h_Ph_MC->SetLineColor(kBlue+2);
 h_Ph_MC->SetFillColor(kBlue-4);
@@ -51,6 +61,10 @@ h_Ph_data->Draw("P SAME");
 h_Di_data->Draw("P SAME");
 
 if(outFileName[0]!='\0') c1->SaveAs(outFileName);
+
+FILE *fw=fopen(TxtOut,"a");
+//          PtMin:PtMax RhoMin:RhoMax PhData_means(Pt) PhData_RMS(Pt) PhData_means(Rho) PhData_RMS(Rho)
+fprintf(fw,"%d:%d %d:%d %f %f %f %f\n",PtMin,PtMax,RhoMin,RhoMax,h_Ph_data->GetMean(),h_Ph_data->GetRMS(),h1_Ph_data->GetMean(),h1_Ph_data->GetRMS());
 
 return 0;
 }

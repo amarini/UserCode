@@ -5,6 +5,7 @@
 #include "TGraphErrors.h"
 //Fit procedure with points exclusion
 #include "new/FitN.C"
+#include "new/Fit2.C"
 #include "new/GetChar.C" //get a char without changing position
 
 inline double func_(double* x, double* par)
@@ -20,16 +21,43 @@ int PlotUnfoldedParams(const char *varName="nCharged",const char*Directory="Inve
 {
 TFile *f;
 TCanvas *c;
-TH1F*rq0=new TH1F("rq0","rq0",10,0,20);
-TH1F*rg0=new TH1F("rg0","rg0",10,0,20);
-TH1F*rq1=new TH1F("rq1","rq1",10,0,20);
-TH1F*rg1=new TH1F("rg1","rg1",10,0,20);
-TH1F*rq2=new TH1F("rq2","rq2",10,0,20);
-TH1F*rg2=new TH1F("rg2","rg2",10,0,20);
+//TH1F*rq0=new TH1F("rq0","rq0",10,0,20);
+//TH1F*rg0=new TH1F("rg0","rg0",10,0,20);
+//TH1F*rq1=new TH1F("rq1","rq1",10,0,20);
+//TH1F*rg1=new TH1F("rg1","rg1",10,0,20);
+//TH1F*rq2=new TH1F("rq2","rq2",10,0,20);
+//TH1F*rg2=new TH1F("rg2","rg2",10,0,20);
+TGraphErrors*rq0=new TGraphErrors();rq0->SetName("rq0");
+TGraphErrors*rg0=new TGraphErrors();rg0->SetName("rg0");
+TGraphErrors*rq1=new TGraphErrors();rq1->SetName("rq1");
+TGraphErrors*rg1=new TGraphErrors();rg1->SetName("rg1");
+TGraphErrors*rq2=new TGraphErrors();rq2->SetName("rq2");
+TGraphErrors*rg2=new TGraphErrors();rg2->SetName("rg2");
 char fileName[1023];
+FILE*fMeans=fopen( ("../"+string(Directory)+"/Means.txt").c_str(),"r");
+printf("Opening file %s\n",("../"+string(Directory)+"/Means.txt").c_str());
+if(fMeans==NULL) {printf("NO MEANS FILE\n");return 1;}
+char MeansStr[1023],ch;
 TF1 *func;//new TF1("gamma",func_,0,100,2);
 for(int i=0; i<20; i+=2)
 	{
+	int RhoMin=i,RhoMax=i+2;
+	//Read Means.txt in order to find the correct pt bin
+		printf("Opening file Means\n");
+		rewind(fMeans);
+		int pt0_, pt1_, rho0_,rho1_;
+		float PtMean=(PtMin+PtMax)/2.0,PtRMS=(PtMax-PtMin)/2.0,RhoMean=(RhoMin+RhoMax)/2.0,RhoRMS=(RhoMax-RhoMin)/2.0;	
+		float ptMean=(PtMin+PtMax)/2.0,ptRMS=(PtMax-PtMin)/2.0,rhoMean=(RhoMin+RhoMax)/2.0,rhoRMS=(RhoMax-RhoMin)/2.0;	
+		while (fscanf(fMeans,"%d:%d %d:%d %f %f %f %f",&pt0_,&pt1_,&rho0_,&rho1_,&ptMean,&ptRMS,&rhoMean,&rhoRMS)!=EOF){
+			if((pt0_==PtMin)&&(pt1_==PtMax)&&(rho0_==RhoMin)&&(rho1_==RhoMax)){
+					PtMean=ptMean;
+					PtRMS=ptRMS;
+					RhoMean=rhoMean;
+					RhoRMS=rhoRMS;
+				};
+			};
+		printf("DONE\n");
+	//
 	sprintf(fileName,"../%s/%s_pt%d_%d_rho%d_%d_UN.root",Directory,varName,PtMin,PtMax,i,i+2);
 	f=TFile::Open(fileName);
 	if(f==NULL){printf("File %s does not exist. Skipped.\n",fileName);continue;}
@@ -37,25 +65,25 @@ for(int i=0; i<20; i+=2)
 	if(varName[0]=='n')func=c->FindObject("gamma_quark");
 	else 	func=c->FindObject("functionPtD_quark");	
 
-		rq0->SetBinContent(rq0->FindBin(i+1),func->GetParameter(0));
-		rq0->SetBinError  (rq0->FindBin(i+1),func->GetParError(0));
-		rq1->SetBinContent(rq1->FindBin(i+1),func->GetParameter(1));
-		rq1->SetBinError  (rq1->FindBin(i+1),func->GetParError(1));
+		rq0->SetPoint(rq0->GetN(),RhoMean,func->GetParameter(0));
+		rq0->SetPointError  (rq0->GetN()-1,RhoRMS,func->GetParError(0));
+		rq1->SetPoint(rq1->GetN(),RhoMean,func->GetParameter(1));
+		rq1->SetPointError  (rq1->GetN()-1,RhoRMS,func->GetParError(1));
 	if(varName[0]!='n'){
-		rq2->SetBinContent(rq2->FindBin(i+1),func->GetParameter(2));
-		rq2->SetBinError  (rq2->FindBin(i+1),func->GetParError(2));
+		rq2->SetPoint(rq2->GetN(),RhoMean,func->GetParameter(2));
+		rq2->SetPointError  (rq2->GetN()-1,RhoRMS,func->GetParError(2));
 		}//
 
 	if(varName[0]=='n') func=c->FindObject("gamma_gluon");
 	else 	func=c->FindObject("functionPtD_gluon");	
 
-		rg0->SetBinContent(rg0->FindBin(i+1),func->GetParameter(0));
-		rg0->SetBinError  (rg0->FindBin(i+1),func->GetParError(0));
-		rg1->SetBinContent(rg1->FindBin(i+1),func->GetParameter(1));
-		rg1->SetBinError  (rg1->FindBin(i+1),func->GetParError(1));
+		rg0->SetPoint(rg0->GetN(),RhoMean,func->GetParameter(0));
+		rg0->SetPointError  (rg0->GetN()-1,RhoRMS,func->GetParError(0));
+		rg1->SetPoint(rg1->GetN(),RhoMean,func->GetParameter(1));
+		rg1->SetPointError  (rg1->GetN()-1,RhoRMS,func->GetParError(1));
 	if(varName[0]!='n'){
-		rg2->SetBinContent(rg2->FindBin(i+1),func->GetParameter(2));
-		rg2->SetBinError  (rg2->FindBin(i+1),func->GetParError(2));
+		rg2->SetPoint(rg2->GetN(),RhoMean,func->GetParameter(2));
+		rg2->SetPointError  (rg2->GetN()-1,RhoRMS,func->GetParError(2));
 		}//
 	//ora li fitto
 	f->Close();
@@ -81,52 +109,63 @@ if(varName[0]=='n')
 	c1->Divide(2);
 else c1->Divide(3);
 c1->cd(1);
-rq0->Draw("P");
+rq0->Draw("A P");
 rg0->Draw("P SAME");
-		FitN *B=new FitN();
-		B->SetP(0.05); //default 0.05
-		B->SetE(0.0001);
-		B->SetN(5);
-		B->SetTH1F(rq0);
-		B->SetRange(0,20);
-		B->SetTF1(pol1);
-B->Fit();
+
+Fit2 *D=new Fit2();
+D->SetTGRAPH(rq0,0);
+D->SetTGRAPH(rg0,1);
+//D->SetTH1F(rq0,0);
+//D->SetTH1F(rg0,1);
+std::vector<float> *v=D->Fit();
+pol1->SetParameter(0,v->at(0));
+pol1->SetParameter(1,v->at(1));
+
 FILE *fw;
 if(outTxtFileName[0]!=0)fw=fopen(outTxtFileName,"a");
 else fw=stdout;
-//rq0->Fit("pol1","N Q");
+
 pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==0 %f bq %f==\n==0 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
-//rg0->Fit("pol1","N Q");
-B->SetTH1F(rg0);
-B->Fit();
+pol1->SetParameter(0,v->at(2));
+pol1->SetParameter(1,v->at(1));
+delete v;
 pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==0 %f bg %f==\n==0 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
-		B->SetRange(1,18);
-		B->SetTF1(pol1);
 c1->cd(2);
-rq1->Draw("P");
+D->SetTGRAPH(rq1,0);
+D->SetTGRAPH(rg1,1);
+v=D->Fit();
+pol1->SetParameter(0,v->at(0));
+pol1->SetParameter(1,v->at(1));
+
+rq1->Draw("A P");
 rg1->Draw("P SAME");
-B->SetTH1F(rq1);
-B->Fit();
-//rq1->Fit("pol1","N Q");
+
 pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bq %f==\n==1 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
-B->SetTH1F(rg1);
-B->Fit();
-//rg1->Fit("pol1","N Q");
+
+pol1->SetParameter(0,v->at(2));
+pol1->SetParameter(1,v->at(1));
+delete v;
+
+
 pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bg %f==\n==1 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
 if(varName[0]!='n'){
 c1->cd(3);
-rq2->Draw("P");
+rq2->Draw("A P");
 rg2->Draw("P SAME");
-B->SetTH1F(rq2);
-B->Fit();
-//rq2->Fit("pol1","N Q");
+D->SetTGRAPH(rq1,0);
+D->SetTGRAPH(rg1,1);
+v=D->Fit();
+
+pol1->SetParameter(0,v->at(0));
+pol1->SetParameter(1,v->at(1));
 pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bq %f==\n==1 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
-B->SetTH1F(rg2);
-B->Fit();
-//rg2->Fit("pol1","N Q");
+
+pol1->SetParameter(0,v->at(2));
+pol1->SetParameter(1,v->at(1));
+
 pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bg %f==\n==1 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 }//end 3rd params plot
 

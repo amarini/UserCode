@@ -63,7 +63,7 @@ ComputeMixture("${DIJETMC}",${PTMIN},${PTMAX},${RHOMIN},${RHOMAX},"omog",&q1,&eq
 ComputeMixture("${PHJETMC}",${PTMIN},${PTMAX},${RHOMIN},${RHOMAX},"omog",&q2,&eq2);
 Unfold("${DIJETDATA}","${PHJETDATA}","${VARNAME}","${RANGE}",$PTMIN,$PTMAX,$RHOMIN,$RHOMAX,q1,q2,false,"${DIJETMC}","Jet0","Jet0","../Inversion/${VARNAME}_pt${PTMIN}_${PTMAX}_rho${RHOMIN}_${RHOMAX}.root","omog");
 
-.x CompareSpectra.C(${PTMIN},${PTMAX},${RHOMIN},${RHOMAX},"../Inversion/PtJet0_pt${PTMIN}_${PTMAX}_rho${RHOMIN}_${RHOMAX}.pdf");
+.x CompareSpectra.C(${PTMIN},${PTMAX},${RHOMIN},${RHOMAX},"../Inversion/PtJet0_pt${PTMIN}_${PTMAX}_rho${RHOMIN}_${RHOMAX}.pdf","../Inversion/Means_${RANDOM}.txt");
 .q
 EOF
 
