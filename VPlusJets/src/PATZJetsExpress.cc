@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.1 2012/07/17 15:22:42 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.2 2012/07/24 09:29:03 amarini Exp $
 //
 //
 
@@ -108,6 +108,11 @@
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenRunInfoProduct.h"
 
+// Added photon stuff
+#include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
+#include "EGamma/EGammaAnalysisTools/src/PFIsolationEstimator.cc"
+#include "RecoEgamma/EgammaElectronAlgos/interface/ElectronHcalHelper.h"
+
 //
 // class declaration
 //
@@ -160,6 +165,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         TLorentzVector p4;  
         // ---- pdgid ---------------------------------------------------
         int pdgId; 
+        // ---- motherid ---------------------------------------------------
+        int motherId; 
       };
       struct JET {
         // ---- momentum 4-vector ---------------------------------------
@@ -288,6 +295,10 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float photonIso_;
       float photonID_;
       int   photonBit_;
+      int   photonPassConversionVeto_;
+      float photonPfIsoChargedHad_;
+      float photonPfIsoNeutralHad_;
+      float photonPfIsoPhoton_;
       float pfhadPhoPt_; // hadronic recoil computed for photon+jet interpretation
       float mPhotonj1_;
       float ptPhotonj1_;
@@ -298,6 +309,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float photonPtGEN_;
       float photonEtaGEN_;
       float photonPhiGEN_;
+      int photonMotherIdGEN_;
       float photonRECODRGEN_;
       // ---- FSR photon
       float FSRphotonE_;
@@ -392,6 +404,15 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       int selRECO_,selGEN_;
       // ---- MC weight
       float mcWeight_;
+
+  // PF isolation calculator for photon
+  PFIsolationEstimator isolator;
+
+  // new H/E calculator for photon
+  ElectronHcalHelper::Configuration hcalCfg;
+  ElectronHcalHelper *hcalHelper;
+
+
 };
 //
 // class implemetation
@@ -428,6 +449,18 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mGENType           = iConfig.getParameter<int>                       ("GENType");
   mOnlyMC	     = iConfig.getParameter<bool>		       ("OnlyMC");
   mGENCrossCleaning  = iConfig.getParameter<int>                       ("GENCrossCleaning"); //0: Nothing 1: Leptons 2: photons (Bit) 4:
+
+  // initializing the PF isolation estimator for photon isolation 2012
+  isolator.initializePhotonIsolation(kTRUE);
+  isolator.setConeSize(0.3);
+
+  // initializing the new H/E calculator for photon 2012 H/E
+  hcalCfg.hOverEConeSize = 0.15;
+  hcalCfg.useTowers = true;
+  hcalCfg.hcalTowers = edm::InputTag("towerMaker");
+  hcalCfg.hOverEPtMin = 0;
+  hcalHelper = new ElectronHcalHelper(hcalCfg);
+
 }
 // ---- destructor ------------------------------------------------------
 PATZJetsExpress::~PATZJetsExpress()
@@ -547,6 +580,10 @@ void PATZJetsExpress::beginRun(edm::Run const & iRun, edm::EventSetup const& iSe
 // ---- event loop ------------------------------------------------------
 void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 {
+  // setup for new H/E calculator for 2012
+  hcalHelper->checkSetup(iSetup);
+  hcalHelper->readEvent(iEvent);
+
   // ---- event counter -------------------------------------------------
   hEvents_->Fill(0.5);  
   // ---- initialize the tree branches ----------------------------------
@@ -658,6 +695,13 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
             TLorentzVector phoP4GEN(i_gen->p4().Px(),i_gen->p4().Py(),i_gen->p4().Pz(),i_gen->p4().E());
             aGenPhoton.pdgId = i_gen->pdgId();
             aGenPhoton.p4    = phoP4GEN;
+
+	    // find mother id
+	    for(int kk = 0; kk < int(i_gen-> numberOfMothers()); ++kk) {
+	      const GenParticle * gen_Moth = static_cast<const GenParticle*>(i_gen->mother(kk)); // find mother
+	      aGenPhoton.motherId = gen_Moth->pdgId();
+	    }
+
             myGenPhotons.push_back(aGenPhoton);
           }
         }
@@ -724,8 +768,18 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       vtxNdof_->push_back(i_vtx->ndof());
     }
   }
+  //---- beam spot for conversion-safe electron veto --------------------
+  edm::Handle<reco::BeamSpot> bsHandle;
+  iEvent.getByLabel("offlineBeamSpot", bsHandle);
+  const reco::BeamSpot &beamspot = *bsHandle.product();
+
+  //---- conversions for conversion-safe electron veto -------------------
+  edm::Handle<reco::ConversionCollection> hConversions;
+  iEvent.getByLabel("allConversions", hConversions);
+
   //---- leptons block --------------------------------------------------
-  Handle<View<GsfElectron> > electrons_;
+  //  Handle<View<GsfElectron> > electrons_;
+  Handle<GsfElectronCollection> electrons_;
   iEvent.getByLabel("gsfElectrons", electrons_);
   Handle<View<Muon> > muons_;
   iEvent.getByLabel("muons",muons_);
@@ -785,7 +839,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     myLeptons.push_back(aLepton);
   }// muon loop
   // ---- loop over electrons -------------------------------------------
-  for(View<GsfElectron>::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
+  //  for(View<GsfElectron>::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
+  for(GsfElectronCollection::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
     float elPt                           = i_el->p4().Pt();
     float elEta                          = i_el->p4().Eta();
     float trackIso                       = i_el->dr03TkSumPt();
@@ -858,7 +913,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   // ---- sort the leptons according to their pt ------------------------
   sort(myLeptons.begin(),myLeptons.end(),lepSortingRule); 
   // ---- PF isolation for leptons --------------------------------------
-  Handle<View<PFCandidate> > pfCandidates;
+  //  Handle<View<PFCandidate> > pfCandidates;
+  Handle<PFCandidateCollection> pfCandidates;
   iEvent.getByLabel("particleFlow", pfCandidates);
   for(unsigned il=0;il<myLeptons.size();il++) {
     float sumPt(0.0);
@@ -937,10 +993,19 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float phoHasConvTrks                    = it->hasConversionTracks();
       float r9                                = it->r9();
       float hadronicOverEm                    = it->hadronicOverEm();
+      float hadronicOverEm2012                = -1; // to be computed later
       float sigmaIphiIphi                     = -1; // to be computed later
 
       float gammaPt = aPhoton.Pt();
       bool  isTriggerISO = false;
+
+
+      // --- calculate new H/E for 2012
+      std::vector<CaloTowerDetId> hcalTowersBehindClusters = hcalHelper->hcalTowersBehindClusters(*(it->superCluster()));
+      float hcalDepth1 = hcalHelper->hcalESumDepth1BehindClusters(hcalTowersBehindClusters);
+      float hcalDepth2 = hcalHelper->hcalESumDepth2BehindClusters(hcalTowersBehindClusters);
+      hadronicOverEm2012 = (hcalDepth1 + hcalDepth2)/it->superCluster()->energy();
+
 
       // --- get iphi-iphi
       EcalClusterLazyTools lazyTool(iEvent, iSetup, InputTag("reducedEcalRecHitsEB"), InputTag("reducedEcalRecHitsEE"));
@@ -952,6 +1017,20 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
          std::vector<float> vCov = lazyTool.covariances(*seed);
          sigmaIphiIphi  = sqrt(vCov[2]);   // This is Sqrt(covPhiPhi)
        }
+
+       // -- conversion-safe electron veto
+
+       photonPassConversionVeto_ = !ConversionTools::hasMatchedPromptElectron(it->superCluster(), electrons_, hConversions, beamspot.position());
+
+       // --- PF isolation ---
+
+       unsigned int ivtx = 0;
+       VertexRef myVtxRef(vertices_, ivtx);
+
+       isolator.fGetIsolation((&*it),pfCandidates.product(), myVtxRef, vertices_);
+       photonPfIsoChargedHad_ = isolator.getIsolationCharged();
+       photonPfIsoNeutralHad_ = isolator.getIsolationNeutral();
+       photonPfIsoPhoton_ = isolator.getIsolationPhoton();
 
 
       // --- https://twiki.cern.ch/twiki/bin/viewauth/CMS/QCDPhotonsTrigger2011
@@ -1056,6 +1135,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       gamma.parameters.push_back(phoHasConvTrks);             // 7  
       gamma.parameters.push_back(r9);                         // 8  
       gamma.parameters.push_back(hadronicOverEm);             // 9  
+      gamma.parameters.push_back(hadronicOverEm2012);         // 10  
 
       // --- save FSR photon candidates and gamma+jets in seperate paths
       
@@ -1574,7 +1654,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         photonEtaGEN_    = myGenPhotons[0].p4.Eta();
         photonPhiGEN_    = myGenPhotons[0].p4.Phi();
         photonEGEN_      = myGenPhotons[0].p4.Energy();
+	photonMotherIdGEN_ = myGenPhotons[0].motherId;
         if(myPhotons.size()>0)photonRECODRGEN_ = myPhotons[0].p4.DeltaR(myGenPhotons[0].p4); // GEN TO RECO matching
+
       }   
 
       mLepGEN_ = lepP4GEN.M(); 
@@ -1791,6 +1873,10 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonIso"        ,&photonIso_         ,"photonIso/F");
   myTree_->Branch("photonID"         ,&photonID_          ,"photonID/F");
   myTree_->Branch("photonBit"        ,&photonBit_         ,"photonBit/I");
+  myTree_->Branch("photonPassConversionVeto",&photonPassConversionVeto_,"photonPassConversionVeto/I");
+  myTree_->Branch("photonPfIsoChargedHad"  ,&photonPfIsoChargedHad_   ,"photonPfIsoChargedHad/F");
+  myTree_->Branch("photonPfIsoNeutralHad"  ,&photonPfIsoNeutralHad_   ,"photonPfIsoNeutralHad/F");
+  myTree_->Branch("photonPfIsoPhoton"      ,&photonPfIsoPhoton_       ,"photonPfIsoPhoton/F");
   myTree_->Branch("pfhadPhoPt"       ,&pfhadPhoPt_        ,"pfhadPhoPt/F");
   myTree_->Branch("mPhotonj1"        ,&mPhotonj1_         ,"mPhotonj1/F");
   myTree_->Branch("ptPhotonj1"       ,&ptPhotonj1_        ,"ptPhotonj1/F");
@@ -1907,6 +1993,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonEGEN"       ,&photonEGEN_        ,"photonEGEN/F");
   myTree_->Branch("photonEtaGEN"     ,&photonEtaGEN_      ,"photonEtaGEN/F");
   myTree_->Branch("photonPhiGEN"     ,&photonPhiGEN_      ,"photonPhiGEN/F");
+  myTree_->Branch("photonMotherIdGEN",&photonMotherIdGEN_ ,"photonMotherIdGEN/I");
   myTree_->Branch("photonRECODRGEN"  ,&photonRECODRGEN_   ,"photonRECODRGEN/F");
   myTree_->Branch("VBPartonDM"       ,&VBPartonDM_        ,"VBPartonDM/I");
   myTree_->Branch("VBPartonM"        ,&VBPartonM_         ,"VBPartonM/F");
@@ -1985,6 +2072,10 @@ void PATZJetsExpress::clearTree()
   photonIso_         = -999;
   photonID_          = -999;
   photonBit_         =    0; // please keep this 0
+  photonPassConversionVeto_ =    0; // please keep this 0
+  photonPfIsoChargedHad_   = -999;
+  photonPfIsoNeutralHad_   = -999;
+  photonPfIsoPhoton_       = -999;
   FSRphotonE_        = -999;
   FSRphotonPt_       = -999;
   FSRphotonllM_      = -999;
@@ -2092,6 +2183,7 @@ void PATZJetsExpress::clearTree()
   photonPtGEN_       = -999;
   photonEtaGEN_      = -999;
   photonPhiGEN_      = -999;
+  photonMotherIdGEN_ = -999;
   photonRECODRGEN_   = +999; // please keep this positive (will cut offline to <0.2 for matched)
   VBPartonDM_        = -999;
   VBPartonM_         = -999;
