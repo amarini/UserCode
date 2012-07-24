@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.1 2012/03/30 12:53:54 kkousour Exp $
+// $Id: PATZJetsExpress.cc,v 1.1 2012/07/17 15:22:42 amarini Exp $
 //
 //
 
@@ -87,6 +87,7 @@
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
@@ -147,6 +148,12 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         int bit;
         // --- float parameters
         std::vector<float> parameters;
+	// --- sigma IetaIeta
+	float sigmaIEtaIEta;
+	float trackIso;
+	float ecalIso;
+	float hcalIso;
+	float hadronicOverEm;
       };
       struct GENPARTICLE {
         // ---- momentum 4-vector ---------------------------------------
@@ -265,6 +272,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       vector<float> *jetllDPhi_,*jetllDPhiGEN_;
       // ---- lepton kinematics -----------------------------------------
       vector<float> *lepPt_,*lepEta_,*lepPhi_,*lepE_,*lepPtGEN_,*lepEtaGEN_,*lepPhiGEN_,*lepEGEN_;
+      vector<float> *lepSigmaIEtaIEta_,*lepEcalIso_,*lepHcalIso_,*lepHadronicOverEm_,*lepTrackIso_;
       // ---- lepton properties ----------------------------------------- 
       vector<int>   *lepChId_,*lepId_,*lepChIdGEN_,*lepMatchedGEN_;
       vector<float> *lepIso_,*lepIsoPF_,*lepIsoRho_,*lepMatchedDRGEN_;
@@ -769,13 +777,18 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     aLepton.iso  = muonIso;
     aLepton.isoPF = -999;
     aLepton.isoRho = muonIsoRho;
+    aLepton.trackIso = -1;
+    aLepton.ecalIso = -1;
+    aLepton.hcalIso = -1;
+    aLepton.sigmaIEtaIEta = -1;
+    aLepton.hadronicOverEm = -1;
     myLeptons.push_back(aLepton);
   }// muon loop
   // ---- loop over electrons -------------------------------------------
   for(View<GsfElectron>::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
     float elPt                           = i_el->p4().Pt();
     float elEta                          = i_el->p4().Eta();
-    float trackIso                      = i_el->dr03TkSumPt();
+    float trackIso                       = i_el->dr03TkSumPt();
     float ecalIso                        = i_el->dr03EcalRecHitSumEt();
     float hcalIso                        = i_el->dr03HcalTowerSumEt();
     float sigmaIetaIeta                  = i_el->sigmaIetaIeta();
@@ -785,7 +798,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     bool  isTight(false);
     float combinedIso03 = (i_el->dr03TkSumPt()+max(0.,i_el->dr03EcalRecHitSumEt()-1.)+i_el->dr03HcalTowerSumEt())/i_el->p4().Pt();
     float combinedIso03Rho =0 ;
-
+    float epDifference 			 = fabs( 1./i_el->ecalEnergy() - i_el->eSuperClusterOverP()/i_el->ecalEnergy()  );
+    
     float Aecal[2] = {0.101,0.046};
     float Ahcal[2] = {0.021,0.040};
     enum detID {barrel=0,endcap};
@@ -794,15 +808,16 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     // ---- use WP90 as default preselection, store also WP80 subset (https://twiki.cern.ch/twiki/bin/view/CMS/VbtfEleID2011)
     if (i_el->isEB()) {
       combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[barrel]*(*rho)) + max(0.,hcalIso - Ahcal[barrel]*(*rho)) )/elPt; 
-      if (combinedIso03Rho>mMaxCombRelIso03)              continue;
-      if (sigmaIetaIeta > 0.01)                           continue;
-      if (deltaPhiSuperClusterTrackAtVtx > 0.8)           continue;
+      if (combinedIso03Rho>mMaxCombRelIso03)              continue;  
+      if (sigmaIetaIeta > 0.01)                           continue; 
+      if (deltaPhiSuperClusterTrackAtVtx > 0.15)           continue; //2011: 0.8
       if (deltaEtaSuperClusterTrackAtVtx > 0.007)         continue;
-      if (hadronicOverEm > 0.15)                          continue; 
-      if (sigmaIetaIeta < 0.01) {  // WP80 subset
+      if (hadronicOverEm > 0.12)                          continue; //2011: 0.15 	
+      if ( epDifference >0.05)				  continue; //2011: Not implemented
+      if (sigmaIetaIeta < 0.01) {  // WP80 subset: 2012 Medium
 	if (deltaPhiSuperClusterTrackAtVtx < 0.06) 
 	  if (deltaEtaSuperClusterTrackAtVtx < 0.004) 
-	    if (hadronicOverEm < 0.04) 
+	    if (hadronicOverEm < 0.12)//2011: 0.04 
               isTight = true;
       }
     }// if EE
@@ -810,9 +825,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[endcap]*(*rho)) + max(0.,hcalIso - Ahcal[endcap]*(*rho)) )/elPt; 
       if (combinedIso03Rho>mMaxCombRelIso03)              continue;
       if (sigmaIetaIeta > 0.03)                           continue;
-      if (deltaPhiSuperClusterTrackAtVtx > 0.7)           continue;
-      if (deltaEtaSuperClusterTrackAtVtx > 0.009)          continue;
-      if (hadronicOverEm > 0.15)                          continue;
+      if (deltaPhiSuperClusterTrackAtVtx > 0.1)           continue; //2011:.7
+      if (deltaEtaSuperClusterTrackAtVtx > 0.009)          continue;//
+      if (hadronicOverEm > 0.10)                          continue;//2011:.15
+      if ( epDifference >0.05)				  continue; //2011: Not implemented
       if (sigmaIetaIeta<0.03) {  // WP80 subset
 	if (deltaPhiSuperClusterTrackAtVtx < 0.03)
 	  if (deltaEtaSuperClusterTrackAtVtx < 0.007)
@@ -831,6 +847,11 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     aLepton.iso   = combinedIso03;
     aLepton.isoPF = -999;
     aLepton.isoRho = combinedIso03Rho;
+    aLepton.trackIso = trackIso;
+    aLepton.ecalIso = ecalIso;
+    aLepton.hcalIso = hcalIso;
+    aLepton.sigmaIEtaIEta = sigmaIetaIeta;
+    aLepton.hadronicOverEm = hadronicOverEm;
     myLeptons.push_back(aLepton);
   } // electrons loop
   hRecoLeptons_->Fill(int(myLeptons.size()));
@@ -1314,6 +1335,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         lepIsoRho_ ->push_back(myLeptons[l].isoRho);
         lepId_     ->push_back(myLeptons[l].id);
         lepChId_   ->push_back(myLeptons[l].chid);
+
+        lepTrackIso_     ->push_back(myLeptons[l].trackIso);
+        lepEcalIso_     ->push_back(myLeptons[l].ecalIso);
+        lepHcalIso_     ->push_back(myLeptons[l].hcalIso);
+        lepHadronicOverEm_     ->push_back(myLeptons[l].hadronicOverEm);
+        lepSigmaIEtaIEta_      ->push_back(myLeptons[l].sigmaIEtaIEta);
       }      
       pfhadPt_    = pfhadP4.Pt();
       mLep_       = lepP4.M(); 
@@ -1653,6 +1680,11 @@ void PATZJetsExpress::buildTree()
   lepIsoRho_         = new std::vector<float>();
   lepChId_           = new std::vector<int>();
   lepId_             = new std::vector<int>();
+  lepTrackIso_       = new std::vector<float>();
+  lepEcalIso_        = new std::vector<float>();
+  lepHcalIso_        = new std::vector<float>();
+  lepSigmaIEtaIEta_  = new std::vector<float>();
+  lepHadronicOverEm_ = new std::vector<float>();
   jetPt_             = new std::vector<float>(); 
   jetEta_            = new std::vector<float>();
   jetPhi_            = new std::vector<float>();
@@ -1883,10 +1915,21 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("VBPartonEta"      ,&VBPartonEta_       ,"VBPartonEta/F");
   myTree_->Branch("VBPartonPhi"      ,&VBPartonPhi_       ,"VBPartonPhi/F");
   myTree_->Branch("QGVars"	     ,"vector<float>"	  ,&QGVars_);
+  myTree_->Branch("lepSigmaIEtaIEta" ,"vector<float>"	  ,&lepSigmaIEtaIEta_);
+  myTree_->Branch("lepTrackIso"	     ,"vector<float>"	  ,&lepTrackIso_);
+  myTree_->Branch("lepEcalIso"	     ,"vector<float>"	  ,&lepEcalIso_);
+  myTree_->Branch("lepHcalIso"	     ,"vector<float>"	  ,&lepHcalIso_);
+  myTree_->Branch("lepHadronicOverEm","vector<float>"	  ,&lepHadronicOverEm_);
 }
 // ---- method for tree initialization ----------------------------------
 void PATZJetsExpress::clearTree()
 {
+   lepSigmaIEtaIEta_->clear();
+   lepTrackIso_->clear();
+   lepEcalIso_->clear();
+   lepHcalIso_->clear();
+   lepHadronicOverEm_->clear();
+
   QGVars_->clear();
   selRECO_           = -999;
   isRealData_        = -999;
