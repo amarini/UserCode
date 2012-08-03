@@ -1,0 +1,7 @@
+cvs co ElectroWeakAnalysis/VPlusJets
+cvs co -d KKousour/MultiJetAnalysis UserCode/KKousour/MultiJetAnalysis
+cvs co -d pandolf UserCode/pandolf
+cvs co -d amarini UserCode/amarini
+cvs co -r V00-00-21 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
+
+scram b -j 5
