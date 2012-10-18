@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.2 2012/07/24 09:29:03 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.3 2012/07/24 13:02:20 jleonard Exp $
 //
 //
 
@@ -233,6 +233,10 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       std::vector<std::string> triggerFamily2_;
       std::vector<std::string> triggerFamily3_;
       std::vector<std::string> triggerFamily4_;
+      std::vector<std::string> triggerFamily5_;
+      std::vector<std::string> triggerFamily6_;
+      std::vector<std::string> triggerFamily7_;
+      std::vector<std::string> triggerFamily8_;
       std::vector<std::string> prescaleDontAsk_;
       std::vector<unsigned int> triggerIndex_;
       edm::InputTag triggerResultsTag_;
@@ -443,6 +447,10 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   triggerFamily2_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily2");
   triggerFamily3_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily3");
   triggerFamily4_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily4");
+  triggerFamily5_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily5");
+  triggerFamily6_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily6");
+  triggerFamily7_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily7");
+  triggerFamily8_    = iConfig.getParameter<std::vector<std::string> > ("triggerFamily8");
   prescaleDontAsk_   = iConfig.getParameter<std::vector<std::string> > ("prescaleDontAsk");
   triggerResultsTag_ = iConfig.getParameter<edm::InputTag>             ("triggerResults");
   triggerEventTag_   = iConfig.getParameter<edm::InputTag>             ("triggerEvent");   
@@ -1614,6 +1622,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
             isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily2_) << 1; // if true 0010
             isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily3_) << 2; // if true 0100
             isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily4_) << 3; // if true 1000
+            isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily5_) << 4; // if true 1000
+            isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily6_) << 5; // if true 1000
+            isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily7_) << 6; // if true 1000
+            isTriggered_ |= checkTriggerName(triggerNames_[itrig],triggerFamily8_) << 7; // if true 1000
 //          std::cout << "f1 " << checkTriggerName(triggerNames_[itrig],triggerFamily1_) << " " <<triggerNames_[itrig] << " " << isTriggered_ << std::endl;
 //          std::cout << "f2 " << checkTriggerName(triggerNames_[itrig],triggerFamily2_) << " " <<triggerNames_[itrig] << " " << isTriggered_ << std::endl;
 //          std::cout << "f3 " << checkTriggerName(triggerNames_[itrig],triggerFamily3_) << " " <<triggerNames_[itrig] << " " << isTriggered_ << std::endl;

@@ -47,6 +47,10 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
+#	'/store/mc/Summer12/DY1JetsToLL_M-10To50_TuneZ2Star_8TeV-madgraph/DQM/PU_S7_START52_V9-v1/0000/6E20576C-9CA1-E111-90B8-20CF3027A5B7.root',
+#'/store/mc/Summer12/DY1JetsToLL_M-10To50_TuneZ2Star_8TeV-madgraph/DQM/PU_S7_START52_V9-v1/0000/B25B2ACE-1196-E111-B0DD-20CF305B0509.root',
+#'/store/mc/Summer12/DY1JetsToLL_M-10To50_TuneZ2Star_8TeV-madgraph/DQM/PU_S7_START52_V9-v1/0000/364A10D7-9B96-E111-910A-E0CB4E1A117B.root'
+
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/774/0CDC3936-889B-E111-9F82-001D09F25041.root',
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/806/C8EE0F38-C89B-E111-9623-001D09F29619.root',
@@ -106,105 +110,8 @@ process.source = cms.Source("PoolSource",
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/998/FC46DA74-B59D-E111-B3FE-002481E0D7C0.root',
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/999/3C2C8C48-B59D-E111-9371-0025901D624E.root'
 
-###################### MC
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/004CA74B-3198-E111-9786-003048FF9AC6.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/02A11927-2D98-E111-902E-002354EF3BD0.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/04A8C6D7-4D98-E111-ABAD-002618943978.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/0EFD3E1B-3D98-E111-AB78-002618FDA211.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/1210DFA2-3098-E111-8D18-00261894382D.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/1294263F-2898-E111-930C-003048678FD6.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/12AD5991-4D98-E111-880F-002618943860.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/18409BDE-4D98-E111-B43A-001A92810AE0.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/1A8127B9-4E98-E111-9076-0026189438C9.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/1AB69670-5C98-E111-81DC-003048678F9C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/20B397A7-3598-E111-B4CF-002618943950.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/228DCD00-4D98-E111-B83E-003048D15E14.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/22F2F7E8-3998-E111-B04B-0026189438DD.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/24D83FE6-7A98-E111-97BA-0026189438A5.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/267CFD91-8498-E111-9D16-002618943963.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/2879A188-3198-E111-AFD5-0026189438D3.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/2A9304D4-6198-E111-824A-00304867BFA8.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/2C007199-2598-E111-85DE-002618943947.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/2E74EAE7-5A98-E111-8650-002618FDA248.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/3093779C-7A98-E111-A28A-002618943842.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/343A7770-7998-E111-8CD0-00304867C1BC.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/3440F927-5898-E111-8B67-0018F3D096A6.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/3A07C1E3-5798-E111-BACB-001A928116BC.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/409D4126-4E98-E111-A6C9-003048678B3C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/445A4B3A-5B98-E111-8874-003048FFD728.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/4678FC9E-2A98-E111-B915-003048FFCB6A.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/4AF02F72-3498-E111-B89C-003048678A76.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/56A6B554-3798-E111-BB98-001A928116CE.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/58356EDE-4F98-E111-87B8-00261894385D.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/625F2B0E-2A98-E111-B10C-003048FFCB84.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/6CA86817-3B98-E111-B991-003048FFD720.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/6E868516-3098-E111-848A-00248C55CC97.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/70C0B391-4098-E111-B3C2-001A92971B7E.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/725B10AC-B898-E111-99C3-003048FFD796.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/72B9B5BB-5A98-E111-9BF6-003048678B04.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/762F5EF8-5A98-E111-9147-0026189438FD.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/7C68AA01-3598-E111-99D5-003048678FF8.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/7E97FC0F-5398-E111-95EC-001A92971B8C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/8031749B-5E98-E111-9E2D-00261894388A.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/824A1D54-7D98-E111-8ED7-002618FDA279.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/864613E5-4B98-E111-971E-003048FFD7C2.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/868DA08D-5B98-E111-B44D-003048FFCBF0.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/8696787E-F298-E111-BA4A-001A928116BC.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/88C2B77D-5998-E111-B703-00261894389C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/8ED0E125-5598-E111-AE8C-003048678B16.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/926FFEE7-5098-E111-9E70-002618FDA265.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/948C7DFB-5398-E111-A49C-00261894383C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/9C205367-2B98-E111-B60E-002618943810.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/9E17136B-7898-E111-8627-001A92810AA2.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/9E8821C7-3898-E111-9F15-003048FFD7A2.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/A2D4AF50-3598-E111-A741-0026189438F8.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/AAA4D11B-5298-E111-B590-0026189438CC.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/ACE6BFFF-5498-E111-9606-002618943977.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/AE2DC452-5098-E111-8609-002618943922.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/B0BC7200-4F98-E111-8D34-002618943831.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/B0CE1A25-3498-E111-98F1-002618FDA211.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/B270074A-3398-E111-B27B-0026189438AC.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/B6F8102F-3698-E111-9F2D-00261894383B.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/BA037BAF-3298-E111-A133-00261894398C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/BA8B8D9C-3798-E111-BCED-0026189438C0.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/C06AF954-2E98-E111-B1CC-0026189437FE.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/C26262C6-3698-E111-A58F-003048678D6C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/C6E2021E-6098-E111-B996-002618943934.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/CA6214CA-2898-E111-B04A-003048678BF4.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/CC2E2912-5898-E111-84D7-003048678BE6.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/DC238E4A-5B98-E111-B4D7-003048678E8A.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/DC8D5AE9-7B98-E111-8E27-002618FDA262.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/E0F70543-4F98-E111-856D-002618943966.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/E2A79357-5A98-E111-9482-00261894392B.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/EA9DB2BC-2D98-E111-83B8-002618943902.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/EADD3D24-3298-E111-A0A2-001BFCDBD160.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/ECDCF32E-2F98-E111-945B-003048678B20.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/F4692886-7798-E111-AD06-0026189438B4.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/F6A7736A-4E98-E111-B899-002618943923.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/FA42324D-2C98-E111-978A-00304867920C.root',
-#'/store/mc/Summer12/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S8_START52_V9-v2/0000/FCEC475A-3098-E111-A0A1-0026189438D3.root'
 
 
-###2011
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/06634156-5FA4-E011-BEA2-003048D293B4.root',
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/0660AC04-B59C-E011-BEC7-E0CB4E19F9B4.root',
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/062DC08D-AF9C-E011-B713-90E6BA0D09B9.root',
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/061080FF-A99C-E011-90CD-0030487CDB24.root',
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/04F65B00-A89C-E011-978E-E0CB4E5536EF.root',
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/04B76CEA-AF9C-E011-8526-E0CB4E1A116A.root',
-#    '/store/mc/Summer11/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/047CEEC1-57A4-E011-86DC-0030487C6A1E.root'
-
-#    '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/06B46752-04CD-E011-B8B9-0015178C4994.root'
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/06883EDE-09CD-E011-899C-00A0D1EEE660.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/066F1232-05CD-E011-A14B-00A0D1EE8F34.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/065D3A98-0BCD-E011-8325-00A0D1EE95CC.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/0648740D-FECC-E011-A2C5-0024E876636C.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/063052DF-FCCC-E011-976C-00A0D1EE8A20.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/04920741-0DCD-E011-84FC-0024E8769B05.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/04437AFF-07CD-E011-8675-001D09676BAB.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/02A456DD-F8CC-E011-B0DF-00151796D680.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/02A3A00C-FECC-E011-82CC-0015178C0100.root',
-   # '/store/mc/Summer11/GJets_TuneZ2_200_HT_inf_7TeV-madgraph/AODSIM/PU_S4_START42_V11-v1/0000/027A27F3-FFCC-E011-8210-00266CF97FF4.root'
     )
 )
 ## 
@@ -229,6 +136,7 @@ switchJetCollection(process,cms.InputTag('ak5PFJets'),
 		 genJetCollection=cms.InputTag('ak5GenJets'),
                  doType1MET   = False,
                  doJetID      = True,
+		btagdiscriminators = ['jetBProbabilityBJetTags','jetProbabilityBJetTags','trackCountingHighPurBJetTags','trackCountingHighEffBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexBJetTags','combinedSecondaryVertexMVABJetTags','softMuonBJetTags','softMuonByPtBJetTags','softMuonByIP3dBJetTags','simpleSecondaryVertexNegativeHighEffBJetTags','simpleSecondaryVertexNegativeHighPurBJetTags']
                  )
 
 process.selectedPatJets.cut        = "pt > 10 && abs(eta) < 4.7"
@@ -308,6 +216,11 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
                                   'HLT_Photon125_v',
                                   'HLT_Photon135_v'),
+  
+    triggerFamily5  = cms.vstring('HLT_SingleMu_v'), ##NAMES TO BE CHECKED!
+    triggerFamily6  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
+    triggerFamily7  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
+    triggerFamily8  = cms.vstring([]), ##TO BE CHECKED!
 
     prescaleDontAsk = cms.vstring('HLT_Mu17_Ele8_CaloIdL_v', # don't ask for L1 prescales for these bits
                                   'HLT_Mu8_Ele17_CaloIdL_v',
