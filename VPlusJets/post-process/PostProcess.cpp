@@ -48,9 +48,15 @@ double CrossSection::xSection(string match){
 	}
 
 #include "AddEventWeight.C"
+#include "AddPUWeight.C"
+
 int Usage(const char *progName){
 	printf("Usage:\n");
-	printf("      %s fileName\n",progName);
+	printf("      %s fileName [pu]\n",progName);
+	printf("             - pu 0: add Cross Section Weights  And PUWeight. Pileupfile is pileup/all.json.pileup.root\n");
+	printf("             - pu 1: add PUWeight+1s. Pileupfile is pileup/all.json.pileup_UP.root\n");
+	printf("             - pu -1: add PUWeight-1s. Pileupfile is pileup/all.json.pileup_DN.root\n");
+	printf("             - pu 10: add PUWeight \n");
 	return 0;
 }
 
@@ -64,6 +70,28 @@ int main(int argc, char**argv){
 		if (xSec==CrossSection::multipleMatch){printf("Multiple matches in Cross Section in the Database\n");return -1;}
 
 		return AddEventWeight(argv[1],"accepted",xSec,"events","WEvents",1.0);
+		}
+	if(argc==3){
+		int pu;
+		sscanf(argv[2],"%d",&pu);
+		if(pu==0){
+			CrossSection A;
+			A.ReadTxtFile("xSec.ini");
+			double xSec=A.xSection(argv[1]);
+			if (xSec==CrossSection::noMatch){printf("No match Cross Section in the Database\n");return -1;}
+			if (xSec==CrossSection::multipleMatch){printf("Multiple matches in Cross Section in the Database\n");return -1;}
+
+			AddEventWeight(argv[1],"accepted",xSec,"events","WEvents",1.0);
+			AddPUWeight(argv[1],"mcPU");
+		}else if(pu==10){
+			AddPUWeight(argv[1],"mcPU");
+		}else if(pu ==1){
+			AddPUWeight(argv[1],"mcPU","accepted","events",1);
+		}else if(pu==-1){
+			AddPUWeight(argv[1],"mcPU","accepted","events",-1);
+			}
+			
+		
 		}
 
 }
