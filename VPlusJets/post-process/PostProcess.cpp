@@ -63,24 +63,32 @@ int Usage(const char *progName){
 int main(int argc, char**argv){
 	if(argc<2){return Usage(argv[0]);}
 	if(argc==2){
+		printf("2\n");//DEBUG
 		CrossSection A;
-		A.ReadTxtFile("xSec.ini");
+			size_t found;
+			found=string(argv[0]).find_last_of("/\\");	
+			string folder=string(argv[0]).substr(0,found);
+		A.ReadTxtFile( (folder+ "/xSec.ini").c_str());
 		double xSec=A.xSection(argv[1]);
 		if (xSec==CrossSection::noMatch){printf("No match Cross Section in the Database\n");return -1;}
 		if (xSec==CrossSection::multipleMatch){printf("Multiple matches in Cross Section in the Database\n");return -1;}
-
+		printf("xSec=%.1lf\n",xSec);
 		return AddEventWeight(argv[1],"accepted",xSec,"events","WEvents",1.0);
 		}
 	if(argc==3){
 		int pu;
+		printf("3\n");//DEBUG
 		sscanf(argv[2],"%d",&pu);
 		if(pu==0){
 			CrossSection A;
-			A.ReadTxtFile("xSec.ini");
+				size_t found;
+				found=string(argv[0]).find_last_of("/\\");	
+				string folder=string(argv[0]).substr(0,found);
+			A.ReadTxtFile( (folder+ "/xSec.ini").c_str());
 			double xSec=A.xSection(argv[1]);
 			if (xSec==CrossSection::noMatch){printf("No match Cross Section in the Database\n");return -1;}
 			if (xSec==CrossSection::multipleMatch){printf("Multiple matches in Cross Section in the Database\n");return -1;}
-
+			printf("xSec=%.1lf\n",xSec);
 			AddEventWeight(argv[1],"accepted",xSec,"events","WEvents",1.0);
 			AddPUWeight(argv[1],"mcPU");
 		}else if(pu==10){
