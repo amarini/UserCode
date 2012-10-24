@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.3 2012/07/24 13:02:20 jleonard Exp $
+// $Id: PATZJetsExpress.cc,v 1.4 2012/10/18 16:45:37 amarini Exp $
 //
 //
 
@@ -415,7 +415,9 @@ class PATZJetsExpress : public edm::EDAnalyzer {
   // new H/E calculator for photon
   ElectronHcalHelper::Configuration hcalCfg;
   ElectronHcalHelper *hcalHelper;
-
+	//xSec variables
+	//---- xSec information
+	TH1F*uXSec_; 
 
 };
 //
@@ -489,6 +491,7 @@ bool PATZJetsExpress::checkTriggerName(string aString,std::vector<string> aFamil
 void PATZJetsExpress::beginJob()
 {
   // ---- create the objects --------------------------------------------
+  hXSec_          	 = fTFileService->make<TH1F>("XSec", "XSec",20,-.5,19.5);hXSec_->Sumw2();
   hRecoLeptons_          = fTFileService->make<TH1I>("RecoLeptons", "RecoLeptons",6,0,6);hRecoLeptons_->Sumw2();
   hGenLeptons_           = fTFileService->make<TH1I>("GenLeptons", "GenLeptons",6,0,6);hGenLeptons_->Sumw2();
   hEvents_               = fTFileService->make<TH1I>("Events", "Events",1,0,1);hEvents_->Sumw2();
@@ -584,6 +587,27 @@ void PATZJetsExpress::beginRun(edm::Run const & iRun, edm::EventSetup const& iSe
            << processName_ << endl;
     }
   }
+	Handle<GenRunInfoProduct> genruninfo;  
+    iRun.getByLabel("generator",genruninfo);
+    cout<<"in begin Run  intXS/extXSLO/extXSNLO "<<genruninfo->internalXSec().value()<<"/"<<genruninfo->externalXSecLO().value()<<"/"<<genruninfo->externalXSecNLO().value()<<endl;	
+	hXSec->Fill(0 ,genruninfo->internalXSec().value()/pow(genruninfo->internalXSec().error(),2)    );
+	hXSec->Fill(1 ,1./pow(genruninfo->internalXSec().error(),2) );
+
+	hXSec->Fill(2 ,genruninfo->externalXSecLO().value()/pow(genruninfo->externalXSecLO().error(),2)  );
+	hXSec->Fill(3 ,1./pow(genruninfo->externalXSecLO().error(),2)  );
+
+	hXSec->Fill(4 ,genruninfo->externalXSecNLO().value()/pow(genruninfo->externalXSecNLO().error(),2) );
+	hXSec->Fill(5 ,1./pow(genruninfo->externalXSecNLO().error(),2) );
+
+	hXSec->Fill(6 , 1 );
+
+	hXSec->Fill(7 ,pow(genruninfo->internalXSec().value(),1) );
+	hXSec->Fill(8 ,pow(genruninfo->externalXSecLO().value(),1)  );
+	hXSec->Fill(9 ,pow(genruninfo->externalXSecNLO().value(),1) );
+
+	hXSec->Fill(10 ,pow(genruninfo->internalXSec().value(),2) );
+	hXSec->Fill(11 ,pow(genruninfo->externalXSecLO().value(),2)  );
+	hXSec->Fill(12 ,pow(genruninfo->externalXSecNLO().value(),2) );
 }
 // ---- event loop ------------------------------------------------------
 void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
