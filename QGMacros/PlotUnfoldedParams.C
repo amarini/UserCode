@@ -39,6 +39,7 @@ printf("Opening file %s\n",("../"+string(Directory)+"/Means.txt").c_str());
 if(fMeans==NULL) {printf("NO MEANS FILE\n");return 1;}
 char MeansStr[1023],ch;
 TF1 *func;//new TF1("gamma",func_,0,100,2);
+float PtMean=-1.;
 for(int i=0; i<20; i+=2)
 	{
 	int RhoMin=i,RhoMax=i+2;
@@ -46,7 +47,7 @@ for(int i=0; i<20; i+=2)
 		printf("Opening file Means\n");
 		rewind(fMeans);
 		int pt0_, pt1_, rho0_,rho1_;
-		float PtMean=(PtMin+PtMax)/2.0,PtRMS=(PtMax-PtMin)/2.0,RhoMean=(RhoMin+RhoMax)/2.0,RhoRMS=(RhoMax-RhoMin)/2.0;	
+		PtMean=(PtMin+PtMax)/2.0,PtRMS=(PtMax-PtMin)/2.0,RhoMean=(RhoMin+RhoMax)/2.0,RhoRMS=(RhoMax-RhoMin)/2.0;	
 		float ptMean=(PtMin+PtMax)/2.0,ptRMS=(PtMax-PtMin)/2.0,rhoMean=(RhoMin+RhoMax)/2.0,rhoRMS=(RhoMax-RhoMin)/2.0;	
 		while (fscanf(fMeans,"%d:%d %d:%d %f %f %f %f",&pt0_,&pt1_,&rho0_,&rho1_,&ptMean,&ptRMS,&rhoMean,&rhoRMS)!=EOF){
 			if((pt0_==PtMin)&&(pt1_==PtMax)&&(rho0_==RhoMin)&&(rho1_==RhoMax)){
@@ -125,12 +126,12 @@ FILE *fw;
 if(outTxtFileName[0]!=0)fw=fopen(outTxtFileName,"a");
 else fw=stdout;
 
-pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==0 %f bq %f==\n==0 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==%s:0 %f bq %f==\n==%s:0 %f aq %f==\n",varName,TMath::Log(PtMean),pol1->GetParameter(0),varName,TMath::Log(PtMean),pol1->GetParameter(1));
 
 pol1->SetParameter(0,v->at(2));
 pol1->SetParameter(1,v->at(1));
 delete v;
-pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==0 %f bg %f==\n==0 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==%s:0 %f bg %f==\n==%s:0 %f ag %f==\n",varName,TMath::Log(PtMean),pol1->GetParameter(0),varName,TMath::Log(PtMean),pol1->GetParameter(1));
 
 c1->cd(2);
 D->SetTGRAPH(rq1,0);
@@ -142,14 +143,14 @@ pol1->SetParameter(1,v->at(1));
 rq1->Draw("A P");
 rg1->Draw("P SAME");
 
-pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bq %f==\n==1 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==%s:1 %f bq %f==\n==%s:1 %f aq %f==\n",varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
 pol1->SetParameter(0,v->at(2));
 pol1->SetParameter(1,v->at(1));
 delete v;
 
 
-pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bg %f==\n==1 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==%s:1 %f bg %f==\n==%s:1 %f ag %f==\n",varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
 if(varName[0]!='n'){
 c1->cd(3);
@@ -161,12 +162,12 @@ v=D->Fit();
 
 pol1->SetParameter(0,v->at(0));
 pol1->SetParameter(1,v->at(1));
-pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bq %f==\n==1 %f aq %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+pol1->SetLineColor(kBlack);pol1->DrawCopy("SAME");fprintf(fw,"==%s: 1 %f bq %f==\n==%s:1 %f aq %f==\n",varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 
 pol1->SetParameter(0,v->at(2));
 pol1->SetParameter(1,v->at(1));
 
-pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==1 %f bg %f==\n==1 %f ag %f==\n",TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
+pol1->SetLineColor(kRed);pol1->DrawCopy("SAME");fprintf(fw,"==%s:1 %f bg %f==\n==%s:1 %f ag %f==\n",varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(0),varName,TMath::Log((PtMin+PtMax)/2.),pol1->GetParameter(1));
 }//end 3rd params plot
 
 //Getting old parameters

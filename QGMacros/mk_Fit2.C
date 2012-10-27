@@ -92,13 +92,13 @@ for(int k=0; k<3;k++)
 	ptD_gluon[k]->SetName(str);
 	}
 fprintf(stderr,"Getting Bins\n");
-double RhoBins[25];
+double RhoBins[100];
 double PtBins[25];
 //getBins(PtBins,20,15,1000,true);
 //getBins(RhoBins,20,0,20,false);
 getBins_int(18,PtBins,20,1000,true);
 PtBins[18]=3500;
-getBins_int(21,RhoBins,0,20,false);
+getBins_int(41,RhoBins,0,40,false);
 fprintf(stderr,"Starting Loop\n");
 for(int j=0; j<3;j++)
 {
@@ -113,7 +113,7 @@ else fprintf(fw,"{2 JetPt Rho 1 x ((x-[0])<0)?0:TMath::Exp(-1.*(x-[0])*[1]/[2])*
 gammadistr->SetParLimits(0,1,20);
 gammadistr->SetParLimits(1,1,50);
 
-for(int RhoBin=0;RhoBin<20;RhoBin++)
+for(int RhoBin=0;RhoBin<40;RhoBin++)
 for(int PtBin=0; PtBin<18;PtBin++)
 {
 	fprintf(stderr,"Bin: Rho %.0lf Pt %.0lf - %.0lf\n",floor(RhoBins[RhoBin]),ceil(PtBins[PtBin]),ceil(PtBins[PtBin+1]));
