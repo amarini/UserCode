@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.5 2012/10/24 13:03:01 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.6 2012/12/07 11:01:45 amarini Exp $
 //
 //
 
@@ -193,7 +193,18 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         float muf;
         // ---- electron energy fraction --------------------------------
         float elf;
+	// ---- qgl ----------------------------------------------------
+	float qgl;
+	// ---- rms ----------------------------------------------------
+	float rms;
       };
+     class GENJET : public TLorentzVector {
+	public:
+	GENJET(float x=0., float y=0., float z=0., float t=0.) : TLorentzVector( x, y, z, t ){veto=0;}
+	GENJET(TLorentzVector &v):TLorentzVector(v){veto=0;}
+	virtual ~GENJET(){}
+	int veto;	
+	}
 
 	vector<float> *ComputeQGVariables(edm::View<pat::Jet>::const_iterator & jet,const Event& iEvent,int index);
       // ---- sorting rules ---------------------------------------------
@@ -249,7 +260,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       bool          mIsMC,mOnlyMC;
   int           mMinNjets,mGENType, mDressedRadius;
       double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
-      int 	    mGENCrossCleaning;
+      //int 	    mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
       edm::InputTag mJetsName,mSrcRho,mSrcRho25;
       // ---- tree variables --------------------------------------------
@@ -335,11 +346,11 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float VBPartonPhi_;
       int VBPartonDM_; // decay mode
       // ---- jet kinematics --------------------------------------------
-      vector<float> *jetPt_,*jetEta_,*jetY_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetYGEN_,*jetPhiGEN_,*jetEGEN_;
+      vector<float> *jetPt_,*jetEta_,*jetY_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetYGEN_,*jetPhiGEN_,*jetEGEN_,*jetVetoGEN;
       // ---- jet composition fractions ---------------------------------
       vector<float> *jetCHF_,*jetPHF_,*jetNHF_,*jetMUF_,*jetELF_;
       // ---- other jet properties --------------------------------------
-      vector<float> *jetBeta_,*jetBtag_,*jetArea_,*jetJEC_,*jetUNC_;
+      vector<float> *jetBeta_,*jetBtag_,*jetArea_,*jetJEC_,*jetUNC_,*jetQGL_,*jetRMS_;
       // ---- tight jet id ----------------------------------------------
       vector<int>   *jetId_; 
       // ---- DR rejected jet kinematics --------------------------------------------
@@ -460,7 +471,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mGENType           = iConfig.getParameter<int>                       ("GENType");
   mDressedRadius     = iConfig.getParameter<double>                    ("dressedRadius");
   mOnlyMC	     = iConfig.getParameter<bool>		       ("OnlyMC");
-  mGENCrossCleaning  = iConfig.getParameter<int>                       ("GENCrossCleaning"); //0: Nothing 1: Leptons 2: photons (Bit) 4:
+  //mGENCrossCleaning  = iConfig.getParameter<int>                       ("GENCrossCleaning"); //0: Nothing 1: Leptons 2: photons (Bit) 4:
 
   // initializing the PF isolation estimator for photon isolation 2012
   isolator.initializePhotonIsolation(kTRUE);
@@ -630,7 +641,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 
   // ----  MC truth block -----------------------------------------------
   vector<GENPARTICLE>      myGenLeptons;
-  vector<TLorentzVector> myGenJets;  
+  //vector<TLorentzVector> myGenJets;  
+  vector<GENJET> myGenJets;  
   vector<GENPARTICLE> myGenPhotons;  
   TLorentzVector VBParton(0,0,0,0);
   if (!isRealData_) {
@@ -762,31 +774,35 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     // ---- genjets -----------------------------------------------------
     for(i_genjet = genjets->begin(); i_genjet != genjets->end(); i_genjet++) {
       // ---- genlepton - genjet cross cleaning -------------------------
-      bool isISO(true);
-      if(mGENCrossCleaning&1){
+      //bool isISO(true);
+      int isVETO=0;
+      //if(mGENCrossCleaning&1)
+      {
       for(unsigned l=0;l<myGenLeptons.size();l++) { 
         // ---- genjet vs 2 leading genlepton cleaning ------------------
         if (l >= 2) continue; 
         if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi()) < mJetLepIsoR) {
-          isISO = false;
+          isVETO |= (1<<l);
           continue;
         }
       }
       }
-      if(mGENCrossCleaning&2){
+      //if(mGENCrossCleaning&2)
+      {
       // ---- genjet vs leading leading photon cleaning ------------------
       if (myGenPhotons.size()>0) {
        if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenPhotons[0].p4.Eta(),myGenPhotons[0].p4.Phi()) < mJetPhoIsoR) { 
-          isISO = false;
+	  isVETO|= (1<<2);
           continue;
         }
       }
       }
 
-      if (!isISO) continue;
+      //if (!isISO) continue;
       // ---- preselection on genjets -----------------------------------
       if ((i_genjet->pt() < mMinJetPt) || (fabs(i_genjet->eta()) > mMaxJetEta)) continue;
       TLorentzVector aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
+	aGenJet.veto=isVETO;
       myGenJets.push_back(aGenJet);  
     }// genjet loop
   }// if MC
@@ -1266,6 +1282,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       int chm   = i_jet->chargedHadronMultiplicity();
       int npr   = i_jet->chargedMultiplicity() + i_jet->neutralMultiplicity();
       bool id = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_jet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_jet->eta())>2.4));
+      float rms=TMath::Sqrt( TMath::Power(i_jet->UserFloat("axis1"),2) + TMath::Power(i_jet->UserFloat("axis2"),2) );
       if (!id) jetIsIDed = false;
       // ---- jet vertex association --------------------------------------
       // ---- get the vector of tracks ------------------------------------ 
@@ -1328,9 +1345,11 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	    QGVars_->push_back(-1.0);
 	  QGVars_->push_back(-99.);
 	}
+	aJet.qgl=QGvars->at(1);
 	QGvars->clear();
 	delete QGvars;
       }
+	aJet.rms=rms;
     }// jet loop
 
     // ---- sort jets according to their corrected pt ---------------------
@@ -1559,6 +1578,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetMUF_      ->push_back(myJets[j].muf);
         jetELF_      ->push_back(myJets[j].elf);
         jetId_       ->push_back(myJets[j].id);  
+        jetQGL_     ->push_back(myJets[j].qgl);
+        jetRMS_     ->push_back(myJets[j].rms);
       }
       for(unsigned j = 0; j < myRJets.size(); j++) {
         rjetPt_       ->push_back(myRJets[j].p4.Pt()); 
@@ -1749,6 +1770,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetPhiGEN_      ->push_back(myGenJets[j].Phi()); 
         jetEGEN_        ->push_back(myGenJets[j].Energy()); 
         jetYGEN_        ->push_back(myGenJets[j].Rapidity());   
+        jetVetoGEN_     ->push_back(myGenJets[j].veto); 
       }
       isZleadGEN_ = 1;
       if (nJetsGEN_ > 0) {
@@ -1850,6 +1872,8 @@ void PATZJetsExpress::buildTree()
   jetY_              = new std::vector<float>();
   jetArea_           = new std::vector<float>();
   jetBeta_           = new std::vector<float>();
+  jetQGL_           = new std::vector<float>();
+  jetRMS_           = new std::vector<float>();
   jetBtag_           = new std::vector<float>();
   jetJEC_            = new std::vector<float>();
   jetUNC_            = new std::vector<float>();
@@ -1889,6 +1913,7 @@ void PATZJetsExpress::buildTree()
   jetPhiGEN_         = new std::vector<float>();
   jetEGEN_           = new std::vector<float>();
   jetYGEN_           = new std::vector<float>();
+  jetVetoGEN_          = new std::vector<float>(); 
   jetllDPhiGEN_      = new std::vector<float>();
   jetllDPhi_         = new std::vector<float>();
   jetPhotonDPhi_     = new std::vector<float>();
@@ -1992,6 +2017,8 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetY"             ,"vector<float>"     ,&jetY_);
   myTree_->Branch("jetArea"          ,"vector<float>"     ,&jetArea_);
   myTree_->Branch("jetBeta"          ,"vector<float>"     ,&jetBeta_);
+  myTree_->Branch("jetQGL"          ,"vector<float>"     ,&jetQGL_);
+  myTree_->Branch("jetRMS"          ,"vector<float>"     ,&jetRMS_);
   myTree_->Branch("jetBtag"          ,"vector<float>"     ,&jetBtag_);
   myTree_->Branch("jetJEC"           ,"vector<float>"     ,&jetJEC_);
   myTree_->Branch("jetUNC"           ,"vector<float>"     ,&jetUNC_);
@@ -2060,6 +2087,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetEtaGEN"        ,"vector<float>"     ,&jetEtaGEN_);
   myTree_->Branch("jetPhiGEN"        ,"vector<float>"     ,&jetPhiGEN_);
   myTree_->Branch("jetEGEN"          ,"vector<float>"     ,&jetEGEN_);
+  myTree_->Branch("jetVetoGEN"         ,"vector<float>"     ,&jetVetoGEN_);
   myTree_->Branch("jetllDPhiGEN"     ,"vector<float>"     ,&jetllDPhiGEN_);
   myTree_->Branch("HTJetSumGEN"      ,&HTJetSumGEN_       ,"HTJetSumGEN/F");  
   myTree_->Branch("HTParSum"         ,&HTParSum_          ,"HTParSum/F");  
@@ -2189,6 +2217,8 @@ void PATZJetsExpress::clearTree()
   jetY_              ->clear();
   jetArea_           ->clear();
   jetBeta_           ->clear();
+  jetQGL_           ->clear();
+  jetRMS_           ->clear();
   jetBtag_           ->clear();
   jetJEC_            ->clear();
   jetUNC_            ->clear();
@@ -2254,6 +2284,7 @@ void PATZJetsExpress::clearTree()
   jetPhiGEN_         ->clear();
   jetEGEN_           ->clear();
   jetYGEN_           ->clear();
+  jetVetoGEN_          ->clear();
   jetllDPhiGEN_      ->clear();
   photonEGEN_        = -999;
   photonPtGEN_       = -999;
