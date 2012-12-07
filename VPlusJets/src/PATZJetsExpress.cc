@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.4 2012/10/18 16:45:37 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.5 2012/10/24 13:03:01 amarini Exp $
 //
 //
 
@@ -218,6 +218,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       TH1F  *hGenMuonEta_,*hGenMuonMatchedEta_;
       TH1F  *hGenElectronPt_,*hGenElectronMatchedPt_;
       TH1F  *hGenElectronEta_,*hGenElectronMatchedEta_;
+      TH1F* hXSec_;
       // ---- simulated in-time pile-up ---------------------------------
       TH1D  *mcPU_;
       // ---- flag to set the JEC uncertainty object --------------------
@@ -246,7 +247,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       HLTConfigProvider hltConfig_;
       // ---- configurable parameters -----------------------------------
       bool          mIsMC,mOnlyMC;
-      int           mMinNjets,mGENType;
+  int           mMinNjets,mGENType, mDressedRadius;
       double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
       int 	    mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
@@ -457,6 +458,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   triggerResultsTag_ = iConfig.getParameter<edm::InputTag>             ("triggerResults");
   triggerEventTag_   = iConfig.getParameter<edm::InputTag>             ("triggerEvent");   
   mGENType           = iConfig.getParameter<int>                       ("GENType");
+  mDressedRadius     = iConfig.getParameter<double>                    ("dressedRadius");
   mOnlyMC	     = iConfig.getParameter<bool>		       ("OnlyMC");
   mGENCrossCleaning  = iConfig.getParameter<int>                       ("GENCrossCleaning"); //0: Nothing 1: Leptons 2: photons (Bit) 4:
 
@@ -550,72 +552,75 @@ void PATZJetsExpress::beginJob()
 // ---- method called everytime there is a new run ----------------------
 void PATZJetsExpress::beginRun(edm::Run const & iRun, edm::EventSetup const& iSetup)
 {
-  if (triggerNames_.size() > 0) {
-    bool changed(true);
-    if (hltConfig_.init(iRun,iSetup,processName_,changed)) {
-      if (changed) {
-        triggerNamesFull_.clear();
-        // check if trigger names in (new) config
-        cout<<"New trigger menu found !!!"<<endl;
-        triggerIndex_.clear(); 
-        const unsigned int n(hltConfig_.size());
-        for(unsigned itrig=0;itrig<triggerNames_.size();itrig++) {
-          bool found(false);
-          for(unsigned iName=0;iName<n;iName++) {
-            std::string ss(hltConfig_.triggerName(iName));
-            if (int(ss.find(triggerNames_[itrig])) > -1) {
-              triggerNamesFull_.push_back(ss);
-              found = true;
-              continue;
-            } 
-          }
-          if (!found) {
-            triggerNamesFull_.push_back("");
-          }
-          triggerIndex_.push_back(hltConfig_.triggerIndex(triggerNamesFull_[itrig]));
-          cout<<triggerNames_[itrig]<<" "<<triggerNamesFull_[itrig]<<" "<<triggerIndex_[itrig]<<" ";  
-          if (triggerIndex_[itrig] >= n)
-            cout<<"does not exist in the current menu"<<endl;
-          else
-            cout<<"exists"<<endl;
-        }// trigger names loop
+  if(!mOnlyMC){
+    if (triggerNames_.size() > 0) {
+      bool changed(true);
+      if (hltConfig_.init(iRun,iSetup,processName_,changed)) {
+	if (changed) {
+	  triggerNamesFull_.clear();
+	  // check if trigger names in (new) config
+	  cout<<"New trigger menu found !!!"<<endl;
+	  triggerIndex_.clear(); 
+	  const unsigned int n(hltConfig_.size());
+	  for(unsigned itrig=0;itrig<triggerNames_.size();itrig++) {
+	    bool found(false);
+	    for(unsigned iName=0;iName<n;iName++) {
+	      std::string ss(hltConfig_.triggerName(iName));
+	      if (int(ss.find(triggerNames_[itrig])) > -1) {
+		triggerNamesFull_.push_back(ss);
+		found = true;
+		continue;
+	      } 
+	    }
+	    if (!found) {
+	      triggerNamesFull_.push_back("");
+	    }
+	    triggerIndex_.push_back(hltConfig_.triggerIndex(triggerNamesFull_[itrig]));
+	    cout<<triggerNames_[itrig]<<" "<<triggerNamesFull_[itrig]<<" "<<triggerIndex_[itrig]<<" ";  
+	    if (triggerIndex_[itrig] >= n)
+	      cout<<"does not exist in the current menu"<<endl;
+	    else
+	      cout<<"exists"<<endl;
+	  }// trigger names loop
+	}
+      } 
+      else {
+	cout << "ProcessedTreeProducer::analyze:"
+	     << " config extraction failure with process name "
+	     << processName_ << endl;
       }
-    } 
-    else {
-      cout << "ProcessedTreeProducer::analyze:"
-           << " config extraction failure with process name "
-           << processName_ << endl;
     }
   }
-	Handle<GenRunInfoProduct> genruninfo;  
-    iRun.getByLabel("generator",genruninfo);
-    cout<<"in begin Run  intXS/extXSLO/extXSNLO "<<genruninfo->internalXSec().value()<<"/"<<genruninfo->externalXSecLO().value()<<"/"<<genruninfo->externalXSecNLO().value()<<endl;	
-	hXSec->Fill(0 ,genruninfo->internalXSec().value()/pow(genruninfo->internalXSec().error(),2)    );
-	hXSec->Fill(1 ,1./pow(genruninfo->internalXSec().error(),2) );
-
-	hXSec->Fill(2 ,genruninfo->externalXSecLO().value()/pow(genruninfo->externalXSecLO().error(),2)  );
-	hXSec->Fill(3 ,1./pow(genruninfo->externalXSecLO().error(),2)  );
-
-	hXSec->Fill(4 ,genruninfo->externalXSecNLO().value()/pow(genruninfo->externalXSecNLO().error(),2) );
-	hXSec->Fill(5 ,1./pow(genruninfo->externalXSecNLO().error(),2) );
-
-	hXSec->Fill(6 , 1 );
-
-	hXSec->Fill(7 ,pow(genruninfo->internalXSec().value(),1) );
-	hXSec->Fill(8 ,pow(genruninfo->externalXSecLO().value(),1)  );
-	hXSec->Fill(9 ,pow(genruninfo->externalXSecNLO().value(),1) );
-
-	hXSec->Fill(10 ,pow(genruninfo->internalXSec().value(),2) );
-	hXSec->Fill(11 ,pow(genruninfo->externalXSecLO().value(),2)  );
-	hXSec->Fill(12 ,pow(genruninfo->externalXSecNLO().value(),2) );
+  Handle<GenRunInfoProduct> genruninfo;  
+  iRun.getByLabel("generator",genruninfo);
+  cout<<"in begin Run  intXS/extXSLO/extXSNLO "<<genruninfo->internalXSec().value()<<"/"<<genruninfo->externalXSecLO().value()<<"/"<<genruninfo->externalXSecNLO().value()<<endl;	
+  hXSec_->Fill(0. ,genruninfo->internalXSec().value()/pow(genruninfo->internalXSec().error(),2)    );
+  hXSec_->Fill(1 ,1./pow(genruninfo->internalXSec().error(),2) );
+  
+  hXSec_->Fill(2 ,genruninfo->externalXSecLO().value()/pow(genruninfo->externalXSecLO().error(),2)  );
+  hXSec_->Fill(3 ,1./pow(genruninfo->externalXSecLO().error(),2)  );
+  
+  hXSec_->Fill(4 ,genruninfo->externalXSecNLO().value()/pow(genruninfo->externalXSecNLO().error(),2) );
+  hXSec_->Fill(5 ,1./pow(genruninfo->externalXSecNLO().error(),2) );
+  
+  hXSec_->Fill(6 , 1 );
+  
+  hXSec_->Fill(7 ,pow(genruninfo->internalXSec().value(),1) );
+  hXSec_->Fill(6 ,pow(genruninfo->externalXSecLO().value(),1)  );
+  hXSec_->Fill(9 ,pow(genruninfo->externalXSecNLO().value(),1) );
+  
+  hXSec_->Fill(10 ,pow(genruninfo->internalXSec().value(),2) );
+  hXSec_->Fill(11 ,pow(genruninfo->externalXSecLO().value(),2)  );
+  hXSec_->Fill(12 ,pow(genruninfo->externalXSecNLO().value(),2) );
 }
 // ---- event loop ------------------------------------------------------
 void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 {
-  // setup for new H/E calculator for 2012
-  hcalHelper->checkSetup(iSetup);
-  hcalHelper->readEvent(iEvent);
-
+  if(!mOnlyMC){
+    // setup for new H/E calculator for 2012
+    hcalHelper->checkSetup(iSetup);
+    hcalHelper->readEvent(iEvent);
+  }
   // ---- event counter -------------------------------------------------
   hEvents_->Fill(0.5);  
   // ---- initialize the tree branches ----------------------------------
@@ -630,18 +635,20 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   TLorentzVector VBParton(0,0,0,0);
   if (!isRealData_) {
     // ---- PU ----------------------------------------------------------
-    Handle<vector<PileupSummaryInfo> > pileupInfo;
-    iEvent.getByLabel("addPileupInfo", pileupInfo);
-    vector<PileupSummaryInfo>::const_iterator PUI;
-    puOOT_ = 0;
-    puINT_ = 0;
-    for(PUI = pileupInfo->begin(); PUI != pileupInfo->end(); ++PUI) {
-      if (PUI->getBunchCrossing() == 0)
-        puINT_ += PUI->getPU_NumInteractions();     
-      else
-        puOOT_ += PUI->getPU_NumInteractions();
-    }// PUI loop
-    mcPU_->Fill(puINT_);
+    if(!mOnlyMC){
+      Handle<vector<PileupSummaryInfo> > pileupInfo;
+      iEvent.getByLabel("addPileupInfo", pileupInfo);
+      vector<PileupSummaryInfo>::const_iterator PUI;
+      puOOT_ = 0;
+      puINT_ = 0;
+      for(PUI = pileupInfo->begin(); PUI != pileupInfo->end(); ++PUI) {
+	if (PUI->getBunchCrossing() == 0)
+	  puINT_ += PUI->getPU_NumInteractions();     
+	else
+	  puOOT_ += PUI->getPU_NumInteractions();
+      }// PUI loop
+      mcPU_->Fill(puINT_);
+    }
     // --- MC weight
     Handle<GenEventInfoProduct> geninfo;  
     iEvent.getByLabel("generator",geninfo);
@@ -655,7 +662,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     GenParticleCollection::const_iterator i_gen;
     GenParticleCollection::const_iterator j_gen;
     GenJetCollection::const_iterator i_genjet;
- 
 
     int VBPartonDM=0;
     // ---- loop over the gen particles ---------------------------------
@@ -703,7 +709,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 			if(j_gen->status() == 1 && abs(j_gen->pdgId()) ==22){
 			    TLorentzVector phoP4GEN(j_gen->p4().Px(),j_gen->p4().Py(),j_gen->p4().Pz(),j_gen->p4().E());
 			    float DR = phoP4GEN.DeltaR(lepP4BARE);
-			    if(DR<0.1) lepP4GEN+=phoP4GEN;
+			    if(DR<mDressedRadius) lepP4GEN+=phoP4GEN;
 			}//if: st=1, pdgid=22
 			}//for: gen particle (2nd loop)
 			break;
@@ -784,549 +790,568 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       myGenJets.push_back(aGenJet);  
     }// genjet loop
   }// if MC
-  //---- Rho ------------------------------------------------------------
-  Handle<double> rho;
-  iEvent.getByLabel(mSrcRho,rho);
-  //---- Rho25 ------------------------------------------------------------
-  Handle<double> rho25;
-  iEvent.getByLabel(mSrcRho25,rho25);
-  //---- reco vertices block --------------------------------------------
-  edm::Handle<VertexCollection> vertices_;
-  iEvent.getByLabel("offlinePrimaryVertices", vertices_);
-  const reco::Vertex *primVtx = &(*(vertices_.product()))[0];
-  for(VertexCollection::const_iterator i_vtx = vertices_->begin(); i_vtx != vertices_->end(); ++i_vtx) {  
-    if (!i_vtx->isFake() && (fabs(i_vtx->z()) < 24) && (i_vtx->ndof() >= 4)) {
-      vtxZ_   ->push_back(i_vtx->z());
-      vtxNdof_->push_back(i_vtx->ndof());
-    }
-  }
-  //---- beam spot for conversion-safe electron veto --------------------
-  edm::Handle<reco::BeamSpot> bsHandle;
-  iEvent.getByLabel("offlineBeamSpot", bsHandle);
-  const reco::BeamSpot &beamspot = *bsHandle.product();
 
-  //---- conversions for conversion-safe electron veto -------------------
-  edm::Handle<reco::ConversionCollection> hConversions;
-  iEvent.getByLabel("allConversions", hConversions);
-
-  //---- leptons block --------------------------------------------------
-  //  Handle<View<GsfElectron> > electrons_;
-  Handle<GsfElectronCollection> electrons_;
-  iEvent.getByLabel("gsfElectrons", electrons_);
-  Handle<View<Muon> > muons_;
-  iEvent.getByLabel("muons",muons_);
+  //define lepton, photon and jet member to continue the MC only loop
+  //with less effort
   vector<PARTICLE> myLeptons;
-  // ---- loop over muons -----------------------------------------------
-  for(View<Muon>::const_iterator i_mu = muons_->begin(); i_mu != muons_->end(); ++i_mu) {
-    //---- apply kinematic and geometric acceptance 
-    if ((i_mu->pt() < mMinLepPt) || (fabs(i_mu->eta()) > mMaxLepEta))  continue;
-
-    //---- apply VBTF-like id (GlobalMuonPromptTight)
-    //---- https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
-    if (!muon::isGoodMuon(*i_mu,muon::GlobalMuonPromptTight))          continue; // should be redundant wrt the cuts below
-    if (!(i_mu->isGlobalMuon()))                                       continue;
-    if (fabs(i_mu->globalTrack()->normalizedChi2()) >= 10)             continue;
-    if (i_mu->globalTrack()->hitPattern().numberOfValidMuonHits()==0)  continue;
-    if (i_mu->numberOfMatchedStations() <=1)                           continue; 
-    if (fabs(i_mu->innerTrack()->dxy(primVtx->position())) >= 0.2)     continue;
-    if (i_mu->track()->hitPattern().numberOfValidPixelHits() == 0)     continue; 
-    if (i_mu->track()->hitPattern().numberOfValidTrackerHits() <= 10)  continue; 
-
-    
-    //---- subdetector isolation rho corrected, for efficiency studies look at
-    //---- https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs
-    //---- https://indico.cern.ch/getFile.py/access?contribId=2&resId=0&materialId=slides&confId=128982 
-    float muonIso = (i_mu->isolationR03().sumPt + i_mu->isolationR03().emEt + i_mu->isolationR03().hadEt)/i_mu->pt();
-
-
-    float muEta = i_mu->eta(); // essentially track direction at Vtx (recommended prescription)
-    float Aecal=0.041; // initiallize with EE value
-    float Ahcal=0.032; // initiallize with HE value
-    if (fabs(muEta)<1.48) { 
-      Aecal = 0.074;   // substitute EB value 
-      Ahcal = 0.023;   // substitute EE value
-    }
-    float muonIsoRho = (i_mu->isolationR03().sumPt + max(0.,i_mu->isolationR03().emEt -Aecal*(*rho)) 
-                       + max(0.,i_mu->isolationR03().hadEt-Ahcal*(*rho)))/i_mu->pt();
-
-    if (muonIsoRho > mMaxCombRelIso03)                                 continue;
-    if (i_mu->innerTrack()->hitPattern().numberOfValidHits() < 11)     continue;
-    if (i_mu->innerTrack()->hitPattern().numberOfValidPixelHits() < 1) continue;
-    if (i_mu->numberOfMatches() < 2)                                   continue;
-    if (i_mu->innerTrack()->ptError()/i_mu->pt() > 0.1)                continue;
-      
-    PARTICLE aLepton;
-    TLorentzVector lepP4(i_mu->p4().Px(),i_mu->p4().Py(),i_mu->p4().Pz(),i_mu->p4().E());
-    aLepton.p4   = lepP4;
-    aLepton.chid = 2*i_mu->charge();
-    aLepton.id   = 1; // all muons are tight
-    aLepton.iso  = muonIso;
-    aLepton.isoPF = -999;
-    aLepton.isoRho = muonIsoRho;
-    aLepton.trackIso = -1;
-    aLepton.ecalIso = -1;
-    aLepton.hcalIso = -1;
-    aLepton.sigmaIEtaIEta = -1;
-    aLepton.hadronicOverEm = -1;
-    myLeptons.push_back(aLepton);
-  }// muon loop
-  // ---- loop over electrons -------------------------------------------
-  //  for(View<GsfElectron>::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
-  for(GsfElectronCollection::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
-    float elPt                           = i_el->p4().Pt();
-    float elEta                          = i_el->p4().Eta();
-    float trackIso                       = i_el->dr03TkSumPt();
-    float ecalIso                        = i_el->dr03EcalRecHitSumEt();
-    float hcalIso                        = i_el->dr03HcalTowerSumEt();
-    float sigmaIetaIeta                  = i_el->sigmaIetaIeta();
-    float hadronicOverEm                 = i_el->hadronicOverEm();
-    float deltaPhiSuperClusterTrackAtVtx = i_el->deltaPhiSuperClusterTrackAtVtx();
-    float deltaEtaSuperClusterTrackAtVtx = i_el->deltaEtaSuperClusterTrackAtVtx();
-    bool  isTight(false);
-    float combinedIso03 = (i_el->dr03TkSumPt()+max(0.,i_el->dr03EcalRecHitSumEt()-1.)+i_el->dr03HcalTowerSumEt())/i_el->p4().Pt();
-    float combinedIso03Rho =0 ;
-    float epDifference 			 = fabs( 1./i_el->ecalEnergy() - i_el->eSuperClusterOverP()/i_el->ecalEnergy()  );
-    
-    float Aecal[2] = {0.101,0.046};
-    float Ahcal[2] = {0.021,0.040};
-    enum detID {barrel=0,endcap};
-
-    if ((elPt < mMinLepPt) || (fabs(elEta) > mMaxLepEta)) continue;
-    // ---- use WP90 as default preselection, store also WP80 subset (https://twiki.cern.ch/twiki/bin/view/CMS/VbtfEleID2011)
-    if (i_el->isEB()) {
-      combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[barrel]*(*rho)) + max(0.,hcalIso - Ahcal[barrel]*(*rho)) )/elPt; 
-      if (combinedIso03Rho>mMaxCombRelIso03)              continue;  
-      if (sigmaIetaIeta > 0.01)                           continue; 
-      if (deltaPhiSuperClusterTrackAtVtx > 0.15)           continue; //2011: 0.8
-      if (deltaEtaSuperClusterTrackAtVtx > 0.007)         continue;
-      if (hadronicOverEm > 0.12)                          continue; //2011: 0.15 	
-      if ( epDifference >0.05)				  continue; //2011: Not implemented
-      if (sigmaIetaIeta < 0.01) {  // WP80 subset: 2012 Medium
-	if (deltaPhiSuperClusterTrackAtVtx < 0.06) 
-	  if (deltaEtaSuperClusterTrackAtVtx < 0.004) 
-	    if (hadronicOverEm < 0.12)//2011: 0.04 
-              isTight = true;
-      }
-    }// if EE
-    if (i_el->isEE()) {
-      combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[endcap]*(*rho)) + max(0.,hcalIso - Ahcal[endcap]*(*rho)) )/elPt; 
-      if (combinedIso03Rho>mMaxCombRelIso03)              continue;
-      if (sigmaIetaIeta > 0.03)                           continue;
-      if (deltaPhiSuperClusterTrackAtVtx > 0.1)           continue; //2011:.7
-      if (deltaEtaSuperClusterTrackAtVtx > 0.009)          continue;//
-      if (hadronicOverEm > 0.10)                          continue;//2011:.15
-      if ( epDifference >0.05)				  continue; //2011: Not implemented
-      if (sigmaIetaIeta<0.03) {  // WP80 subset
-	if (deltaPhiSuperClusterTrackAtVtx < 0.03)
-	  if (deltaEtaSuperClusterTrackAtVtx < 0.007)
-	    if (hadronicOverEm < 0.15) 
-              isTight = true;
-      } 
-    }
-    PARTICLE aLepton;
-    TLorentzVector lepP4(i_el->p4().Px(),i_el->p4().Py(),i_el->p4().Pz(),i_el->p4().E());
-    aLepton.p4   = lepP4;
-    aLepton.chid = i_el->charge();
-    aLepton.id   = 0;
-    if (isTight) {
-      aLepton.id = 1;
-    }
-    aLepton.iso   = combinedIso03;
-    aLepton.isoPF = -999;
-    aLepton.isoRho = combinedIso03Rho;
-    aLepton.trackIso = trackIso;
-    aLepton.ecalIso = ecalIso;
-    aLepton.hcalIso = hcalIso;
-    aLepton.sigmaIEtaIEta = sigmaIetaIeta;
-    aLepton.hadronicOverEm = hadronicOverEm;
-    myLeptons.push_back(aLepton);
-  } // electrons loop
-  hRecoLeptons_->Fill(int(myLeptons.size()));
-  // ---- sort the leptons according to their pt ------------------------
-  sort(myLeptons.begin(),myLeptons.end(),lepSortingRule); 
-  // ---- PF isolation for leptons --------------------------------------
-  //  Handle<View<PFCandidate> > pfCandidates;
-  Handle<PFCandidateCollection> pfCandidates;
-  iEvent.getByLabel("particleFlow", pfCandidates);
-  for(unsigned il=0;il<myLeptons.size();il++) {
-    float sumPt(0.0);
-    for(unsigned ipf=0;ipf<pfCandidates->size();ipf++) {
-      float dR = deltaR(myLeptons[il].p4.Eta(),myLeptons[il].p4.Phi(),(*pfCandidates)[ipf].eta(),(*pfCandidates)[ipf].phi());
-      if (dR < 0.3) {
-        sumPt += (*pfCandidates)[ipf].pt();
-      }
-    }
-    float isoPF = (sumPt-myLeptons[il].p4.Pt()-(*rho)*0.2827434)/myLeptons[il].p4.Pt();
-    myLeptons[il].isoPF = isoPF;
-  }
-  //---- photons block --------------------------------------------------
   vector<PARTICLE> myPhotons;
   vector<PARTICLE> myFSRphotons;
-
-  if(true) 
-  {
-    Handle<reco::PhotonCollection> photons_;
-    iEvent.getByLabel("photons",photons_);
-
-    std::vector<std::string> photonIDCollectionTags_;
-    photonIDCollectionTags_.push_back("PhotonCutBasedIDLoose");
-    photonIDCollectionTags_.push_back("PhotonCutBasedIDLooseEM");
-    photonIDCollectionTags_.push_back("PhotonCutBasedIDTight");
-
-    const int nPhoIDC = photonIDCollectionTags_.size();
-    std::vector< const edm::ValueMap<Bool_t>* > phoIds;
-
-    for(int j=0; j<nPhoIDC; j++) {
-      edm::Handle<edm::ValueMap<Bool_t> > phoIDValueMap_;
-      iEvent.getByLabel("PhotonIDProd",photonIDCollectionTags_[j], phoIDValueMap_);
-      phoIds.push_back( phoIDValueMap_.product() );
-    }
-
-  //---- loop over the photon collection ---------------------------------
-    int ipho = 0;
-    for(reco::PhotonCollection::const_iterator it = photons_->begin();it != photons_->end(); it++) {
-
-  //---- don't bother if it has pt less than 15 GeV ----------------------
-      if(it->pt() < 15) continue;
-      if(abs(it->eta()) > mMaxPhoEta) continue;
-      if(it->isEBEEGap())continue;
-      if(it->isEB() && it->hadronicOverEm()>0.15)continue; // on-line requirement 
-      if(it->isEB() && it->sigmaIetaIeta()>0.024)continue; // on-line requirement 
-      if(it->isEE() && it->hadronicOverEm()>0.10)continue; // on-line requirement 
-      if(it->isEE() && it->sigmaIetaIeta()>0.040)continue; // on-line requirement 
-
-      reco::PhotonRef phoRef(photons_,ipho++);
-      int photonID=0;
-
-      TLorentzVector aPhoton(it->p4().Px(),it->p4().Py(),it->p4().Pz(),it->p4().E());
-//   photonBit |= (it->isEB()          << 0);
-
-      std::map<TString,UChar_t> idPairs;
-      for(int k=0; k<nPhoIDC; k++) {
-        idPairs[ TString(photonIDCollectionTags_[k].c_str()) ] = (*phoIds[k])[phoRef];
-        if(photonIDCollectionTags_[k] == "PhotonCutBasedIDLoose")photonID |= (*phoIds[k])[phoRef] <<1;
-        if(photonIDCollectionTags_[k] == "PhotonCutBasedIDTight")photonID |= (*phoIds[k])[phoRef] <<2;
-      }// for id
-
-      float hcalTowerSumEtConeDR03            = it->hcalTowerSumEtConeDR03(); // hcalTowerSumEtConeDR03
-      float ecalRecHitSumEtConeDR03           = it->ecalRecHitSumEtConeDR03(); // ecalRecHitSumEtConeDR03
-      float trkSumPtHollowConeDR03            = it->trkSumPtHollowConeDR03();
-
-
-      float hcalTowerSumEtConeDR04            = it->hcalTowerSumEtConeDR04(); // hcalTowerSumEtConeDR04
-      float ecalRecHitSumEtConeDR04           = it->ecalRecHitSumEtConeDR04(); // ecalRecHitSumEtConeDR04
-      float trkSumPtHollowConeDR04            = it->trkSumPtHollowConeDR04();
-      float nTrkSolidConeDR04                 = it->nTrkSolidConeDR04();
-      float nTrkHollowConeDR04                = it->nTrkHollowConeDR04();
-      float trkSumPtSolidConeDR04             = it->trkSumPtSolidConeDR04();
-
-
-      float sigmaIetaIeta                     = it->sigmaIetaIeta();
-      float phoHasConvTrks                    = it->hasConversionTracks();
-      float r9                                = it->r9();
-      float hadronicOverEm                    = it->hadronicOverEm();
-      float hadronicOverEm2012                = -1; // to be computed later
-      float sigmaIphiIphi                     = -1; // to be computed later
-
-      float gammaPt = aPhoton.Pt();
-      bool  isTriggerISO = false;
-
-
-      // --- calculate new H/E for 2012
-      std::vector<CaloTowerDetId> hcalTowersBehindClusters = hcalHelper->hcalTowersBehindClusters(*(it->superCluster()));
-      float hcalDepth1 = hcalHelper->hcalESumDepth1BehindClusters(hcalTowersBehindClusters);
-      float hcalDepth2 = hcalHelper->hcalESumDepth2BehindClusters(hcalTowersBehindClusters);
-      hadronicOverEm2012 = (hcalDepth1 + hcalDepth2)/it->superCluster()->energy();
-
-
-      // --- get iphi-iphi
-      EcalClusterLazyTools lazyTool(iEvent, iSetup, InputTag("reducedEcalRecHitsEB"), InputTag("reducedEcalRecHitsEE"));
-
-       // Next few lines get sigma-iphi-iphi
-       const reco::CaloClusterPtr  seed = it->superCluster()->seed();
-       if (seed.isAvailable()) {
-         // Get sigma-iphi-iphi
-         std::vector<float> vCov = lazyTool.covariances(*seed);
-         sigmaIphiIphi  = sqrt(vCov[2]);   // This is Sqrt(covPhiPhi)
-       }
-
-       // -- conversion-safe electron veto
-
-       photonPassConversionVeto_ = !ConversionTools::hasMatchedPromptElectron(it->superCluster(), electrons_, hConversions, beamspot.position());
-
-       // --- PF isolation ---
-
-       unsigned int ivtx = 0;
-       VertexRef myVtxRef(vertices_, ivtx);
-
-       isolator.fGetIsolation((&*it),pfCandidates.product(), myVtxRef, vertices_);
-       photonPfIsoChargedHad_ = isolator.getIsolationCharged();
-       photonPfIsoNeutralHad_ = isolator.getIsolationNeutral();
-       photonPfIsoPhoton_ = isolator.getIsolationPhoton();
-
-
-      // --- https://twiki.cern.ch/twiki/bin/viewauth/CMS/QCDPhotonsTrigger2011
-      if(ecalRecHitSumEtConeDR03 < 6.0 + 0.012*gammaPt) // requirement of _IsoVL_ type photon triggers 
-      if(hcalTowerSumEtConeDR03  < 4.0 + 0.005*gammaPt)
-      if(trkSumPtHollowConeDR03  < 4.0 + 0.002*gammaPt)isTriggerISO=true;
-
-      // --- https://twiki.cern.ch/twiki/bin/viewauth/CMS/Vgamma2011PhotonID
-      // --- recommended photon isolation + id in one step
-      bool isVgamma2011 = false;
-      float Rho25 = *rho25;
-      float ATr = 0.0167 ;if(it->isEE()) ATr = 0.032;
-      float AEc = 0.183  ;if(it->isEE()) AEc = 0.090;
-      float AHc = 0.062  ;if(it->isEE()) AHc = 0.180;
-      float sigmaIetaIetaMax = 0.011 ;if(it->isEE()) sigmaIetaIetaMax = 0.03;
-      if(trkSumPtHollowConeDR04  < 2.0 + 0.001*gammaPt + ATr*Rho25)
-      if(ecalRecHitSumEtConeDR04 < 4.2 + 0.006*gammaPt + AEc*Rho25) 
-      if(hcalTowerSumEtConeDR04  < 2.2 + 0.0025*gammaPt + AHc*Rho25)
-      if(sigmaIetaIeta<sigmaIetaIetaMax)
-      if(!it->hasPixelSeed())
-      if(it->isEE() || (it->isEB() && sigmaIetaIeta > 0.001 && sigmaIphiIphi > 0.001)) // additional EB spike cleaning
-      if(hadronicOverEm<0.05) isVgamma2011 = true;
-      photonID |= isVgamma2011 << 3;
-
-      // --- online isolation + Vgamma2011 id
-      if(isTriggerISO) 
-      if(sigmaIetaIeta<sigmaIetaIetaMax)
-      if(!it->hasPixelSeed())
-      if(it->isEE() || (it->isEB() && sigmaIetaIeta > 0.001 && sigmaIphiIphi > 0.001)) // additional EB spike cleaning
-      if(hadronicOverEm<0.05) 
-      photonID |= 1 << 4;
-
-      // --- Vgamma2011 photon id w/o isolation
-      if(sigmaIetaIeta<sigmaIetaIetaMax) 
-      if(!it->hasPixelSeed())
-      if(it->isEE() || (it->isEB() && sigmaIetaIeta > 0.001 && sigmaIphiIphi > 0.001)) // additional EB spike cleaning
-      if(hadronicOverEm<0.05) 
-      photonID |= 1 << 5;
-      
-
-      // photon near masked region
-      float gammaEta = aPhoton.Eta();
-      float gammaPhi = aPhoton.Phi();
-      bool mask_0  = ( gammaPhi>=-2.72 && gammaPhi<=-2.61 && gammaEta>=-1.33 && gammaEta<=-1.25 );
-      bool mask_1  = ( gammaPhi<=-3.05 && gammaEta<=-1.40 );
-      bool mask_2  = ( gammaPhi<=-3.05 && gammaEta>=1.04 && gammaEta<=1.15 );
-      bool mask_3  = ( gammaPhi>=-2.64 && gammaPhi<=-2.52 && gammaEta>=-0.20 && gammaEta<=-0.08 );
-      bool mask_4  = ( gammaPhi>=-2.64 && gammaPhi<=-2.52 && gammaEta>=1.38 && gammaEta<=1.46 );
-      bool mask_5  = ( gammaPhi>=-2.03 && gammaPhi<=-1.91 && gammaEta>=-0.47 && gammaEta<=-0.3 );
-      bool mask_6  = ( gammaPhi>=-1.25 && gammaPhi<=-1.12 && gammaEta>=-1.25 && gammaEta<=-1.13 );
-      bool mask_7  = ( gammaPhi>=-0.81 && gammaPhi<=-0.69 && gammaEta>=-0.82 && gammaEta<=-0.69 );
-      bool mask_8  = ( gammaPhi>=-0.55 && gammaPhi<=-0.42 && gammaEta>=1.21 && gammaEta<=1.33 );
-      bool mask_9  = ( gammaPhi>=-0.29 && gammaPhi<=-0.16  && gammaEta>=1.38 );
-      bool mask_10 = ( gammaPhi>=0.07 && gammaPhi<=0.19 && gammaEta>=-0.29 && gammaEta<=-0.16 );
-      bool mask_11 = ( gammaPhi>=0.15 && gammaPhi<=0.28 && gammaEta>=-0.37 && gammaEta<=-0.25 );
-      bool mask_12 = ( gammaPhi>=0.69 && gammaPhi<=0.79 && gammaEta>=-0.20 && gammaEta<=-0.07 );
-      bool mask_13 = ( gammaPhi>=0.86 && gammaPhi<=0.97 && gammaEta>=-0.11 && gammaEta<=0.02 );
-      bool mask_14 = ( gammaPhi>=0.60 && gammaPhi<=0.70 && gammaEta>=0.96 && gammaEta<=1.06 );
-      bool mask_15 = ( gammaPhi>=1.74 && gammaPhi<=1.84 && gammaEta>=0.08 && gammaEta<=0.19 );
-      bool mask_16 = ( gammaPhi>=1.65 && gammaPhi<=1.75 && gammaEta>=0.87 && gammaEta<=0.97 );
-      bool mask_17 = ( gammaPhi>=1.99 && gammaPhi<=2.10 && gammaEta>=-0.97 && gammaEta<=-0.87 );
-      bool mask_18 = ( gammaPhi>=2.95 && gammaPhi<=3.05 && gammaEta>=-0.98 && gammaEta<=-0.87 );
-      bool mask_19 = ( gammaPhi>=2.78 && gammaPhi<=2.89 && gammaEta>=0.86 && gammaEta<=0.98);
-      bool mask_20 = ( gammaPhi>=2.69 && gammaPhi<=2.81 && gammaEta>= 1.39);
- 
-      bool isMasked = mask_0 || mask_1 || mask_2 || mask_3 || mask_4 || mask_5 || mask_6 || mask_7 || mask_8 || mask_9 || mask_10 || mask_11;
-      isMasked      = isMasked || mask_12 || mask_13 || mask_14 || mask_15 || mask_16 || mask_17 || mask_18 || mask_19 || mask_20;      
-
-
-
-
-      int photonBit=0;
-      photonBit |= (it->isEB()          << 0);
-      photonBit |= (it->isEE()          << 1);
-      photonBit |= (it->isEBEtaGap()    << 2);
-      photonBit |= (it->isEBPhiGap()    << 3);
-      photonBit |= (it->isEERingGap()   << 4);
-      photonBit |= (it->isEEDeeGap()    << 5);
-      photonBit |= (it->isEBEEGap()     << 6);
-      photonBit |= (it->hasPixelSeed()  << 7);
-      photonBit |= (isTriggerISO        << 8);
-      photonBit |= (isMasked            << 9);
-
-
-
-
-      PARTICLE gamma; // define pseudo lepton half of the p4 of the real photon
-      gamma.p4    = aPhoton;
-      gamma.chid  = 0;
-      gamma.id    = photonID;
-      gamma.iso   = isTriggerISO;    // this bool 0/1
-      gamma.isoPF = 0; 
-      gamma.bit   = photonBit;
-      // ok, now close your eyes what follows is a scandal
-      gamma.parameters.push_back(hcalTowerSumEtConeDR04);     // 0   need to remember the ordering offline
-      gamma.parameters.push_back(ecalRecHitSumEtConeDR04);    // 1  
-      gamma.parameters.push_back(nTrkSolidConeDR04);          // 2  
-      gamma.parameters.push_back(trkSumPtSolidConeDR04);      // 3 
-      gamma.parameters.push_back(nTrkHollowConeDR04);         // 4 
-      gamma.parameters.push_back(trkSumPtHollowConeDR04);     // 5
-      gamma.parameters.push_back(sigmaIetaIeta);              // 6  
-      gamma.parameters.push_back(phoHasConvTrks);             // 7  
-      gamma.parameters.push_back(r9);                         // 8  
-      gamma.parameters.push_back(hadronicOverEm);             // 9  
-      gamma.parameters.push_back(hadronicOverEm2012);         // 10  
-
-      // --- save FSR photon candidates and gamma+jets in seperate paths
-      
-      myFSRphotons.push_back(gamma);                          // FSR photons are *not* used in the photon+jet DR cone rejection
-
-      //---- consider single event interpretation, exclusive di-lepton/photon interpretation (myLeptons.size()==0)  SINGLEEVENT:
-      //if(it->pt() > mMinPhoPt && myLeptons.size()==0 && isTriggerISO) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
-      if(it->pt() > mMinPhoPt && isTriggerISO) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
-    }
-  }
-  sort(myPhotons.begin(),myPhotons.end(),lepSortingRule);
-  sort(myFSRphotons.begin(),myFSRphotons.end(),lepSortingRule);
-  //---- jets block -----------------------------------------------------
-  edm::Handle<edm::View<pat::Jet> > jets;
-  iEvent.getByLabel(mJetsName,jets);
-  edm::View<pat::Jet> pat_jets = *jets;
-
-  //Handle<PFJetCollection> jets_;
-  //iEvent.getByLabel(mJetsName,jets_);
   vector<JET> myJets;
   vector<JET> myRJets;
-  //---- get the jet energy corrector -----------------------------------
-  //if(isRealData_)mJEC = JetCorrector::getJetCorrector(mJECserviceDATA,iSetup);
-  //if(!isRealData_)mJEC = JetCorrector::getJetCorrector(mJECserviceMC,iSetup);
-  //---- the JEC uncertainty only needs to be set-up once ---------------
-  //if (!mIsJECuncSet) {
+
+  TLorentzVector mypfmetP4(0,0,0,0);
+
+  if(!mOnlyMC){
+    //---- Rho ------------------------------------------------------------
+    Handle<double> rho;
+    iEvent.getByLabel(mSrcRho,rho);
+    //---- Rho25 ------------------------------------------------------------
+    Handle<double> rho25;
+    iEvent.getByLabel(mSrcRho25,rho25);
+    rho_        = *rho; 
+    rho25_      = *rho25;
+
+    //---- reco vertices block --------------------------------------------
+    edm::Handle<VertexCollection> vertices_;
+    iEvent.getByLabel("offlinePrimaryVertices", vertices_);
+    const reco::Vertex *primVtx = &(*(vertices_.product()))[0];
+    for(VertexCollection::const_iterator i_vtx = vertices_->begin(); i_vtx != vertices_->end(); ++i_vtx) {  
+      if (!i_vtx->isFake() && (fabs(i_vtx->z()) < 24) && (i_vtx->ndof() >= 4)) {
+	vtxZ_   ->push_back(i_vtx->z());
+	vtxNdof_->push_back(i_vtx->ndof());
+      }
+    }
+    //---- beam spot for conversion-safe electron veto --------------------
+    edm::Handle<reco::BeamSpot> bsHandle;
+    iEvent.getByLabel("offlineBeamSpot", bsHandle);
+    const reco::BeamSpot &beamspot = *bsHandle.product();
+    
+    //---- conversions for conversion-safe electron veto -------------------
+    edm::Handle<reco::ConversionCollection> hConversions;
+    iEvent.getByLabel("allConversions", hConversions);
+    
+    //---- leptons block --------------------------------------------------
+    //  Handle<View<GsfElectron> > electrons_;
+    Handle<GsfElectronCollection> electrons_;
+    iEvent.getByLabel("gsfElectrons", electrons_);
+    Handle<View<Muon> > muons_;
+    iEvent.getByLabel("muons",muons_);
+
+    // ---- loop over muons -----------------------------------------------
+    for(View<Muon>::const_iterator i_mu = muons_->begin(); i_mu != muons_->end(); ++i_mu) {
+      //---- apply kinematic and geometric acceptance 
+      if ((i_mu->pt() < mMinLepPt) || (fabs(i_mu->eta()) > mMaxLepEta))  continue;
+      
+      //---- apply VBTF-like id (GlobalMuonPromptTight)
+      //---- https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
+      if (!muon::isGoodMuon(*i_mu,muon::GlobalMuonPromptTight))          continue; // should be redundant wrt the cuts below
+      if (!(i_mu->isGlobalMuon()))                                       continue;
+      if (fabs(i_mu->globalTrack()->normalizedChi2()) >= 10)             continue;
+      if (i_mu->globalTrack()->hitPattern().numberOfValidMuonHits()==0)  continue;
+      if (i_mu->numberOfMatchedStations() <=1)                           continue; 
+      if (fabs(i_mu->innerTrack()->dxy(primVtx->position())) >= 0.2)     continue;
+      if (i_mu->track()->hitPattern().numberOfValidPixelHits() == 0)     continue; 
+      if (i_mu->track()->hitPattern().numberOfValidTrackerHits() <= 10)  continue; 
+      
+      
+      //---- subdetector isolation rho corrected, for efficiency studies look at
+      //---- https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs
+      //---- https://indico.cern.ch/getFile.py/access?contribId=2&resId=0&materialId=slides&confId=128982 
+      float muonIso = (i_mu->isolationR03().sumPt + i_mu->isolationR03().emEt + i_mu->isolationR03().hadEt)/i_mu->pt();
+      
+      
+      float muEta = i_mu->eta(); // essentially track direction at Vtx (recommended prescription)
+      float Aecal=0.041; // initiallize with EE value
+      float Ahcal=0.032; // initiallize with HE value
+      if (fabs(muEta)<1.48) { 
+	Aecal = 0.074;   // substitute EB value 
+	Ahcal = 0.023;   // substitute EE value
+      }
+      float muonIsoRho = (i_mu->isolationR03().sumPt + max(0.,i_mu->isolationR03().emEt -Aecal*(*rho)) 
+			  + max(0.,i_mu->isolationR03().hadEt-Ahcal*(*rho)))/i_mu->pt();
+      
+      if (muonIsoRho > mMaxCombRelIso03)                                 continue;
+      if (i_mu->innerTrack()->hitPattern().numberOfValidHits() < 11)     continue;
+      if (i_mu->innerTrack()->hitPattern().numberOfValidPixelHits() < 1) continue;
+      if (i_mu->numberOfMatches() < 2)                                   continue;
+      if (i_mu->innerTrack()->ptError()/i_mu->pt() > 0.1)                continue;
+      
+      PARTICLE aLepton;
+      TLorentzVector lepP4(i_mu->p4().Px(),i_mu->p4().Py(),i_mu->p4().Pz(),i_mu->p4().E());
+      aLepton.p4   = lepP4;
+      aLepton.chid = 2*i_mu->charge();
+      aLepton.id   = 1; // all muons are tight
+      aLepton.iso  = muonIso;
+      aLepton.isoPF = -999;
+      aLepton.isoRho = muonIsoRho;
+      aLepton.trackIso = -1;
+      aLepton.ecalIso = -1;
+      aLepton.hcalIso = -1;
+      aLepton.sigmaIEtaIEta = -1;
+      aLepton.hadronicOverEm = -1;
+      myLeptons.push_back(aLepton);
+    }// muon loop
+    // ---- loop over electrons -------------------------------------------
+    //  for(View<GsfElectron>::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
+    for(GsfElectronCollection::const_iterator i_el = electrons_->begin();i_el != electrons_->end(); ++i_el) {
+      float elPt                           = i_el->p4().Pt();
+      float elEta                          = i_el->p4().Eta();
+      float trackIso                       = i_el->dr03TkSumPt();
+      float ecalIso                        = i_el->dr03EcalRecHitSumEt();
+      float hcalIso                        = i_el->dr03HcalTowerSumEt();
+      float sigmaIetaIeta                  = i_el->sigmaIetaIeta();
+      float hadronicOverEm                 = i_el->hadronicOverEm();
+      float deltaPhiSuperClusterTrackAtVtx = i_el->deltaPhiSuperClusterTrackAtVtx();
+      float deltaEtaSuperClusterTrackAtVtx = i_el->deltaEtaSuperClusterTrackAtVtx();
+      bool  isTight(false);
+      float combinedIso03 = (i_el->dr03TkSumPt()+max(0.,i_el->dr03EcalRecHitSumEt()-1.)+i_el->dr03HcalTowerSumEt())/i_el->p4().Pt();
+      float combinedIso03Rho =0 ;
+      float epDifference 			 = fabs( 1./i_el->ecalEnergy() - i_el->eSuperClusterOverP()/i_el->ecalEnergy()  );
+      
+      float Aecal[2] = {0.101,0.046};
+      float Ahcal[2] = {0.021,0.040};
+      enum detID {barrel=0,endcap};
+      
+      if ((elPt < mMinLepPt) || (fabs(elEta) > mMaxLepEta)) continue;
+      // ---- use WP90 as default preselection, store also WP80 subset (https://twiki.cern.ch/twiki/bin/view/CMS/VbtfEleID2011)
+      if (i_el->isEB()) {
+	combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[barrel]*(*rho)) + max(0.,hcalIso - Ahcal[barrel]*(*rho)) )/elPt; 
+	if (combinedIso03Rho>mMaxCombRelIso03)              continue;  
+	if (sigmaIetaIeta > 0.01)                           continue; 
+	if (deltaPhiSuperClusterTrackAtVtx > 0.15)           continue; //2011: 0.8
+	if (deltaEtaSuperClusterTrackAtVtx > 0.007)         continue;
+	if (hadronicOverEm > 0.12)                          continue; //2011: 0.15 	
+	if ( epDifference >0.05)				  continue; //2011: Not implemented
+	if (sigmaIetaIeta < 0.01) {  // WP80 subset: 2012 Medium
+	  if (deltaPhiSuperClusterTrackAtVtx < 0.06) 
+	    if (deltaEtaSuperClusterTrackAtVtx < 0.004) 
+	      if (hadronicOverEm < 0.12)//2011: 0.04 
+		isTight = true;
+	}
+      }// if EE
+      if (i_el->isEE()) {
+	combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[endcap]*(*rho)) + max(0.,hcalIso - Ahcal[endcap]*(*rho)) )/elPt; 
+	if (combinedIso03Rho>mMaxCombRelIso03)              continue;
+	if (sigmaIetaIeta > 0.03)                           continue;
+	if (deltaPhiSuperClusterTrackAtVtx > 0.1)           continue; //2011:.7
+	if (deltaEtaSuperClusterTrackAtVtx > 0.009)          continue;//
+	if (hadronicOverEm > 0.10)                          continue;//2011:.15
+	if ( epDifference >0.05)				  continue; //2011: Not implemented
+	if (sigmaIetaIeta<0.03) {  // WP80 subset
+	  if (deltaPhiSuperClusterTrackAtVtx < 0.03)
+	    if (deltaEtaSuperClusterTrackAtVtx < 0.007)
+	      if (hadronicOverEm < 0.15) 
+		isTight = true;
+	} 
+      }
+      PARTICLE aLepton;
+      TLorentzVector lepP4(i_el->p4().Px(),i_el->p4().Py(),i_el->p4().Pz(),i_el->p4().E());
+      aLepton.p4   = lepP4;
+      aLepton.chid = i_el->charge();
+      aLepton.id   = 0;
+      if (isTight) {
+	aLepton.id = 1;
+      }
+      aLepton.iso   = combinedIso03;
+      aLepton.isoPF = -999;
+      aLepton.isoRho = combinedIso03Rho;
+      aLepton.trackIso = trackIso;
+      aLepton.ecalIso = ecalIso;
+      aLepton.hcalIso = hcalIso;
+      aLepton.sigmaIEtaIEta = sigmaIetaIeta;
+      aLepton.hadronicOverEm = hadronicOverEm;
+      myLeptons.push_back(aLepton);
+    } // electrons loop
+    hRecoLeptons_->Fill(int(myLeptons.size()));
+    // ---- sort the leptons according to their pt ------------------------
+    sort(myLeptons.begin(),myLeptons.end(),lepSortingRule); 
+    // ---- PF isolation for leptons --------------------------------------
+    //  Handle<View<PFCandidate> > pfCandidates;
+    Handle<PFCandidateCollection> pfCandidates;
+    iEvent.getByLabel("particleFlow", pfCandidates);
+    for(unsigned il=0;il<myLeptons.size();il++) {
+      float sumPt(0.0);
+      for(unsigned ipf=0;ipf<pfCandidates->size();ipf++) {
+	float dR = deltaR(myLeptons[il].p4.Eta(),myLeptons[il].p4.Phi(),(*pfCandidates)[ipf].eta(),(*pfCandidates)[ipf].phi());
+	if (dR < 0.3) {
+	  sumPt += (*pfCandidates)[ipf].pt();
+	}
+      }
+      float isoPF = (sumPt-myLeptons[il].p4.Pt()-(*rho)*0.2827434)/myLeptons[il].p4.Pt();
+      myLeptons[il].isoPF = isoPF;
+    }
+    //---- photons block --------------------------------------------------
+
+    if(true) 
+      {
+	Handle<reco::PhotonCollection> photons_;
+	iEvent.getByLabel("photons",photons_);
+	
+	std::vector<std::string> photonIDCollectionTags_;
+	photonIDCollectionTags_.push_back("PhotonCutBasedIDLoose");
+	photonIDCollectionTags_.push_back("PhotonCutBasedIDLooseEM");
+	photonIDCollectionTags_.push_back("PhotonCutBasedIDTight");
+	
+	const int nPhoIDC = photonIDCollectionTags_.size();
+	std::vector< const edm::ValueMap<Bool_t>* > phoIds;
+	
+	for(int j=0; j<nPhoIDC; j++) {
+	  edm::Handle<edm::ValueMap<Bool_t> > phoIDValueMap_;
+	  iEvent.getByLabel("PhotonIDProd",photonIDCollectionTags_[j], phoIDValueMap_);
+	  phoIds.push_back( phoIDValueMap_.product() );
+	}
+	
+	//---- loop over the photon collection ---------------------------------
+	int ipho = 0;
+	for(reco::PhotonCollection::const_iterator it = photons_->begin();it != photons_->end(); it++) {
+	  
+	  //---- don't bother if it has pt less than 15 GeV ----------------------
+	  if(it->pt() < 15) continue;
+	  if(abs(it->eta()) > mMaxPhoEta) continue;
+	  if(it->isEBEEGap())continue;
+	  if(it->isEB() && it->hadronicOverEm()>0.15)continue; // on-line requirement 
+	  if(it->isEB() && it->sigmaIetaIeta()>0.024)continue; // on-line requirement 
+	  if(it->isEE() && it->hadronicOverEm()>0.10)continue; // on-line requirement 
+	  if(it->isEE() && it->sigmaIetaIeta()>0.040)continue; // on-line requirement 
+	  
+	  reco::PhotonRef phoRef(photons_,ipho++);
+	  int photonID=0;
+	  
+	  TLorentzVector aPhoton(it->p4().Px(),it->p4().Py(),it->p4().Pz(),it->p4().E());
+	  //   photonBit |= (it->isEB()          << 0);
+	  
+	  std::map<TString,UChar_t> idPairs;
+	  for(int k=0; k<nPhoIDC; k++) {
+	    idPairs[ TString(photonIDCollectionTags_[k].c_str()) ] = (*phoIds[k])[phoRef];
+	    if(photonIDCollectionTags_[k] == "PhotonCutBasedIDLoose")photonID |= (*phoIds[k])[phoRef] <<1;
+	    if(photonIDCollectionTags_[k] == "PhotonCutBasedIDTight")photonID |= (*phoIds[k])[phoRef] <<2;
+	  }// for id
+	  
+	  float hcalTowerSumEtConeDR03            = it->hcalTowerSumEtConeDR03(); // hcalTowerSumEtConeDR03
+	  float ecalRecHitSumEtConeDR03           = it->ecalRecHitSumEtConeDR03(); // ecalRecHitSumEtConeDR03
+	  float trkSumPtHollowConeDR03            = it->trkSumPtHollowConeDR03();
+	  
+	  
+	  float hcalTowerSumEtConeDR04            = it->hcalTowerSumEtConeDR04(); // hcalTowerSumEtConeDR04
+	  float ecalRecHitSumEtConeDR04           = it->ecalRecHitSumEtConeDR04(); // ecalRecHitSumEtConeDR04
+	  float trkSumPtHollowConeDR04            = it->trkSumPtHollowConeDR04();
+	  float nTrkSolidConeDR04                 = it->nTrkSolidConeDR04();
+	  float nTrkHollowConeDR04                = it->nTrkHollowConeDR04();
+	  float trkSumPtSolidConeDR04             = it->trkSumPtSolidConeDR04();
+	  
+	  
+	  float sigmaIetaIeta                     = it->sigmaIetaIeta();
+	  float phoHasConvTrks                    = it->hasConversionTracks();
+	  float r9                                = it->r9();
+	  float hadronicOverEm                    = it->hadronicOverEm();
+	  float hadronicOverEm2012                = -1; // to be computed later
+	  float sigmaIphiIphi                     = -1; // to be computed later
+	  
+	  float gammaPt = aPhoton.Pt();
+	  bool  isTriggerISO = false;
+	  
+	  
+	  // --- calculate new H/E for 2012
+	  std::vector<CaloTowerDetId> hcalTowersBehindClusters = hcalHelper->hcalTowersBehindClusters(*(it->superCluster()));
+	  float hcalDepth1 = hcalHelper->hcalESumDepth1BehindClusters(hcalTowersBehindClusters);
+	  float hcalDepth2 = hcalHelper->hcalESumDepth2BehindClusters(hcalTowersBehindClusters);
+	  hadronicOverEm2012 = (hcalDepth1 + hcalDepth2)/it->superCluster()->energy();
+	  
+	  
+	  // --- get iphi-iphi
+	  EcalClusterLazyTools lazyTool(iEvent, iSetup, InputTag("reducedEcalRecHitsEB"), InputTag("reducedEcalRecHitsEE"));
+	  
+	  // Next few lines get sigma-iphi-iphi
+	  const reco::CaloClusterPtr  seed = it->superCluster()->seed();
+	  if (seed.isAvailable()) {
+	    // Get sigma-iphi-iphi
+	    std::vector<float> vCov = lazyTool.covariances(*seed);
+	    sigmaIphiIphi  = sqrt(vCov[2]);   // This is Sqrt(covPhiPhi)
+	  }
+	  
+	  // -- conversion-safe electron veto
+	  
+	  photonPassConversionVeto_ = !ConversionTools::hasMatchedPromptElectron(it->superCluster(), electrons_, hConversions, beamspot.position());
+	  
+	  // --- PF isolation ---
+	  
+	  unsigned int ivtx = 0;
+	  VertexRef myVtxRef(vertices_, ivtx);
+	  
+	  isolator.fGetIsolation((&*it),pfCandidates.product(), myVtxRef, vertices_);
+	  photonPfIsoChargedHad_ = isolator.getIsolationCharged();
+	  photonPfIsoNeutralHad_ = isolator.getIsolationNeutral();
+	  photonPfIsoPhoton_ = isolator.getIsolationPhoton();
+	  
+	  
+	  // --- https://twiki.cern.ch/twiki/bin/viewauth/CMS/QCDPhotonsTrigger2011
+	  if(ecalRecHitSumEtConeDR03 < 6.0 + 0.012*gammaPt) // requirement of _IsoVL_ type photon triggers 
+	    if(hcalTowerSumEtConeDR03  < 4.0 + 0.005*gammaPt)
+	      if(trkSumPtHollowConeDR03  < 4.0 + 0.002*gammaPt)isTriggerISO=true;
+	  
+	  // --- https://twiki.cern.ch/twiki/bin/viewauth/CMS/Vgamma2011PhotonID
+	  // --- recommended photon isolation + id in one step
+	  bool isVgamma2011 = false;
+	  float Rho25 = *rho25;
+	  float ATr = 0.0167 ;if(it->isEE()) ATr = 0.032;
+	  float AEc = 0.183  ;if(it->isEE()) AEc = 0.090;
+	  float AHc = 0.062  ;if(it->isEE()) AHc = 0.180;
+	  float sigmaIetaIetaMax = 0.011 ;if(it->isEE()) sigmaIetaIetaMax = 0.03;
+	  if(trkSumPtHollowConeDR04  < 2.0 + 0.001*gammaPt + ATr*Rho25)
+	    if(ecalRecHitSumEtConeDR04 < 4.2 + 0.006*gammaPt + AEc*Rho25) 
+	      if(hcalTowerSumEtConeDR04  < 2.2 + 0.0025*gammaPt + AHc*Rho25)
+		if(sigmaIetaIeta<sigmaIetaIetaMax)
+		  if(!it->hasPixelSeed())
+		    if(it->isEE() || (it->isEB() && sigmaIetaIeta > 0.001 && sigmaIphiIphi > 0.001)) // additional EB spike cleaning
+		      if(hadronicOverEm<0.05) isVgamma2011 = true;
+	  photonID |= isVgamma2011 << 3;
+	  
+	  // --- online isolation + Vgamma2011 id
+	  if(isTriggerISO) 
+	    if(sigmaIetaIeta<sigmaIetaIetaMax)
+	      if(!it->hasPixelSeed())
+		if(it->isEE() || (it->isEB() && sigmaIetaIeta > 0.001 && sigmaIphiIphi > 0.001)) // additional EB spike cleaning
+		  if(hadronicOverEm<0.05) 
+		    photonID |= 1 << 4;
+	  
+	  // --- Vgamma2011 photon id w/o isolation
+	  if(sigmaIetaIeta<sigmaIetaIetaMax) 
+	    if(!it->hasPixelSeed())
+	      if(it->isEE() || (it->isEB() && sigmaIetaIeta > 0.001 && sigmaIphiIphi > 0.001)) // additional EB spike cleaning
+		if(hadronicOverEm<0.05) 
+		  photonID |= 1 << 5;
+	  
+	  
+	  // photon near masked region
+	  float gammaEta = aPhoton.Eta();
+	  float gammaPhi = aPhoton.Phi();
+	  bool mask_0  = ( gammaPhi>=-2.72 && gammaPhi<=-2.61 && gammaEta>=-1.33 && gammaEta<=-1.25 );
+	  bool mask_1  = ( gammaPhi<=-3.05 && gammaEta<=-1.40 );
+	  bool mask_2  = ( gammaPhi<=-3.05 && gammaEta>=1.04 && gammaEta<=1.15 );
+	  bool mask_3  = ( gammaPhi>=-2.64 && gammaPhi<=-2.52 && gammaEta>=-0.20 && gammaEta<=-0.08 );
+	  bool mask_4  = ( gammaPhi>=-2.64 && gammaPhi<=-2.52 && gammaEta>=1.38 && gammaEta<=1.46 );
+	  bool mask_5  = ( gammaPhi>=-2.03 && gammaPhi<=-1.91 && gammaEta>=-0.47 && gammaEta<=-0.3 );
+	  bool mask_6  = ( gammaPhi>=-1.25 && gammaPhi<=-1.12 && gammaEta>=-1.25 && gammaEta<=-1.13 );
+	  bool mask_7  = ( gammaPhi>=-0.81 && gammaPhi<=-0.69 && gammaEta>=-0.82 && gammaEta<=-0.69 );
+	  bool mask_8  = ( gammaPhi>=-0.55 && gammaPhi<=-0.42 && gammaEta>=1.21 && gammaEta<=1.33 );
+	  bool mask_9  = ( gammaPhi>=-0.29 && gammaPhi<=-0.16  && gammaEta>=1.38 );
+	  bool mask_10 = ( gammaPhi>=0.07 && gammaPhi<=0.19 && gammaEta>=-0.29 && gammaEta<=-0.16 );
+	  bool mask_11 = ( gammaPhi>=0.15 && gammaPhi<=0.28 && gammaEta>=-0.37 && gammaEta<=-0.25 );
+	  bool mask_12 = ( gammaPhi>=0.69 && gammaPhi<=0.79 && gammaEta>=-0.20 && gammaEta<=-0.07 );
+	  bool mask_13 = ( gammaPhi>=0.86 && gammaPhi<=0.97 && gammaEta>=-0.11 && gammaEta<=0.02 );
+	  bool mask_14 = ( gammaPhi>=0.60 && gammaPhi<=0.70 && gammaEta>=0.96 && gammaEta<=1.06 );
+	  bool mask_15 = ( gammaPhi>=1.74 && gammaPhi<=1.84 && gammaEta>=0.08 && gammaEta<=0.19 );
+	  bool mask_16 = ( gammaPhi>=1.65 && gammaPhi<=1.75 && gammaEta>=0.87 && gammaEta<=0.97 );
+	  bool mask_17 = ( gammaPhi>=1.99 && gammaPhi<=2.10 && gammaEta>=-0.97 && gammaEta<=-0.87 );
+	  bool mask_18 = ( gammaPhi>=2.95 && gammaPhi<=3.05 && gammaEta>=-0.98 && gammaEta<=-0.87 );
+	  bool mask_19 = ( gammaPhi>=2.78 && gammaPhi<=2.89 && gammaEta>=0.86 && gammaEta<=0.98);
+	  bool mask_20 = ( gammaPhi>=2.69 && gammaPhi<=2.81 && gammaEta>= 1.39);
+	  
+	  bool isMasked = mask_0 || mask_1 || mask_2 || mask_3 || mask_4 || mask_5 || mask_6 || mask_7 || mask_8 || mask_9 || mask_10 || mask_11;
+	  isMasked      = isMasked || mask_12 || mask_13 || mask_14 || mask_15 || mask_16 || mask_17 || mask_18 || mask_19 || mask_20;      
+	  
+	  
+	  
+	  
+	  int photonBit=0;
+	  photonBit |= (it->isEB()          << 0);
+	  photonBit |= (it->isEE()          << 1);
+	  photonBit |= (it->isEBEtaGap()    << 2);
+	  photonBit |= (it->isEBPhiGap()    << 3);
+	  photonBit |= (it->isEERingGap()   << 4);
+	  photonBit |= (it->isEEDeeGap()    << 5);
+	  photonBit |= (it->isEBEEGap()     << 6);
+	  photonBit |= (it->hasPixelSeed()  << 7);
+	  photonBit |= (isTriggerISO        << 8);
+	  photonBit |= (isMasked            << 9);
+	  
+	  
+	  
+	  
+	  PARTICLE gamma; // define pseudo lepton half of the p4 of the real photon
+	  gamma.p4    = aPhoton;
+	  gamma.chid  = 0;
+	  gamma.id    = photonID;
+	  gamma.iso   = isTriggerISO;    // this bool 0/1
+	  gamma.isoPF = 0; 
+	  gamma.bit   = photonBit;
+	  // ok, now close your eyes what follows is a scandal
+	  gamma.parameters.push_back(hcalTowerSumEtConeDR04);     // 0   need to remember the ordering offline
+	  gamma.parameters.push_back(ecalRecHitSumEtConeDR04);    // 1  
+	  gamma.parameters.push_back(nTrkSolidConeDR04);          // 2  
+	  gamma.parameters.push_back(trkSumPtSolidConeDR04);      // 3 
+	  gamma.parameters.push_back(nTrkHollowConeDR04);         // 4 
+	  gamma.parameters.push_back(trkSumPtHollowConeDR04);     // 5
+	  gamma.parameters.push_back(sigmaIetaIeta);              // 6  
+	  gamma.parameters.push_back(phoHasConvTrks);             // 7  
+	  gamma.parameters.push_back(r9);                         // 8  
+	  gamma.parameters.push_back(hadronicOverEm);             // 9  
+	  gamma.parameters.push_back(hadronicOverEm2012);         // 10  
+	  
+	  // --- save FSR photon candidates and gamma+jets in seperate paths
+	  
+	  myFSRphotons.push_back(gamma);                          // FSR photons are *not* used in the photon+jet DR cone rejection
+	  
+	  //---- consider single event interpretation, exclusive di-lepton/photon interpretation (myLeptons.size()==0)  SINGLEEVENT:
+	  //if(it->pt() > mMinPhoPt && myLeptons.size()==0 && isTriggerISO) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
+	  if(it->pt() > mMinPhoPt && isTriggerISO) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
+	}
+      }
+    sort(myPhotons.begin(),myPhotons.end(),lepSortingRule);
+    sort(myFSRphotons.begin(),myFSRphotons.end(),lepSortingRule);
+    //---- jets block -----------------------------------------------------
+    edm::Handle<edm::View<pat::Jet> > jets;
+    iEvent.getByLabel(mJetsName,jets);
+    edm::View<pat::Jet> pat_jets = *jets;
+    
+    //Handle<PFJetCollection> jets_;
+    //iEvent.getByLabel(mJetsName,jets_);
+
+   //---- get the jet energy corrector -----------------------------------
+    //if(isRealData_)mJEC = JetCorrector::getJetCorrector(mJECserviceDATA,iSetup);
+    //if(!isRealData_)mJEC = JetCorrector::getJetCorrector(mJECserviceMC,iSetup);
+    //---- the JEC uncertainty only needs to be set-up once ---------------
+    //if (!mIsJECuncSet) {
     //edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
     //iSetup.get<JetCorrectionsRecord>().get(mPayloadName,JetCorParColl); 
     //JetCorrectorParameters const& JetCorPar = (*JetCorParColl)["Uncertainty"];
     //mJECunc = new JetCorrectionUncertainty(JetCorPar);
     //mIsJECuncSet = true;
-  //}
-  // ---- jets loop -----------------------------------------------------
-  for(edm::View<pat::Jet>::const_iterator i_jet = pat_jets.begin();i_jet != pat_jets.end(); ++i_jet) {
-    int index= i_jet - pat_jets.begin();  //index QG
-    TLorentzVector jetP4(i_jet->px(),i_jet->py(),i_jet->pz(),i_jet->energy());
-    bool jetIsDuplicate(false);
-    bool jetIsInAcceptance(true);
-    bool jetIsIDed(true);
-
-    //----- remove the leptons ------------------------------------------
-    for(unsigned int i_lep = 0; i_lep < myLeptons.size(); i_lep++) {
-      float DR = myLeptons[i_lep].p4.DeltaR(jetP4);
-      if (DR < mJetLepIsoR) {
-        jetIsDuplicate = true; 
-      }
-    }// lepton loop 
-
-    //----- remove the leading photon ------------------------------------ (reminder nPhotons>0 only IF nLeptons==0)
-    for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) {
-      float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
-      if (DR < mJetPhoIsoR) {
-        jetIsDuplicate = true;
-      }
-    }// photon loop
-
-    // ---- get the jec and the uncertainty -----------------------------    
-    //int index = i_jet - jets_->begin();
-    //edm::RefToBase<reco::Jet> jetRef(edm::Ref<PFJetCollection>(jets_,index));
-    //double jec = mJEC->correction(*i_jet,jetRef,iEvent,iSetup);
-    // ---- only keep jets within the kinematic acceptance --------------
-    if ((i_jet->pt() < 15) || (fabs(i_jet->eta()) > 3.0)) continue; // apply first a hardcode preselection
-    if ((i_jet->pt() < mMinJetPt) || (fabs(i_jet->eta()) > mMaxJetEta)) jetIsInAcceptance = false;
-    //mJECunc->setJetEta(i_jet->eta());
-    // ---- the unc is a function of the corrected pt -------------------
-    //mJECunc->setJetPt(jec * i_jet->pt());
-    //double unc = mJECunc->getUncertainty(true);
-    float jec  = 1./i_jet->jecFactor(0);
-    float unc  = i_jet->userFloat("jecUnc");
-    float btag = i_jet->bDiscriminator("combinedSecondaryVertexBJetTags");
-    float beta = i_jet->userFloat("beta");
-    // ---- keep only jets that pass the tight id -----------------------
-    float chf = i_jet->chargedHadronEnergyFraction();
-    float nhf = i_jet->neutralHadronEnergyFraction() + i_jet->HFHadronEnergyFraction();
-    float phf = i_jet->photonEnergy()/(i_jet->jecFactor(0) * i_jet->energy());
-    float elf = i_jet->electronEnergy()/(i_jet->jecFactor(0) * i_jet->energy());
-    float muf = i_jet->muonEnergy()/(i_jet->jecFactor(0) * i_jet->energy());
-    int chm   = i_jet->chargedHadronMultiplicity();
-    int npr   = i_jet->chargedMultiplicity() + i_jet->neutralMultiplicity();
-    bool id = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_jet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_jet->eta())>2.4));
-    if (!id) jetIsIDed = false;
-    // ---- jet vertex association --------------------------------------
-    // ---- get the vector of tracks ------------------------------------ 
-    //reco::TrackRefVector vTrks(i_jet->getTrackRefs());
-    //float sumTrkPt(0.0),sumTrkPtBeta(0.0),sumTrkPtBetaStar(0.0),beta(-1.0),betaStar(-1.0);
-    // ---- loop over the tracks of the jet -----------------------------
-    /*
-    for(reco::TrackRefVector::const_iterator i_trk = vTrks.begin(); i_trk != vTrks.end(); i_trk++) {
-      sumTrkPt += (*i_trk)->pt();
-      // ---- loop over all vertices ------------------------------------
-      for(unsigned i_vtx = 0;i_vtx < vertices_->size();i_vtx++) {
+    //}
+    // ---- jets loop -----------------------------------------------------
+    for(edm::View<pat::Jet>::const_iterator i_jet = pat_jets.begin();i_jet != pat_jets.end(); ++i_jet) {
+      int index= i_jet - pat_jets.begin();  //index QG
+      TLorentzVector jetP4(i_jet->px(),i_jet->py(),i_jet->pz(),i_jet->energy());
+      bool jetIsDuplicate(false);
+      bool jetIsInAcceptance(true);
+      bool jetIsIDed(true);
+      
+      //----- remove the leptons ------------------------------------------
+      for(unsigned int i_lep = 0; i_lep < myLeptons.size(); i_lep++) {
+	float DR = myLeptons[i_lep].p4.DeltaR(jetP4);
+	if (DR < mJetLepIsoR) {
+	  jetIsDuplicate = true; 
+	}
+      }// lepton loop 
+      
+      //----- remove the leading photon ------------------------------------ (reminder nPhotons>0 only IF nLeptons==0)
+      for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) {
+	float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
+	if (DR < mJetPhoIsoR) {
+	  jetIsDuplicate = true;
+	}
+      }// photon loop
+      
+      // ---- get the jec and the uncertainty -----------------------------    
+      //int index = i_jet - jets_->begin();
+      //edm::RefToBase<reco::Jet> jetRef(edm::Ref<PFJetCollection>(jets_,index));
+      //double jec = mJEC->correction(*i_jet,jetRef,iEvent,iSetup);
+      // ---- only keep jets within the kinematic acceptance --------------
+      if ((i_jet->pt() < 15) || (fabs(i_jet->eta()) > 3.0)) continue; // apply first a hardcode preselection
+      if ((i_jet->pt() < mMinJetPt) || (fabs(i_jet->eta()) > mMaxJetEta)) jetIsInAcceptance = false;
+      //mJECunc->setJetEta(i_jet->eta());
+      // ---- the unc is a function of the corrected pt -------------------
+      //mJECunc->setJetPt(jec * i_jet->pt());
+      //double unc = mJECunc->getUncertainty(true);
+      float jec  = 1./i_jet->jecFactor(0);
+      float unc  = i_jet->userFloat("jecUnc");
+      float btag = i_jet->bDiscriminator("combinedSecondaryVertexBJetTags");
+      float beta = i_jet->userFloat("beta");
+      // ---- keep only jets that pass the tight id -----------------------
+      float chf = i_jet->chargedHadronEnergyFraction();
+      float nhf = i_jet->neutralHadronEnergyFraction() + i_jet->HFHadronEnergyFraction();
+      float phf = i_jet->photonEnergy()/(i_jet->jecFactor(0) * i_jet->energy());
+      float elf = i_jet->electronEnergy()/(i_jet->jecFactor(0) * i_jet->energy());
+      float muf = i_jet->muonEnergy()/(i_jet->jecFactor(0) * i_jet->energy());
+      int chm   = i_jet->chargedHadronMultiplicity();
+      int npr   = i_jet->chargedMultiplicity() + i_jet->neutralMultiplicity();
+      bool id = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_jet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_jet->eta())>2.4));
+      if (!id) jetIsIDed = false;
+      // ---- jet vertex association --------------------------------------
+      // ---- get the vector of tracks ------------------------------------ 
+      //reco::TrackRefVector vTrks(i_jet->getTrackRefs());
+      //float sumTrkPt(0.0),sumTrkPtBeta(0.0),sumTrkPtBetaStar(0.0),beta(-1.0),betaStar(-1.0);
+      // ---- loop over the tracks of the jet -----------------------------
+      /*
+	for(reco::TrackRefVector::const_iterator i_trk = vTrks.begin(); i_trk != vTrks.end(); i_trk++) {
+	sumTrkPt += (*i_trk)->pt();
+	// ---- loop over all vertices ------------------------------------
+	for(unsigned i_vtx = 0;i_vtx < vertices_->size();i_vtx++) {
         // ---- loop over the tracks associated with the vertex ---------
         if ((*vertices_)[i_vtx].isFake() || (*vertices_)[i_vtx].ndof() < 4) continue; 
         for(reco::Vertex::trackRef_iterator i_vtxTrk = (*vertices_)[i_vtx].tracks_begin(); i_vtxTrk != (*vertices_)[i_vtx].tracks_end(); ++i_vtxTrk) {
-          // ---- match the jet track to the track from the vertex ------
-          reco::TrackRef trkRef(i_vtxTrk->castTo<reco::TrackRef>());
-          // ---- check if the tracks match -----------------------------
-          if (trkRef == (*i_trk)) {
-            if (i_vtx == 0) {
-              sumTrkPtBeta += (*i_trk)->pt();
-            }
-            else {
-              sumTrkPtBetaStar += (*i_trk)->pt();
-            }   
-            continue;
-          }
+	// ---- match the jet track to the track from the vertex ------
+	reco::TrackRef trkRef(i_vtxTrk->castTo<reco::TrackRef>());
+	// ---- check if the tracks match -----------------------------
+	if (trkRef == (*i_trk)) {
+	if (i_vtx == 0) {
+	sumTrkPtBeta += (*i_trk)->pt();
+	}
+	else {
+	sumTrkPtBetaStar += (*i_trk)->pt();
+	}   
+	continue;
+	}
         }
-      }// vertices loop 
-    }// jet tracks loop
-    if (sumTrkPt > 0) {
-      beta     = sumTrkPtBeta/sumTrkPt;
-      betaStar = sumTrkPtBetaStar/sumTrkPt;
-    }
-    */
-    JET aJet; 
-    aJet.p4       = jetP4;
-    aJet.jec      = jec;
-    aJet.unc      = unc;
-    aJet.area     = i_jet->jetArea();
-    aJet.chf      = chf;
-    aJet.nhf      = nhf;
-    aJet.phf      = phf;
-    aJet.elf      = elf;
-    aJet.muf      = muf;
-    aJet.id       = 0;
-    if (id) {
-      aJet.id     = 1;
-    }
-    aJet.beta     = beta;
-    aJet.btag     = btag;
-    if(!jetIsDuplicate && jetIsInAcceptance && jetIsIDed)myJets.push_back(aJet);
-    if(jetIsDuplicate){aJet.p4       = jetP4; myRJets.push_back(aJet);}  // store the uncorrected jet (this is virtually the matched lepton in DR) 
-    if(!jetIsDuplicate && jetIsInAcceptance && jetIsIDed){ //store QG Variable for myJets
-    vector<float> *QGvars=ComputeQGVariables(i_jet,iEvent,index);
+	}// vertices loop 
+	}// jet tracks loop
+	if (sumTrkPt > 0) {
+	beta     = sumTrkPtBeta/sumTrkPt;
+	betaStar = sumTrkPtBetaStar/sumTrkPt;
+	}
+      */
+      JET aJet; 
+      aJet.p4       = jetP4;
+      aJet.jec      = jec;
+      aJet.unc      = unc;
+      aJet.area     = i_jet->jetArea();
+      aJet.chf      = chf;
+      aJet.nhf      = nhf;
+      aJet.phf      = phf;
+      aJet.elf      = elf;
+      aJet.muf      = muf;
+      aJet.id       = 0;
+      if (id) {
+	aJet.id     = 1;
+      }
+      aJet.beta     = beta;
+      aJet.btag     = btag;
+      if(!jetIsDuplicate && jetIsInAcceptance && jetIsIDed)myJets.push_back(aJet);
+      if(jetIsDuplicate){aJet.p4       = jetP4; myRJets.push_back(aJet);}  // store the uncorrected jet (this is virtually the matched lepton in DR) 
+      if(!jetIsDuplicate && jetIsInAcceptance && jetIsIDed){ //store QG Variable for myJets
+	vector<float> *QGvars=ComputeQGVariables(i_jet,iEvent,index);
 	{
-	int i;
-	for( i=0;i<int(QGvars->size());i++)
-		QGVars_->push_back(QGvars->at(i));
-	for(;i<9;i++)
-		QGVars_->push_back(-1.0);
-	QGVars_->push_back(-99.);
+	  int i;
+	  for( i=0;i<int(QGvars->size());i++)
+	    QGVars_->push_back(QGvars->at(i));
+	  for(;i<9;i++)
+	    QGVars_->push_back(-1.0);
+	  QGVars_->push_back(-99.);
 	}
 	QGvars->clear();
 	delete QGvars;
-     }
-  }// jet loop
+      }
+    }// jet loop
 
-  // ---- sort jets according to their corrected pt ---------------------
-  //sort(myJets.begin(),myJets.end(),jetSortingRule);    
-  //sort(myRJets.begin(),myRJets.end(),jetSortingRule);    
-  // ---- MET block -----------------------------------------------------
-  Handle<View<PFMET> > pfmetCol_;
-  iEvent.getByLabel("pfMet", pfmetCol_);
-  float pfmetPx = (pfmetCol_->front()).px();
-  float pfmetPy = (pfmetCol_->front()).py();
+    // ---- sort jets according to their corrected pt ---------------------
+    //sort(myJets.begin(),myJets.end(),jetSortingRule);    
+    //sort(myRJets.begin(),myRJets.end(),jetSortingRule);    
+    // ---- MET block -----------------------------------------------------
+    Handle<View<PFMET> > pfmetCol_;
+    iEvent.getByLabel("pfMet", pfmetCol_);
+    float pfmetPx = (pfmetCol_->front()).px();
+    float pfmetPy = (pfmetCol_->front()).py();
+    pfmet_      = (pfmetCol_->front()).pt();
+    pfmetPhi_   = (pfmetCol_->front()).phi();
+    pfSumEt_    = (pfmetCol_->front()).sumEt();
+    mypfmetP4.SetPxPyPzE(pfmetPx,pfmetPy,0,sqrt(pfmetPx * pfmetPx + pfmetPy * pfmetPy));
+  }
   // ---- define di-lepton pair (if exist)
   TLorentzVector llP4(0,0,0,0);
   if(myLeptons.size()>1) llP4 = myLeptons[0].p4 + myLeptons[1].p4;
+  
   TLorentzVector llP4GEN(0,0,0,0); 
+
   if(myGenLeptons.size()>1) llP4GEN = myGenLeptons[0].p4 + myGenLeptons[1].p4;  
   // ---- counters ------------------------------------------------------
   nVtx_        = int(vtxZ_->size());
@@ -1342,14 +1367,14 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     lepMatchedDRGEN_->push_back(999);
     lepMatchedGEN_->push_back(999);
     for(unsigned rr = 0; rr < myLeptons.size(); rr++) {
-	float DR = myGenLeptons[gg].p4.DeltaR(myLeptons[rr].p4);
-	bool isSameFlavor = (abs(myGenLeptons[gg].pdgId) == 11 && abs(myLeptons[rr].chid)==1);
-	isSameFlavor = isSameFlavor || (abs(myGenLeptons[gg].pdgId) == 13 && abs(myLeptons[rr].chid)==2);
-	if(DR<lepMatchedDRGEN_->at(gg) && isSameFlavor) {
-	    lepMatchedGEN_->at(gg) = rr;                              //store recolepton matched index
-	    lepMatchedDRGEN_->at(gg) = DR;                           //store DR with matched GEN lepton
-	}
+      float DR = myGenLeptons[gg].p4.DeltaR(myLeptons[rr].p4);
+      bool isSameFlavor = (abs(myGenLeptons[gg].pdgId) == 11 && abs(myLeptons[rr].chid)==1);
+      isSameFlavor = isSameFlavor || (abs(myGenLeptons[gg].pdgId) == 13 && abs(myLeptons[rr].chid)==2);
+      if(DR<lepMatchedDRGEN_->at(gg) && isSameFlavor) {
+	lepMatchedGEN_->at(gg) = rr;                              //store recolepton matched index
+	lepMatchedDRGEN_->at(gg) = DR;                           //store DR with matched GEN lepton
       }
+    }
   }
   // ---- plot some inclusive di-lepton spectra (prior jet requirement)
   if(nLeptons_>1) {
@@ -1364,18 +1389,18 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     if(dileptonId==-2)hElMuMassWeighted_->Fill(llP4.M(),mcWeight_);
   }
   if(nPhotonsGEN_>0) {
-   float pt = myGenPhotons[0].p4.Pt();
-   float eta = myGenPhotons[0].p4.Eta();
-   float DR=999;
-   if(myPhotons.size()>0)DR = myPhotons[0].p4.DeltaR(myGenPhotons[0].p4);
-     hGenPhotonPt_->Fill(pt);
-     hGenPhotonEta_->Fill(eta);
-     if(photonRECODRGEN_<0.2) {
-       hGenPhotonMatchedPt_->Fill(pt);
-       hGenPhotonMatchedEta_->Fill(eta);
-     }  
+    float pt = myGenPhotons[0].p4.Pt();
+    float eta = myGenPhotons[0].p4.Eta();
+    float DR=999;
+    if(myPhotons.size()>0)DR = myPhotons[0].p4.DeltaR(myGenPhotons[0].p4);
+    hGenPhotonPt_->Fill(pt);
+    hGenPhotonEta_->Fill(eta);
+    if(photonRECODRGEN_<0.2) {
+      hGenPhotonMatchedPt_->Fill(pt);
+      hGenPhotonMatchedEta_->Fill(eta);
+    }  
   }
-
+  
   for(int rr=0; rr< int(lepMatchedDRGEN_->size()); rr++) {
     if(rr>=2)continue; // do this only for first 2 leptons
     float pt = myGenLeptons[rr].p4.Pt();
@@ -1399,15 +1424,20 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       hGenElectronMatchedEta_->Fill(eta);
     }
   }
+
   // ---- keep only selected events -------------------------------------
-  bool selectionRECO = ((nVtx_ > 0) && (nLeptons_ > 1) && (nJets_ >= mMinNjets) && llP4.M()>mMinLLMass);
+  bool selectionRECO = false;
+  if(!mOnlyMC){
+    selectionRECO = ((nVtx_ > 0) && (nLeptons_ > 1) && (nJets_ >= mMinNjets) && llP4.M()>mMinLLMass);
+  }
   selectionRECO = selectionRECO || ((nVtx_ > 0) &&  nPhotons_>0 && (nJets_ >= mMinNjets)); // add photon logic for RECO
   bool selection(selectionRECO);
   bool selectionGEN(false);
   selRECO_ = 0;
   if (!isRealData_) {
     selectionGEN = ((nLeptonsGEN_ > 1) && (nJetsGEN_ >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
-    selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
+    //take in a QCD selection temporarily
+    selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets)) ||(nJetsGEN_ >= (mMinNjets+1));      // add photon logic for GEN 
     selection +=  selectionGEN;
     selGEN_ = 0;
   }
@@ -1416,15 +1446,20 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     runNum_     = iEvent.id().run();
     lumi_       = iEvent.luminosityBlock();
     isRealData_ = isRealData_; // just pass through 
-    rho_        = *rho; 
-    rho25_      = *rho25; 
-    pfmet_      = (pfmetCol_->front()).pt();
-    pfmetPhi_   = (pfmetCol_->front()).phi();
-    pfSumEt_    = (pfmetCol_->front()).sumEt();
+    /* //move members below to definition of values
+       //less problematic to define mOnlyMC
+    if(!mOnlyMC){
+      rho_        = *rho; 
+      rho25_      = *rho25; 
+      pfmet_      = (pfmetCol_->front()).pt();
+      pfmetPhi_   = (pfmetCol_->front()).phi();
+      pfSumEt_    = (pfmetCol_->front()).sumEt();
+    }
+    */
     if (selectionRECO) {
       selRECO_ = 1;
       // ---- hadronic recoil vector --------------------------------------
-      TLorentzVector pfmetP4(pfmetPx,pfmetPy,0,sqrt(pfmetPx * pfmetPx + pfmetPy * pfmetPy));
+      TLorentzVector pfmetP4=mypfmetP4;
       TLorentzVector pfhadP4(0,0,0,0);
       if(myLeptons.size()>1) { 
 	llM_                   = llP4.M();
@@ -1622,10 +1657,16 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
           // --- check if your trigger bit is in the list which we don't ask for prescale (emu paths)
 	  bool doCheckForPrescale = true;
           string reducedTriggerName = "";
+          string reducedTriggerName2 = "";
 	  int arraySize = int(triggerNamesFull_[itrig].size());
-	  if(arraySize-1>0)reducedTriggerName=triggerNamesFull_[itrig].substr(0,triggerNamesFull_[itrig].size()-1); // remove last char from the str
+	  if(arraySize-1>0)
+	    {reducedTriggerName=triggerNamesFull_[itrig].substr(0,triggerNamesFull_[itrig].size()-1); // remove last char from the str
+	    reducedTriggerName2=triggerNamesFull_[itrig].substr(0,triggerNamesFull_[itrig].size()-2); // remove 2 last chars from the str
+	    }
 	  for(int nn = 0; nn<int(prescaleDontAsk_.size()); nn++) {
-	    if(reducedTriggerName==prescaleDontAsk_[nn])doCheckForPrescale=false;
+	    if(reducedTriggerName==prescaleDontAsk_[nn] || reducedTriggerName2==prescaleDontAsk_[nn]){
+	      doCheckForPrescale=false;
+	    }
 	  }
 	  //if(!doCheckForPrescale)cout << "skipping to check = " << triggerNamesFull_[itrig] << endl;
 
@@ -1656,7 +1697,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 //          std::cout << "f4 " << checkTriggerName(triggerNames_[itrig],triggerFamily4_) << " " <<triggerNames_[itrig] << " " << isTriggered_ << std::endl;
           }
         }
-        
         fired_      ->push_back(tmpFired);
         prescaleL1_ ->push_back(preL1);
         prescaleHLT_->push_back(preHLT);
@@ -1685,7 +1725,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         lepChIdGEN_   ->push_back(myGenLeptons[l].pdgId);
       }   
 
-      if(myGenPhotons.size()>0) {       
+      if(myGenPhotons.size()>0) {     
         photonPtGEN_     = myGenPhotons[0].p4.Pt();
         photonEtaGEN_    = myGenPhotons[0].p4.Eta();
         photonPhiGEN_    = myGenPhotons[0].p4.Phi();
@@ -1708,7 +1748,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetEtaGEN_      ->push_back(myGenJets[j].Eta()); 
         jetPhiGEN_      ->push_back(myGenJets[j].Phi()); 
         jetEGEN_        ->push_back(myGenJets[j].Energy()); 
-        jetYGEN_        ->push_back(myGenJets[j].Rapidity());  
+        jetYGEN_        ->push_back(myGenJets[j].Rapidity());   
       }
       isZleadGEN_ = 1;
       if (nJetsGEN_ > 0) {
