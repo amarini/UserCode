@@ -1,13 +1,12 @@
-cvs co ElectroWeakAnalysis/VPlusJets
+
+export "SCRAM_ARCH=slc5_amd64_gcc462"
+cmsrel CMSSW_5_3_6
+cd CMSSW_5_3_6/src
+cmsenv
+
 cvs co -d KKousour/MultiJetAnalysis UserCode/KKousour/MultiJetAnalysis
-cvs co -d pandolf UserCode/pandolf
-cvs co -d amarini UserCode/amarini
+cvs co -d pandolf/QuarkGluonTagger UserCode/pandolf/QuarkGluonTagger
+cvs co  -d amarini/VPlusJets UserCode/amarini/VPlusJets
 cvs co -r V00-00-21 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
 
-
-#I'm copying the content of Usercode/amarini/VPlusJets in
-# ElectroWeak/VPlusJets but probably compile also there.
-# You have to delete from ElectroWeak/VPlusJets everything that does not
-# compile from /src and /plugins and /interface.  
-
-scram b -j 5
+scram b -j 4
