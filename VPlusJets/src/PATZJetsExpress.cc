@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.6 2012/12/07 11:01:45 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.7 2012/12/07 17:16:20 amarini Exp $
 //
 //
 
@@ -204,7 +204,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
 	GENJET(TLorentzVector &v):TLorentzVector(v){veto=0;}
 	virtual ~GENJET(){}
 	int veto;	
-	}
+	};
 
 	vector<float> *ComputeQGVariables(edm::View<pat::Jet>::const_iterator & jet,const Event& iEvent,int index);
       // ---- sorting rules ---------------------------------------------
@@ -346,7 +346,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float VBPartonPhi_;
       int VBPartonDM_; // decay mode
       // ---- jet kinematics --------------------------------------------
-      vector<float> *jetPt_,*jetEta_,*jetY_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetYGEN_,*jetPhiGEN_,*jetEGEN_,*jetVetoGEN;
+      vector<float> *jetPt_,*jetEta_,*jetY_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetYGEN_,*jetPhiGEN_,*jetEGEN_,*jetVetoGEN_;
       // ---- jet composition fractions ---------------------------------
       vector<float> *jetCHF_,*jetPHF_,*jetNHF_,*jetMUF_,*jetELF_;
       // ---- other jet properties --------------------------------------
@@ -801,7 +801,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       //if (!isISO) continue;
       // ---- preselection on genjets -----------------------------------
       if ((i_genjet->pt() < mMinJetPt) || (fabs(i_genjet->eta()) > mMaxJetEta)) continue;
-      TLorentzVector aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
+      GENJET aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
 	aGenJet.veto=isVETO;
       myGenJets.push_back(aGenJet);  
     }// genjet loop
@@ -1282,7 +1282,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       int chm   = i_jet->chargedHadronMultiplicity();
       int npr   = i_jet->chargedMultiplicity() + i_jet->neutralMultiplicity();
       bool id = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_jet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_jet->eta())>2.4));
-      float rms=TMath::Sqrt( TMath::Power(i_jet->UserFloat("axis1"),2) + TMath::Power(i_jet->UserFloat("axis2"),2) );
+
+      float rms=TMath::Sqrt( TMath::Power(i_jet->userFloat("axis1"),2) + TMath::Power(i_jet->userFloat("axis2"),2) );
       if (!id) jetIsIDed = false;
       // ---- jet vertex association --------------------------------------
       // ---- get the vector of tracks ------------------------------------ 
