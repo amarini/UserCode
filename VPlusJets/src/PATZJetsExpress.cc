@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.8 2012/12/10 17:38:03 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.9 2012/12/13 12:51:11 amarini Exp $
 //
 //
 
@@ -606,27 +606,30 @@ void PATZJetsExpress::beginRun(edm::Run const & iRun, edm::EventSetup const& iSe
       }
     }
   }
-  Handle<GenRunInfoProduct> genruninfo;  
-  iRun.getByLabel("generator",genruninfo);
-  cout<<"in begin Run  intXS/extXSLO/extXSNLO "<<genruninfo->internalXSec().value()<<"/"<<genruninfo->externalXSecLO().value()<<"/"<<genruninfo->externalXSecNLO().value()<<endl;	
-  hXSec_->Fill(0. ,genruninfo->internalXSec().value()/pow(genruninfo->internalXSec().error(),2)    );
-  hXSec_->Fill(1 ,1./pow(genruninfo->internalXSec().error(),2) );
-  
-  hXSec_->Fill(2 ,genruninfo->externalXSecLO().value()/pow(genruninfo->externalXSecLO().error(),2)  );
-  hXSec_->Fill(3 ,1./pow(genruninfo->externalXSecLO().error(),2)  );
-  
-  hXSec_->Fill(4 ,genruninfo->externalXSecNLO().value()/pow(genruninfo->externalXSecNLO().error(),2) );
-  hXSec_->Fill(5 ,1./pow(genruninfo->externalXSecNLO().error(),2) );
-  
-  hXSec_->Fill(6 , 1 );
-  
-  hXSec_->Fill(7 ,pow(genruninfo->internalXSec().value(),1) );
-  hXSec_->Fill(6 ,pow(genruninfo->externalXSecLO().value(),1)  );
-  hXSec_->Fill(9 ,pow(genruninfo->externalXSecNLO().value(),1) );
-  
-  hXSec_->Fill(10 ,pow(genruninfo->internalXSec().value(),2) );
-  hXSec_->Fill(11 ,pow(genruninfo->externalXSecLO().value(),2)  );
-  hXSec_->Fill(12 ,pow(genruninfo->externalXSecNLO().value(),2) );
+  //isRealData_ Not set yet
+  if(iRun.run()<100){
+  	Handle<GenRunInfoProduct> genruninfo;  
+  	iRun.getByLabel("generator",genruninfo);
+  	cout<<"in begin Run  intXS/extXSLO/extXSNLO "<<genruninfo->internalXSec().value()<<"/"<<genruninfo->externalXSecLO().value()<<"/"<<genruninfo->externalXSecNLO().value()<<endl;	
+  	hXSec_->Fill(0. ,genruninfo->internalXSec().value()/pow(genruninfo->internalXSec().error(),2)    );
+  	hXSec_->Fill(1 ,1./pow(genruninfo->internalXSec().error(),2) );
+  	
+  	hXSec_->Fill(2 ,genruninfo->externalXSecLO().value()/pow(genruninfo->externalXSecLO().error(),2)  );
+  	hXSec_->Fill(3 ,1./pow(genruninfo->externalXSecLO().error(),2)  );
+  	
+  	hXSec_->Fill(4 ,genruninfo->externalXSecNLO().value()/pow(genruninfo->externalXSecNLO().error(),2) );
+  	hXSec_->Fill(5 ,1./pow(genruninfo->externalXSecNLO().error(),2) );
+  	
+  	hXSec_->Fill(6 , 1 );
+  	
+  	hXSec_->Fill(7 ,pow(genruninfo->internalXSec().value(),1) );
+  	hXSec_->Fill(6 ,pow(genruninfo->externalXSecLO().value(),1)  );
+  	hXSec_->Fill(9 ,pow(genruninfo->externalXSecNLO().value(),1) );
+  	
+  	hXSec_->Fill(10 ,pow(genruninfo->internalXSec().value(),2) );
+  	hXSec_->Fill(11 ,pow(genruninfo->externalXSecLO().value(),2)  );
+  	hXSec_->Fill(12 ,pow(genruninfo->externalXSecNLO().value(),2) );
+	}
 }
 // ---- event loop ------------------------------------------------------
 void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
@@ -667,14 +670,19 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     }
     // --- MC weight
     Handle<GenEventInfoProduct> geninfo;  
-    iEvent.getByLabel("generator",geninfo);
-    mcWeight_ = geninfo->weight();
-    hWEvents_->Fill(0.5,mcWeight_);
+    if(!isRealData_)
+	{
+    	iEvent.getByLabel("generator",geninfo);
+    	mcWeight_ = geninfo->weight();
+    	hWEvents_->Fill(0.5,mcWeight_);
+	}
     // --- Gen Jets
     Handle<GenJetCollection> genjets;
-    iEvent.getByLabel("ak5GenJets",genjets);
+    if(!isRealData_)
+    	iEvent.getByLabel("ak5GenJets",genjets);
     Handle<GenParticleCollection> gen;
-    iEvent.getByLabel("genParticles", gen);
+    if(!isRealData_)
+    	iEvent.getByLabel("genParticles", gen);
     GenParticleCollection::const_iterator i_gen;
     GenParticleCollection::const_iterator j_gen;
     GenJetCollection::const_iterator i_genjet;
