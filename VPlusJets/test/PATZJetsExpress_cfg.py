@@ -109,14 +109,23 @@ if not isMC:
 	removeMCMatching(process)
 
 addPfMET(process, 'PF')
+
+if(isMC):
+	Corrections=cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute'])
+else:
+	Corrections=cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute','L2L3Residual'])
+
+#BTagDiscriminators= ['jetBProbabilityBJetTags','jetProbabilityBJetTags','trackCountingHighPurBJetTags','trackCountingHighEffBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexBJetTags','combinedSecondaryVertexMVABJetTags','softMuonBJetTags','softMuonByPtBJetTags','softMuonByIP3dBJetTags','simpleSecondaryVertexNegativeHighEffBJetTags','simpleSecondaryVertexNegativeHighPurBJetTags']
+BTagDiscriminators= ['jetBProbabilityBJetTags','jetProbabilityBJetTags','trackCountingHighPurBJetTags','trackCountingHighEffBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexBJetTags','combinedSecondaryVertexMVABJetTags']
+
 switchJetCollection(process,cms.InputTag('ak5PFJets'),
                  doJTA        = True,
                  doBTagging   = True,
-                 jetCorrLabel = ('AK5PF', cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute','L2L3Residual'])),
+                 jetCorrLabel = ('AK5PF', Corrections),
 		 genJetCollection=cms.InputTag('ak5GenJets'),
                  doType1MET   = False,
                  doJetID      = True,
-		btagdiscriminators = ['jetBProbabilityBJetTags','jetProbabilityBJetTags','trackCountingHighPurBJetTags','trackCountingHighEffBJetTags','simpleSecondaryVertexHighEffBJetTags','simpleSecondaryVertexHighPurBJetTags','combinedSecondaryVertexBJetTags','combinedSecondaryVertexMVABJetTags','softMuonBJetTags','softMuonByPtBJetTags','softMuonByIP3dBJetTags','simpleSecondaryVertexNegativeHighEffBJetTags','simpleSecondaryVertexNegativeHighPurBJetTags']
+		btagdiscriminators = BTagDiscriminators 
                  )
 
 process.selectedPatJets.cut        = "pt > 10 && abs(eta) < 4.7"
