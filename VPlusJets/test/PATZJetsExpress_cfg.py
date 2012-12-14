@@ -207,6 +207,11 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon125_v',
                                   'HLT_Photon135_v'),
 
+    triggerFamily5  = cms.vstring('HLT_SingleMu_v'), ##NAMES TO BE CHECKED!
+    triggerFamily6  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
+    triggerFamily7  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
+    triggerFamily8  = cms.vstring([]), ##TO BE CHECKED!
+
     prescaleDontAsk = cms.vstring('HLT_Mu17_Ele8_CaloIdL_v', # don't ask for L1 prescales for these bits
                                   'HLT_Mu8_Ele17_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
