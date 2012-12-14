@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.9 2012/12/13 12:51:11 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.10 2012/12/13 14:38:36 amarini Exp $
 //
 //
 
@@ -1843,15 +1843,12 @@ if(jet->genParton() != NULL)Vars->push_back(  jet->genParton()->pdgId() ); 	//0 
 else Vars->push_back( 0 );
 //Vars->push_back( jet->partonFlavour () );
 Vars->push_back(  (*qglMap)[jetRef]  ); 		//1 QGL
+Vars->push_back(	jet->userFloat("ptD_QC") ); 	//6
+Vars->push_back(	jet->userFloat("axis1_QC") ); 	//7
+Vars->push_back(	jet->userFloat("axis2_QC") ); 	//8
+Vars->push_back(	jet->userFloat("nNeutral_ptCut") ) ; 	//9
+Vars->push_back(	jet->userFloat("nChg_QC") ) ; 	//9
 Vars->push_back( -1.);
-Vars->push_back( jet->userFloat("ptD")  ); 	//2     PTD
-Vars->push_back( jet->chargedMultiplicity() ); 	//3       Charged Mult.
-Vars->push_back( jet->neutralMultiplicity() ); 	//4       neutral Mult.
-Vars->push_back( -1.	); 			//5	RMSCAND
-Vars->push_back(	jet->userFloat("ptMax") ); 	//6
-Vars->push_back(	jet->userFloat("axis1") ); 	//7
-Vars->push_back(	jet->userFloat("axis2") ); 	//8
-Vars->push_back(	jet->userFloat("pull") ) ; 	//9
 return Vars;
 }
 
