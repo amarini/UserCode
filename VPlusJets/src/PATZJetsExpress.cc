@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.11 2012/12/14 14:21:42 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.12 2012/12/18 14:37:18 bellan Exp $
 //
 //
 
@@ -130,7 +130,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       virtual void beginRun(edm::Run const &, edm::EventSetup const& iSetup);
       virtual void analyze(const edm::Event&, const edm::EventSetup&);
       virtual void endJob();
-      virtual bool checkTriggerName(string,std::vector<string>); //checks if string belongs to any of the vector<string>
+      bool checkTriggerName(string,std::vector<string>); //checks if string belongs to any of the vector<string>
+      inline double getEffectiveArea(const double& eta) const;
       // ---- method that builds the tree -------------------------------
       void buildTree();
       // ---- method that re-initializes the tree branches --------------
@@ -875,25 +876,19 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       //---- https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
       if (!muon::isTightMuon(*i_mu,*primVtx))          continue;
       
-      //---- subdetector isolation rho corrected, for efficiency studies look at
+      //---- pfi isolation not corrected, for efficiency studies look at
       //---- https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs
       //---- https://indico.cern.ch/getFile.py/access?contribId=2&resId=0&materialId=slides&confId=128982 
-      float muonIso = (i_mu->isolationR03().sumPt + i_mu->isolationR03().emEt + i_mu->isolationR03().hadEt)/i_mu->pt();
+      float muonIso = (i_mu->pfIsolationR04().sumChargedHadronPt + i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt)/i_mu->pt();
       
-      
-      float muEta = i_mu->eta(); // essentially track direction at Vtx (recommended prescription)
-      float Aecal=0.041; // initiallize with EE value
-      float Ahcal=0.032; // initiallize with HE value
-      if (fabs(muEta)<1.48) { 
-	Aecal = 0.074;   // substitute EB value 
-	Ahcal = 0.023;   // substitute EE value
-      }
-      float muonIsoRho = (i_mu->isolationR03().sumPt + max(0.,i_mu->isolationR03().emEt -Aecal*(*rho)) 
-			  + max(0.,i_mu->isolationR03().hadEt-Ahcal*(*rho)))/i_mu->pt();
+      // Muon pf isolation rho corrected
+      float muonIsoRho = (i_mu->pfIsolationR04().sumChargedHadronPt
+			  + max(0.,i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - (*rho)*getEffectiveArea(i_mu->eta())))/i_mu->pt();
       
       // Muon pf isolation DB corrected
-      float muonIsoPF = (i_mu->pfIsolationR04().sumChargedHadronPt + max(0., i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - 0.5*i_mu->pfIsolationR04().sumPUPt))/i_mu->pt();
-      
+      float muonIsoPF = (i_mu->pfIsolationR04().sumChargedHadronPt 
+			 + max(0., i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - 0.5*i_mu->pfIsolationR04().sumPUPt))/i_mu->pt();    
+
 
       if (muonIsoPF > mMaxCombRelIso04)                                 continue;
 
@@ -2309,5 +2304,19 @@ void PATZJetsExpress::clearTree()
   VBPartonPhi_       = -999;
   mcWeight_          = -999;
 }
+
+double PATZJetsExpress::getEffectiveArea(const double& eta) const {
+  double abseta = abs(eta);
+  // values for 0.4 cone
+  
+  if(abseta <= 1.)                        return 0.674;
+  else if(abseta > 1.  && abseta <= 1.5)  return 0.565;
+  else if(abseta > 1.5 && abseta <= 2.0)  return 0.442;
+  else if(abseta > 2.0 && abseta <= 2.2)  return 0.515;
+  else if(abseta > 2.2 && abseta <=  2.3) return 0.821;
+  else if(abseta > 2.3 && abseta <= 2.4)  return 0.660;
+  else                                    return 9999;
+}
+
 // ---- define this as a plug-in ----------------------------------------
 DEFINE_FWK_MODULE(PATZJetsExpress);
