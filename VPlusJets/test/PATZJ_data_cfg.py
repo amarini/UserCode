@@ -266,6 +266,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     minLepPt        = cms.double(20),
     maxLepEta       = cms.double(2.4),
     maxCombRelIso03 = cms.double(0.15),
+    maxCombRelIso03 = cms.double(0.12),
     minLLMass       = cms.double(40),
     OnlyMC	    = cms.bool(False), #NOT IMPL
     #GENCrossCleaning= cms.int32(1),

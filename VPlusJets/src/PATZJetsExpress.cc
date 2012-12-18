@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.10 2012/12/13 14:38:36 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.11 2012/12/14 14:21:42 amarini Exp $
 //
 //
 
@@ -261,7 +261,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- configurable parameters -----------------------------------
       bool          mIsMC,mOnlyMC;
   int           mMinNjets,mGENType, mDressedRadius;
-      double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
+  double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
       //int 	    mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
       edm::InputTag mJetsName,mSrcRho,mSrcRho25;
@@ -453,6 +453,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mMaxPhoEta         = iConfig.getParameter<double>                    ("maxPhoEta");
   mMinLLMass         = iConfig.getParameter<double>                    ("minLLMass");
   mMaxCombRelIso03   = iConfig.getParameter<double>                    ("maxCombRelIso03");
+  mMaxCombRelIso04   = iConfig.getParameter<double>                    ("maxCombRelIso04");
   mJetsName          = iConfig.getParameter<edm::InputTag>             ("jets");
   mSrcRho            = iConfig.getParameter<edm::InputTag>             ("srcRho");
   mSrcRho25          = iConfig.getParameter<edm::InputTag>             ("srcRho25");
@@ -870,17 +871,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       //---- apply kinematic and geometric acceptance 
       if ((i_mu->pt() < mMinLepPt) || (fabs(i_mu->eta()) > mMaxLepEta))  continue;
       
-      //---- apply VBTF-like id (GlobalMuonPromptTight)
+      //---- apply tight definition for muon selection
       //---- https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideMuonId
-      if (!muon::isGoodMuon(*i_mu,muon::GlobalMuonPromptTight))          continue; // should be redundant wrt the cuts below
-      if (!(i_mu->isGlobalMuon()))                                       continue;
-      if (fabs(i_mu->globalTrack()->normalizedChi2()) >= 10)             continue;
-      if (i_mu->globalTrack()->hitPattern().numberOfValidMuonHits()==0)  continue;
-      if (i_mu->numberOfMatchedStations() <=1)                           continue; 
-      if (fabs(i_mu->innerTrack()->dxy(primVtx->position())) >= 0.2)     continue;
-      if (i_mu->track()->hitPattern().numberOfValidPixelHits() == 0)     continue; 
-      if (i_mu->track()->hitPattern().numberOfValidTrackerHits() <= 10)  continue; 
-      
+      if (!muon::isTightMuon(*i_mu,*primVtx))          continue;
       
       //---- subdetector isolation rho corrected, for efficiency studies look at
       //---- https://twiki.cern.ch/twiki/bin/viewauth/CMS/MuonReferenceEffs
@@ -898,11 +891,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float muonIsoRho = (i_mu->isolationR03().sumPt + max(0.,i_mu->isolationR03().emEt -Aecal*(*rho)) 
 			  + max(0.,i_mu->isolationR03().hadEt-Ahcal*(*rho)))/i_mu->pt();
       
-      if (muonIsoRho > mMaxCombRelIso03)                                 continue;
-      if (i_mu->innerTrack()->hitPattern().numberOfValidHits() < 11)     continue;
-      if (i_mu->innerTrack()->hitPattern().numberOfValidPixelHits() < 1) continue;
-      if (i_mu->numberOfMatches() < 2)                                   continue;
-      if (i_mu->innerTrack()->ptError()/i_mu->pt() > 0.1)                continue;
+      // Muon pf isolation DB corrected
+      float muonIsoPF = (i_mu->pfIsolationR04().sumChargedHadronPt + max(0., i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - 0.5*i_mu->pfIsolationR04().sumPUPt))/i_mu->pt();
+      
+
+      if (muonIsoPF > mMaxCombRelIso04)                                 continue;
+
       
       PARTICLE aLepton;
       TLorentzVector lepP4(i_mu->p4().Px(),i_mu->p4().Py(),i_mu->p4().Pz(),i_mu->p4().E());
@@ -910,12 +904,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aLepton.chid = 2*i_mu->charge();
       aLepton.id   = 1; // all muons are tight
       aLepton.iso  = muonIso;
-      aLepton.isoPF = -999;
+      aLepton.isoPF  = muonIsoPF;
       aLepton.isoRho = muonIsoRho;
       aLepton.trackIso = -1;
-      aLepton.ecalIso = -1;
-      aLepton.hcalIso = -1;
-      aLepton.sigmaIEtaIEta = -1;
+      aLepton.ecalIso  = -1;
+      aLepton.hcalIso  = -1;
+      aLepton.sigmaIEtaIEta  = -1;
       aLepton.hadronicOverEm = -1;
       myLeptons.push_back(aLepton);
     }// muon loop
