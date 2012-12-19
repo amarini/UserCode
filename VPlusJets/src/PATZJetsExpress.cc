@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.16 2012/12/19 15:22:37 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.17 2012/12/19 15:51:14 bellan Exp $
 //
 //
 
@@ -962,6 +962,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	    isMedium = true;
 	} 
       }
+      if(ConversionTools::hasMatchedConversion(*i_el, hConversions, beamspot.position())) continue;
+      if(i_el->gsfTrack()->trackerExpectedHitsInner().numberOfHits() > 1)                 continue;
+
 
       GsfElectronRef electronRef(electrons_, eleIndex++);
       float sumChargedHadronPt = (*pfIsoValEleCH03)[electronRef];
@@ -969,7 +972,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float sumPhotonEt        = (*pfIsoValEleG03)[electronRef];
 
       float electronIsoPFUnc   = (sumChargedHadronPt + sumNeutralHadronEt + sumPhotonEt)/i_el->pt();
-      float electronIsoPFRho  = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
+      float electronIsoPFRho   = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
 
       if(electronIsoPFRho > mMaxCombRelIso03)              continue;
       
