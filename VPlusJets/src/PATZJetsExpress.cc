@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.14 2012/12/18 16:10:56 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.15 2012/12/19 13:29:04 bellan Exp $
 //
 //
 
@@ -131,7 +131,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       virtual void analyze(const edm::Event&, const edm::EventSetup&);
       virtual void endJob();
       bool checkTriggerName(string,std::vector<string>); //checks if string belongs to any of the vector<string>
-      inline double getEffectiveArea(const double& eta) const;
+      inline double getEffectiveAreaForMuons(const double& eta) const;
+      inline double getEffectiveAreaForElectrons(const double& eta) const;
       // ---- method that builds the tree -------------------------------
       void buildTree();
       // ---- method that re-initializes the tree branches --------------
@@ -262,8 +263,9 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       HLTConfigProvider hltConfig_;
       // ---- configurable parameters -----------------------------------
       bool          mIsMC,mOnlyMC;
-  int           mMinNjets,mGENType, mDressedRadius;
-  double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
+      int           mMinNjets,mGENType, mDressedRadius;
+      double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
+      edm::InputTag pfIsoValEleCH03Name,pfIsoValEleNH03Name,pfIsoValEleG03Name;
       //int 	    mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
       edm::InputTag mJetsName,mSrcRho,mSrcRho25;
@@ -478,6 +480,10 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mGENType           = iConfig.getParameter<int>                       ("GENType");
   mDressedRadius     = iConfig.getParameter<double>                    ("dressedRadius");
   mOnlyMC	     = iConfig.getParameter<bool>		       ("OnlyMC");
+  pfIsoValEleCH03Name= iConfig.getParameter<edm::InputTag>("pfIsoValEleCH03");
+  pfIsoValEleNH03Name= iConfig.getParameter<edm::InputTag>("pfIsoValEleNH03");
+  pfIsoValEleG03Name = iConfig.getParameter<edm::InputTag>("pfIsoValEleG03");
+
   //mGENCrossCleaning  = iConfig.getParameter<int>                       ("GENCrossCleaning"); //0: Nothing 1: Leptons 2: photons (Bit) 4:
 
   // initializing the PF isolation estimator for photon isolation 2012
@@ -853,18 +859,27 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       }
     }
     //---- beam spot for conversion-safe electron veto --------------------
-    edm::Handle<reco::BeamSpot> bsHandle;
+    Handle<reco::BeamSpot> bsHandle;
     iEvent.getByLabel("offlineBeamSpot", bsHandle);
     const reco::BeamSpot &beamspot = *bsHandle.product();
     
     //---- conversions for conversion-safe electron veto -------------------
-    edm::Handle<reco::ConversionCollection> hConversions;
+    Handle<reco::ConversionCollection> hConversions;
     iEvent.getByLabel("allConversions", hConversions);
     
     //---- leptons block --------------------------------------------------
     //  Handle<View<GsfElectron> > electrons_;
     Handle<GsfElectronCollection> electrons_;
     iEvent.getByLabel("gsfElectrons", electrons_);
+    GsfElectronRef::key_type eleIndex = 0;
+    // Fetch pf iso maps
+    Handle<ValueMap<double> > pfIsoValEleCH03;
+    iEvent.getByLabel(pfIsoValEleCH03Name, pfIsoValEleCH03);
+    Handle<ValueMap<double> > pfIsoValEleNH03;
+    iEvent.getByLabel(pfIsoValEleNH03Name, pfIsoValEleNH03);
+    Handle<ValueMap<double> > pfIsoValEleG03;
+    iEvent.getByLabel(pfIsoValEleG03Name, pfIsoValEleG03);
+
     Handle<View<Muon> > muons_;
     iEvent.getByLabel("muons",muons_);
 
@@ -884,7 +899,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       
       // Muon pf isolation rho corrected
       float muonIsoPFRho = (i_mu->pfIsolationR04().sumChargedHadronPt
-			  + max(0.,i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - (*rho)*getEffectiveArea(i_mu->eta())))/i_mu->pt();
+			  + max(0.,i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - (*rho)*getEffectiveAreaForMuons(i_mu->eta())))/i_mu->pt();
       
       // Muon pf isolation DB corrected
       float muonIsoPFdb  = (i_mu->pfIsolationR04().sumChargedHadronPt 
@@ -961,9 +976,19 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       if (isTight) {
 	aLepton.id = 1;
       }
-      aLepton.isoPFUnc = -1;
+      
+      
+      GsfElectronRef electronRef(electrons_, eleIndex++);
+      float sumChargedHadronPt = (*pfIsoValEleCH03)[electronRef];
+      float sumNeutralHadronEt = (*pfIsoValEleNH03)[electronRef];
+      float sumPhotonEt        = (*pfIsoValEleG03)[electronRef];
+
+      float electronIsoPFUnc   = (sumChargedHadronPt + sumNeutralHadronEt + sumPhotonEt)/i_el->pt();
+      double electronIsoPFRho  = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
+
+      aLepton.isoPFUnc = electronIsoPFUnc;
       aLepton.isoPFDb  = -1;
-      aLepton.isoPFRho  = -1;
+      aLepton.isoPFRho = electronIsoPFRho;
       aLepton.sigmaIEtaIEta = sigmaIetaIeta;
       aLepton.hadronicOverEm = hadronicOverEm;
       myLeptons.push_back(aLepton);
@@ -971,21 +996,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     hRecoLeptons_->Fill(int(myLeptons.size()));
     // ---- sort the leptons according to their pt ------------------------
     sort(myLeptons.begin(),myLeptons.end(),lepSortingRule); 
-    // ---- PF isolation for leptons --------------------------------------
-    //  Handle<View<PFCandidate> > pfCandidates;
-    Handle<PFCandidateCollection> pfCandidates;
-    iEvent.getByLabel("particleFlow", pfCandidates);
-    for(unsigned il=0;il<myLeptons.size();il++) {
-      float sumPt(0.0);
-      for(unsigned ipf=0;ipf<pfCandidates->size();ipf++) {
-	float dR = deltaR(myLeptons[il].p4.Eta(),myLeptons[il].p4.Phi(),(*pfCandidates)[ipf].eta(),(*pfCandidates)[ipf].phi());
-	if (dR < 0.3) {
-	  sumPt += (*pfCandidates)[ipf].pt();
-	}
-      }
-      myLeptons[il].isoPFRho = (sumPt-myLeptons[il].p4.Pt()-(*rho)*0.2827434)/myLeptons[il].p4.Pt();
-
-    }
+  
+  
     //---- photons block --------------------------------------------------
 
     if(true) 
@@ -1080,6 +1092,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  photonPassConversionVeto_ = !ConversionTools::hasMatchedPromptElectron(it->superCluster(), electrons_, hConversions, beamspot.position());
 	  
 	  // --- PF isolation ---
+	  Handle<PFCandidateCollection> pfCandidates;
+	  iEvent.getByLabel("particleFlow", pfCandidates);
 	  
 	  unsigned int ivtx = 0;
 	  VertexRef myVtxRef(vertices_, ivtx);
@@ -2309,7 +2323,7 @@ void PATZJetsExpress::clearTree()
   mcWeight_          = -999;
 }
 
-double PATZJetsExpress::getEffectiveArea(const double& eta) const {
+double PATZJetsExpress::getEffectiveAreaForMuons(const double& eta) const {
   double abseta = abs(eta);
   // values for 0.4 cone
   
@@ -2320,6 +2334,20 @@ double PATZJetsExpress::getEffectiveArea(const double& eta) const {
   else if(abseta > 2.2 && abseta <=  2.3) return 0.821;
   else if(abseta > 2.3 && abseta <= 2.4)  return 0.660;
   else                                    return 9999;
+}
+
+double PATZJetsExpress::getEffectiveAreaForElectrons(const double& eta) const {
+  double abseta = abs(eta);
+    // values for 0.3 cone
+  
+  if(abseta <= 1.)                            return 0.13;
+  else if(abseta > 1.    && abseta <= 1.479)  return 0.14;
+  else if(abseta > 1.479 && abseta <= 2.0)    return 0.07;
+  else if(abseta > 2.    && abseta <= 2.2)    return 0.09;
+  else if(abseta > 2.2   && abseta <=  2.3)   return 0.11;
+  else if(abseta > 2.3   && abseta <= 2.4)    return 0.11;
+  else if(abseta > 2.4)                       return 0.14;
+  else                                        return 9999;
 }
 
 // ---- define this as a plug-in ----------------------------------------

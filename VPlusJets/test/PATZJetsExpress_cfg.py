@@ -48,7 +48,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 10
 process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
@@ -148,11 +148,20 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string("PATZJetsExpress.root"),
     closeFileFast = cms.untracked.bool(True)
 )
+
+# ---- Recompute electron's PF iso deposits -----------------------------
+from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFElectronIso, setupPFPhotonIso
+process.eleIsoSequence = setupPFElectronIso(process, 'gsfElectrons')
+process.phoIsoSequence = setupPFPhotonIso(process, 'photons')
+
 # ---- ZJetsExpress analyzer --------------------------------------------
 process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     jets            = cms.InputTag('jetExtender','extendedPatJets'),
     srcRho          = cms.InputTag('kt6PFJets','rho'),
     srcRho25        = cms.InputTag('kt6PFJets25','rho'),
+    pfIsoValEleCH03 = cms.InputTag('elPFIsoValueCharged03PFIdPFIso'),
+    pfIsoValEleNH03 = cms.InputTag('elPFIsoValueNeutral03PFIdPFIso'),			  
+    pfIsoValEleG03  = cms.InputTag('elPFIsoValueGamma03PFIdPFIso'),                                    
     minNjets        = cms.int32(1),
     jetLepIsoRadius = cms.double(0.4),
     jetLepPhoRadius = cms.double(0.4),
@@ -250,10 +259,23 @@ process.kt6PFJets25.Rho_EtaMax = cms.double(2.5)
 del process.outpath
 
 # ---- save all events for any trigger ---------------------
-if(isMC):
-	process.p = cms.Path(process.kt6PFJets + process.ak5PFJets + process.kt6PFJets25 + process.goodOfflinePrimaryVertices 
-		+ process.genParticlesForJets
-		+  process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
-else:
-	process.p = cms.Path(process.kt6PFJets + process.ak5PFJets + process.kt6PFJets25 + process.goodOfflinePrimaryVertices 
-		+  process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
+process.p = cms.Path(process.pfParticleSelectionSequence
+		     + process.eleIsoSequence
+		     + process.phoIsoSequence
+		     + process.kt6PFJets
+		     + process.ak5PFJets
+		     + process.kt6PFJets25
+		     + process.goodOfflinePrimaryVertices)
+
+if(isMC): process.p += process.genParticlesForJets
+process.tail = cms.Sequence(process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
+
+process.p += process.tail
+
+
+
+process.out = cms.OutputModule("PoolOutputModule",
+    fileName = cms.untracked.string('RecoMuons.root')
+)
+
+process.this_is_the_end = cms.EndPath(process.out)
