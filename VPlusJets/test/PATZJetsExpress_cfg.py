@@ -48,7 +48,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 10
 process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
@@ -271,11 +271,3 @@ if(isMC): process.p += process.genParticlesForJets
 process.tail = cms.Sequence(process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
 
 process.p += process.tail
-
-
-
-process.out = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string('RecoMuons.root')
-)
-
-process.this_is_the_end = cms.EndPath(process.out)

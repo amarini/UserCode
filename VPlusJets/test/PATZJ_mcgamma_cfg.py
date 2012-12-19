@@ -95,11 +95,20 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string("DYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph_Summer12_DR53X-PU_S10-START53_V7A-v2_PREFSR.root"),
     closeFileFast = cms.untracked.bool(True)
 )
+
+# ---- Recompute electron's PF iso deposits -----------------------------
+from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFElectronIso, setupPFPhotonIso
+process.eleIsoSequence = setupPFElectronIso(process, 'gsfElectrons')
+process.phoIsoSequence = setupPFPhotonIso(process, 'photons')
+
 # ---- ZJetsExpress analyzer --------------------------------------------
 process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     jets            = cms.InputTag('jetExtender','extendedPatJets'),
     srcRho          = cms.InputTag('kt6PFJets','rho'),
     srcRho25        = cms.InputTag('kt6PFJets25','rho'),
+    pfIsoValEleCH03 = cms.InputTag('elPFIsoValueCharged03PFIdPFIso'),
+    pfIsoValEleNH03 = cms.InputTag('elPFIsoValueNeutral03PFIdPFIso'),			  
+    pfIsoValEleG03  = cms.InputTag('elPFIsoValueGamma03PFIdPFIso'),                                                                         
     minNjets        = cms.int32(1),
     dressedRadius   = cms.double(0.15),                              
     jetLepIsoRadius = cms.double(0.4),
@@ -220,9 +229,12 @@ del process.outpath
 #GEN
 #process.p = cms.Path(process.genParticlesForJets+process.ak5GenJets+  process.accepted)
 #RECO, data and MC
-process.p = cms.Path(process.kt6PFJets + process.ak5PFJets + process.kt6PFJets25 + process.goodOfflinePrimaryVertices 
-	+ process.genParticlesForJets
-	+  process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
+process.p = cms.Path(process.pfParticleSelectionSequence
+		     + process.eleIsoSequence
+		     + process.phoIsoSequence
+                     + process.kt6PFJets + process.ak5PFJets + process.kt6PFJets25 + process.goodOfflinePrimaryVertices 
+                     + process.genParticlesForJets
+                     +  process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
 
 # ---- first sequence: events that pass the trigger ---------------------
 #process.s1 = cms.Sequence(process.hltFilter + process.kt6PFJets + process.ak5PFJets + process.accepted)
