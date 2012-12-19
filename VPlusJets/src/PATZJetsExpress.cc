@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.15 2012/12/19 13:29:04 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.16 2012/12/19 15:22:37 bellan Exp $
 //
 //
 
@@ -930,61 +930,58 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float hadronicOverEm                 = i_el->hadronicOverEm();
       float deltaPhiSuperClusterTrackAtVtx = i_el->deltaPhiSuperClusterTrackAtVtx();
       float deltaEtaSuperClusterTrackAtVtx = i_el->deltaEtaSuperClusterTrackAtVtx();
-      bool  isTight(false);
+      bool  isMedium(false);
 
-      // float combinedIso03 = (i_el->dr03TkSumPt()+max(0.,i_el->dr03EcalRecHitSumEt()-1.)+i_el->dr03HcalTowerSumEt())/i_el->p4().Pt();
-      float combinedIso03Rho =0 ;
       float epDifference 			 = fabs( 1./i_el->ecalEnergy() - i_el->eSuperClusterOverP()/i_el->ecalEnergy()  );
       
       if ((elPt < mMinLepPt) || (fabs(elEta) > mMaxLepEta)) continue;
-      // ---- use WP90 as default preselection, store also WP80 subset (https://twiki.cern.ch/twiki/bin/view/CMS/VbtfEleID2011)
+      // ---- use WP90 as default preselection, store also WP80 subset (https://twiki.cern.ch/twiki/bin/viewauth/CMS/EgammaCutBasedIdentification)
       if (i_el->isEB()) {
-	//combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[barrel]*(*rho)) + max(0.,hcalIso - Ahcal[barrel]*(*rho)) )/elPt; 
-	if (combinedIso03Rho>mMaxCombRelIso03)              continue;  
-	if (sigmaIetaIeta > 0.01)                           continue; 
+	if (sigmaIetaIeta                  > 0.01)          continue; 
 	if (deltaPhiSuperClusterTrackAtVtx > 0.15)          continue; //2011: 0.8
 	if (deltaEtaSuperClusterTrackAtVtx > 0.007)         continue;
-	if (hadronicOverEm > 0.12)                          continue; //2011: 0.15 	
-	if ( epDifference >0.05)				  continue; //2011: Not implemented
+	if (hadronicOverEm                 > 0.12)          continue; //2011: 0.15 	
+	if (epDifference                   > 0.05)	    continue; //2011: Not implemented
 	if (sigmaIetaIeta < 0.01) {  // WP80 subset: 2012 Medium
-	  if (deltaPhiSuperClusterTrackAtVtx < 0.06) 
-	    if (deltaEtaSuperClusterTrackAtVtx < 0.004) 
-	      if (hadronicOverEm < 0.12)//2011: 0.04 
-		isTight = true;
+	  if (deltaPhiSuperClusterTrackAtVtx    < 0.06 
+	      && deltaEtaSuperClusterTrackAtVtx < 0.004
+	      && hadronicOverEm                 < 0.12)
+	    isMedium = true;
 	}
       }// if EE
       if (i_el->isEE()) {
-	//combinedIso03Rho = (trackIso + max(0. ,ecalIso - Aecal[endcap]*(*rho)) + max(0.,hcalIso - Ahcal[endcap]*(*rho)) )/elPt; 
-	if (combinedIso03Rho>mMaxCombRelIso03)              continue;
-	if (sigmaIetaIeta > 0.03)                           continue;
+	if (sigmaIetaIeta                  > 0.03)          continue;
 	if (deltaPhiSuperClusterTrackAtVtx > 0.1)           continue; //2011:.7
-	if (deltaEtaSuperClusterTrackAtVtx > 0.009)         continue;//
-	if (hadronicOverEm > 0.10)                          continue;//2011:.15
-	if ( epDifference >0.05)			    continue; //2011: Not implemented
+	if (deltaEtaSuperClusterTrackAtVtx > 0.009)         continue;
+	if (hadronicOverEm                 > 0.10)          continue; //2011:.15
+	if ( epDifference                  > 0.05)          continue; //2011: Not implemented
 	if (sigmaIetaIeta<0.03) {  // WP80 subset
-	  if (deltaPhiSuperClusterTrackAtVtx < 0.03)
-	    if (deltaEtaSuperClusterTrackAtVtx < 0.007)
-	      if (hadronicOverEm < 0.15) 
-		isTight = true;
+	  if (deltaPhiSuperClusterTrackAtVtx    < 0.03
+	      && deltaEtaSuperClusterTrackAtVtx < 0.007
+	      && hadronicOverEm                 < 0.10) 
+	    isMedium = true;
 	} 
       }
-      PARTICLE aLepton;
-      TLorentzVector lepP4(i_el->p4().Px(),i_el->p4().Py(),i_el->p4().Pz(),i_el->p4().E());
-      aLepton.p4   = lepP4;
-      aLepton.chid = i_el->charge();
-      aLepton.id   = 0;
-      if (isTight) {
-	aLepton.id = 1;
-      }
-      
-      
+
       GsfElectronRef electronRef(electrons_, eleIndex++);
       float sumChargedHadronPt = (*pfIsoValEleCH03)[electronRef];
       float sumNeutralHadronEt = (*pfIsoValEleNH03)[electronRef];
       float sumPhotonEt        = (*pfIsoValEleG03)[electronRef];
 
       float electronIsoPFUnc   = (sumChargedHadronPt + sumNeutralHadronEt + sumPhotonEt)/i_el->pt();
-      double electronIsoPFRho  = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
+      float electronIsoPFRho  = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
+
+      if(electronIsoPFRho > mMaxCombRelIso03)              continue;
+      
+
+      PARTICLE aLepton;
+      TLorentzVector lepP4(i_el->p4().Px(),i_el->p4().Py(),i_el->p4().Pz(),i_el->p4().E());
+      aLepton.p4   = lepP4;
+      aLepton.chid = i_el->charge();
+      aLepton.id   = 0;
+      if (isMedium) {
+	aLepton.id = 1;
+      }
 
       aLepton.isoPFUnc = electronIsoPFUnc;
       aLepton.isoPFDb  = -1;
