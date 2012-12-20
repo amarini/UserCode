@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.17 2012/12/19 15:51:14 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.18 2012/12/19 15:58:31 bellan Exp $
 //
 //
 
@@ -899,7 +899,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       
       // Muon pf isolation rho corrected
       float muonIsoPFRho = (i_mu->pfIsolationR04().sumChargedHadronPt
-			  + max(0.,i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - (*rho)*getEffectiveAreaForMuons(i_mu->eta())))/i_mu->pt();
+			  + max(0.,i_mu->pfIsolationR04().sumNeutralHadronEt + i_mu->pfIsolationR04().sumPhotonEt - (*rho25)*getEffectiveAreaForMuons(i_mu->eta())))/i_mu->pt();
       
       // Muon pf isolation DB corrected
       float muonIsoPFdb  = (i_mu->pfIsolationR04().sumChargedHadronPt 
@@ -972,7 +972,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float sumPhotonEt        = (*pfIsoValEleG03)[electronRef];
 
       float electronIsoPFUnc   = (sumChargedHadronPt + sumNeutralHadronEt + sumPhotonEt)/i_el->pt();
-      float electronIsoPFRho   = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
+      float electronIsoPFRho   = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho25) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
 
       if(electronIsoPFRho > mMaxCombRelIso03)              continue;
       
