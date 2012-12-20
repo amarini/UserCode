@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.18 2012/12/19 15:58:31 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.19 2012/12/20 10:12:33 bellan Exp $
 //
 //
 
@@ -178,10 +178,12 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         float beta;
         // ---- btagger -------------------------------------------------
         float btag;
-        // ---- btag extra info -------------------------------------------------
+        // ---- btag extra info -----------------------------------------
         float taginfoNvtx;
         float taginfoNtracks;
 	float taginfoVtxMass;
+	// ---- MC flavour (0 in case of data) --------------------------
+	int mcflavour;
         // ---- jet energy correction factor ----------------------------
         float jec; 
         // ---- jet energy uncertainty ----------------------------------
@@ -358,7 +360,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       vector<float> *jetCHF_,*jetPHF_,*jetNHF_,*jetMUF_,*jetELF_;
       // ---- other jet properties --------------------------------------
       vector<float> *jetBeta_,*jetBtag_,*jetTagInfoNVtx_,*jetTagInfoNTracks_,*jetTagInfoVtxMass_,*jetArea_,*jetJEC_,*jetUNC_,*jetQGL_,*jetRMS_;
-      vector<int> *jetVeto_;
+      vector<int> *jetVeto_, *jetMCFlavour_;
       // ---- tight jet id ----------------------------------------------
       vector<int>   *jetId_; 
       // ---- DR rejected jet kinematics --------------------------------------------
@@ -1285,8 +1287,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float taginfoVtxMass = -999.;
       if(taginfoNvtx) 	//pick the first secondary vertex (i.e. the best one)
 	taginfoVtxMass = svTagInfo->secondaryVertex(0).p4().M();
-      // ---------------------------------------------
+      
+      // ---- Gen-Jet match ---------------------------
+      // will be 0 in case of data
+      int mcflavour = i_jet->partonFlavour();
 
+      // ---------------------------------------------
       float beta = i_jet->userFloat("beta");
       // ---- keep only jets that pass the tight id -----------------------
       float chf = i_jet->chargedHadronEnergyFraction();
@@ -1353,6 +1359,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aJet.taginfoNvtx    = taginfoNvtx;      
       aJet.taginfoNtracks = taginfoNtracks;
       aJet.taginfoVtxMass = taginfoVtxMass;
+      aJet.mcflavour      = mcflavour;
       //if(jetIsDuplicate){aJet.p4       = jetP4; myRJets.push_back(aJet);}  // store the uncorrected jet (this is virtually the matched lepton in DR) 
       if( jetIsInAcceptance && jetIsIDed){ //store QG Variable for myJets
 	vector<float> *QGvars=ComputeQGVariables(i_jet,iEvent,index);
@@ -1592,6 +1599,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	jetTagInfoNVtx_    ->push_back(myJets[j].taginfoNvtx);
 	jetTagInfoNTracks_ ->push_back(myJets[j].taginfoNtracks);
 	jetTagInfoVtxMass_ ->push_back(myJets[j].taginfoVtxMass);
+	jetMCFlavour_ ->push_back(myJets[j].mcflavour);
         jetJEC_      ->push_back(myJets[j].jec);
         jetUNC_      ->push_back(myJets[j].unc);
         jetCHF_      ->push_back(myJets[j].chf);
@@ -1894,6 +1902,7 @@ void PATZJetsExpress::buildTree()
   jetTagInfoVtxMass_ = new std::vector<float>();
   jetTagInfoNTracks_ = new std::vector<float>();
   jetTagInfoNVtx_    = new std::vector<float>();
+  jetMCFlavour_      = new std::vector<int>();
   jetJEC_            = new std::vector<float>();
   jetUNC_            = new std::vector<float>();
   jetCHF_            = new std::vector<float>();
@@ -2043,6 +2052,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetTagInfoNVtx"   ,"vector<float>"     ,&jetTagInfoNVtx_);
   myTree_->Branch("jetTagInfoNTracks","vector<float>"     ,&jetTagInfoNTracks_);
   myTree_->Branch("jetTagInfoVtxMass","vector<float>"     ,&jetTagInfoVtxMass_);
+  myTree_->Branch("jetMCFlavour"     ,"vector<float>"     ,&jetMCFlavour_);
   myTree_->Branch("jetJEC"           ,"vector<float>"     ,&jetJEC_);
   myTree_->Branch("jetUNC"           ,"vector<float>"     ,&jetUNC_);
   myTree_->Branch("jetllDPhi"        ,"vector<float>"     ,&jetllDPhi_);
@@ -2241,6 +2251,7 @@ void PATZJetsExpress::clearTree()
   jetTagInfoVtxMass_ ->clear();
   jetTagInfoNTracks_ ->clear();
   jetTagInfoNVtx_    ->clear();
+  jetMCFlavour_      ->clear();
   jetJEC_            ->clear();
   jetUNC_            ->clear();
   jetllDPhi_         ->clear();
