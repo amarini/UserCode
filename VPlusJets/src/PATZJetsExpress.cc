@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.19 2012/12/20 10:12:33 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.20 2012/12/20 15:09:22 bellan Exp $
 //
 //
 
@@ -974,7 +974,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float sumPhotonEt        = (*pfIsoValEleG03)[electronRef];
 
       float electronIsoPFUnc   = (sumChargedHadronPt + sumNeutralHadronEt + sumPhotonEt)/i_el->pt();
-      float electronIsoPFRho   = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho25) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
+      float electronIsoPFRho   = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
 
       if(electronIsoPFRho > mMaxCombRelIso03)              continue;
       
@@ -2052,7 +2052,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetTagInfoNVtx"   ,"vector<float>"     ,&jetTagInfoNVtx_);
   myTree_->Branch("jetTagInfoNTracks","vector<float>"     ,&jetTagInfoNTracks_);
   myTree_->Branch("jetTagInfoVtxMass","vector<float>"     ,&jetTagInfoVtxMass_);
-  myTree_->Branch("jetMCFlavour"     ,"vector<float>"     ,&jetMCFlavour_);
+  myTree_->Branch("jetMCFlavour"     ,"vector<int>"       ,&jetMCFlavour_);
   myTree_->Branch("jetJEC"           ,"vector<float>"     ,&jetJEC_);
   myTree_->Branch("jetUNC"           ,"vector<float>"     ,&jetUNC_);
   myTree_->Branch("jetllDPhi"        ,"vector<float>"     ,&jetllDPhi_);
