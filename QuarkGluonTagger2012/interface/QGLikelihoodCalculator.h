@@ -22,18 +22,19 @@ class QGLikelihoodCalculator {
 
  public:
 
-  QGLikelihoodCalculator( const std::string& fileName_nCharged="pandolf/QuarkGluonTagger/data/QGTaggerConfig_nCharged_AK5PF.txt", const std::string& fileName_nNeutral="pandolf/QuarkGluonTagger/data/QGTaggerConfig_nNeutral_AK5PF.txt", const std::string& fileName_ptD="pandolf/QuarkGluonTagger/data/QGTaggerConfig_ptD_AK5PF.txt");
+  //QGLikelihoodCalculator( const std::string& fileName_nCharged="pandolf/QuarkGluonTagger/data/QGTaggerConfig_nCharged_AK5PF.txt", const std::string& fileName_nNeutral="pandolf/QuarkGluonTagger/data/QGTaggerConfig_nNeutral_AK5PF.txt", const std::string& fileName_ptD="pandolf/QuarkGluonTagger/data/QGTaggerConfig_ptD_AK5PF.txt");
+  QGLikelihoodCalculator( const std::string& dirName="amarini/QuarkGluonTagger/data/");
    ~QGLikelihoodCalculator();
 
 
-  float computeQGLikelihood( float pt, float rhoPF, int nCharged, int nNeutral, float ptD );
+  float computeQGLikelihood( float pt, float rhoPF, float eta, int nPFCand_QC_ptCut, float ptD_QC ,float axis1_QC, float axis2_QC );
   
 
  private:
 
-  map<string,JetCorrectorParameters*> JCP;
-  map<string,SimpleJetCorrector*> SJC;
-  vector<string> names;
+  std::map<std::string,JetCorrectorParameters*> JCP;
+  std::map<std::string,SimpleJetCorrector*> SJC;
+  std::vector<std::string> names;
 
   //JetCorrectorParameters *jcp_nCharged_quark_;
   //JetCorrectorParameters *jcp_nCharged_gluon_;

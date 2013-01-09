@@ -1,6 +1,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "../interface/QGLikelihoodCalculator.h"
+#include <FWCore/Utilities/interface/Exception.h>
 
+#include "TMath.h"
 
 using namespace std;
 
@@ -9,7 +11,7 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 
   //map<string,JetCorrectorParameters*> JCP;
   //map<string,SimpleJetCorrector*> SJC;
-	JPC.clear();
+	JCP.clear();
 	SJC.clear();
 	names.clear();
 	
@@ -33,13 +35,13 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 	for(vector<string>::iterator iStr=names.begin();iStr!=names.end();iStr++){
 	
 		if(JCP[(*iStr)+".quark"]->definitions().level() != (string("QGL")+(*iStr)+"_quark").c_str() )
-			throw cms::Exceptions("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"\' is not of the proper format. Check input files.";
+			throw cms::Exception("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"\' is not of the proper format. Check input files.";
 		if(JCP[(*iStr)+".gluon"]->definitions().level() != (string("QGL")+(*iStr)+"_gluon").c_str() )
-			throw cms::Exceptions("QuarkGluonTagger Config File Error")<<"gluon section of file\'"<< *iStr <<"\' is not of the proper format. Check input files.";
+			throw cms::Exception("QuarkGluonTagger Config File Error")<<"gluon section of file\'"<< *iStr <<"\' is not of the proper format. Check input files.";
 		if(JCP[(*iStr)+".F.quark"]->definitions().level() != (string("QGL")+(*iStr)+"_F_quark").c_str() )
-			throw cms::Exceptions("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"_F\' is not of the proper format. Check input files.";
+			throw cms::Exception("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"_F\' is not of the proper format. Check input files.";
 		if(JCP[(*iStr)+".F.gluon"]->definitions().level() != (string("QGL")+(*iStr)+"_F_gluon").c_str() )
-			throw cms::Exceptions("QuarkGluonTagger Config File Error")<<"gluon section of file\'"<< *iStr <<"_F\' is not of the proper format. Check input files.";
+			throw cms::Exception("QuarkGluonTagger Config File Error")<<"gluon section of file\'"<< *iStr <<"_F\' is not of the proper format. Check input files.";
 	}
 
 	for(vector<string>::iterator iStr=names.begin();iStr!=names.end();iStr++){
@@ -55,12 +57,12 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 //--------- Destructor ----------------------------------------------------------------------------------------
 QGLikelihoodCalculator::~QGLikelihoodCalculator() {
 
-  for(map<string,JetCorrectorParameters*>::iterator it= JPC.begin(); it!=JPC.end(); it++)
+  for(map<string,JetCorrectorParameters*>::iterator it= JCP.begin(); it!=JCP.end(); it++)
 	delete it->second;
   for(map<string,SimpleJetCorrector*>::iterator it= SJC.begin();it!=SJC.end();it++)
 	delete it->second;
 	
- JPC.clear();
+ JCP.clear();
  SJC.clear();
 
 }
