@@ -34,6 +34,8 @@ process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
     filterParams = pvSelector.clone( minNdof = cms.double(4.0), maxZ = cms.double(24.0) )
 )
 
+from amarini.VPlusJets.hggPhotonIDCuts_cfi import *
+
 ##--------- remove cleaning --------------------
 removeCleaning(process)
 ##--------- jets -------------------------------
@@ -52,7 +54,8 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
+#	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
+	'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/774/0CDC3936-889B-E111-9F82-001D09F25041.root', 
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/806/C8EE0F38-C89B-E111-9623-001D09F29619.root', 
@@ -173,6 +176,10 @@ from CommonTools.ParticleFlow.Tools.pfIsolation import setupPFElectronIso, setup
 process.eleIsoSequence = setupPFElectronIso(process, 'gsfElectrons')
 process.phoIsoSequence = setupPFPhotonIso(process, 'photons')
 
+process.options = cms.untracked.PSet(
+	wantSummary = cms.untracked.bool(True)
+	)
+
 # ---- ZJetsExpress analyzer --------------------------------------------
 process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     jets            = cms.InputTag('jetExtender','extendedPatJets'),
@@ -241,6 +248,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     triggerFamily7  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
     triggerFamily8  = cms.vstring([]), ##TO BE CHECKED!
 
+				  hggPhotonIDConfiguration = cms.PSet(hggPhotonIDCuts),
     prescaleDontAsk = cms.vstring('HLT_Mu17_Ele8_CaloIdL_v', # don't ask for L1 prescales for these bits
                                   'HLT_Mu8_Ele17_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
