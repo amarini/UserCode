@@ -10,7 +10,7 @@
 
 #include "JetMETCorrections/Objects/interface/JetCorrector.h"
 
-//#include "../interface/QGLikelihoodCalculator.h"
+#include "../interface/QGLikelihoodCalculator.h"
 
 
 
@@ -29,7 +29,7 @@ class QuarkGluonTagger2012 : public edm::EDProducer {
       edm::InputTag src_,srcRho_,srcRho2_;
       std::string jecService_;
       bool isPatJet_;
-  //    QGLikelihoodCalculator *qglikeli_;
+      QGLikelihoodCalculator *qglikeli_;
       const JetCorrector *JEC_;           
 };
 
