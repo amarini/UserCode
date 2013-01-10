@@ -1,14 +1,12 @@
 
-//---------------------H---------------
-//class QuarkGluonTagger2012 : public edm::EDProducer
-//{
-//public:
-//	QuarkGluonTagger2012();	
-//	~QuarkGluonTagger2012();
-//	produce(edm::Event& iEvent, const edm::EventSetup& iSetup);
-//};
-//---------------------H---------------
-
+/*
+ * Original Author: Andrea Carlo Marini
+ * Email: andrea.carlo.marini@cern.ch
+ * Date: Jan 2013
+ *
+ *
+ *
+ */
 #include <memory>
 #include <iostream>
 #include <vector>
@@ -35,7 +33,8 @@ QuarkGluonTagger2012::QuarkGluonTagger2012(const edm::ParameterSet& iConfig)
 	isPatJet_ = iConfig.existsAs<bool>("isPatJet") ? iConfig.getParameter<bool>("isPatJet") : false ; 
        
         produces<edm::ValueMap<float> >().setBranchAlias("qg");
-       // qglikeli_ = new QGLikelihoodCalculator();
+        qglikeli_ = new QGLikelihoodCalculator(); 
+	debug=0;
 }
 
 QuarkGluonTagger2012::~QuarkGluonTagger2012(){}
@@ -65,7 +64,7 @@ iEvent.getByLabel(srcRho_,rho);
 JEC_ = JetCorrector::getJetCorrector(jecService_,iSetup);
 //------ Vtxs -----------------------------------------------------------------------------
 edm::Handle<reco::VertexCollection> recVtxs;
-iEvent.getByLabel("goodOfflinePrmaryVertices",recVtxs);
+iEvent.getByLabel("goodOfflinePrimaryVertices",recVtxs);
 
 
 //------ Variables -----------------------------------------------------------------------------
@@ -76,6 +75,7 @@ if(!isPatJet_)
 for(reco::PFJetCollection::const_iterator ijet=pfjets->begin();ijet!=pfjets->end();ijet++)
 	{
 	//JEC
+		if(debug>1) std::cout<<"BEGIN RECO JET"<<endl;
 	double cor = JEC_->correction(*ijet,iEvent,iSetup);
 	double corPt = cor*ijet->pt();
 	
@@ -84,24 +84,22 @@ for(reco::PFJetCollection::const_iterator ijet=pfjets->begin();ijet!=pfjets->end
 //	ptD= ijet->constituentPtDistribution();
 	
     //----- calculations based on the constituents -----
-	}
-if(isPatJet_)
-for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();ijet++)
-{
 //----- calculations based on the constituents -----
     std::vector<PFCandidatePtr> pfConst(ijet->getPFConstituents());
     int n_pf = pfConst.size();                                                                                          
     float phiJet = ijet->phi();                                                                                         
     float etaJet = ijet->eta();                                                                                         
-    float deta,dphi,dR,weight,weight2,sumW(0.0),sumW2(0.0),sum_deta(0.0),sum_dphi(0.0),sum_deta2(0.0),sum_dphi2(0.0),sum_detadphi(0.0);              
-    float Teta(0),Tphi(0),Ttheta(-9),jetPtMax(0),axis1(-999),axis2(-999),tana(-999),ptD(-999);                      
+    float deta,dphi,weight,weight2,sumW(0.0),sumW2(0.0),sum_deta(0.0),sum_dphi(0.0),sum_deta2(0.0),sum_dphi2(0.0),sum_detadphi(0.0);
+    //UNUSED---   float dR;
+    //UNUSED---   float Teta(0),Tphi(0),Ttheta(-9),jetPtMax(0),axis1(-999),axis2(-999),tana(-999),ptD(-999);                      
     
     float sumW_QC(0.0),sumW2_QC(0.0),sum_deta_QC(0.0),sum_dphi_QC(0.0),sum_deta2_QC(0.0),sum_dphi2_QC(0.0),sum_detadphi_QC(0.0);
-    float axis1_QC(-999),axis2_QC(-999);   
+    float axis1_QC(-999),axis2_QC(-999),ptD_QC(-999);   
 
-    float ave_deta(0.0),ave_dphi(0.0),ave_deta2(0.0),ave_dphi2(0.0);
+    //UNUSED---   float ave_deta(0.0),ave_dphi(0.0),ave_deta2(0.0),ave_dphi2(0.0);
     float ave_deta_QC(0.0),ave_dphi_QC(0.0),ave_deta2_QC(0.0),ave_dphi2_QC(0.0);
-    float pull(0.0),pull_QC(0.0);
+    //UNUSED---   float pull(0.0);
+    //UNUSED---   float pull_QC(0.0);
 
     float pTMax(0.0),pTMaxChg(0.0),pTMaxNeutral(0.0),pTMaxChg_QC(0.0);
     int nChg_QC(0),nChg_ptCut(0),nChg_ptCut_QC(0),nNeutral_ptCut(0);
@@ -177,13 +175,13 @@ for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();
   
       deta = pfConst[j]->eta() - etaJet;                                                                                               
       dphi = 2*atan(tan((pfConst[j]->phi()-phiJet)/2));                                                                              
-      dR = sqrt(deta*deta + dphi*dphi);                                                                                              
+      //UNUSED---   dR = sqrt(deta*deta + dphi*dphi);                                                                                              
       weight = pfConst[j]->pt(); // used for the thrust and ptD variables
       weight2 = weight * weight; // used for the jet axis variables                                                          
       sumW += weight;
       sumW2 += weight2;                                                                                                   
-      Teta += weight * dR * deta;
-      Tphi += weight * dR * dphi;
+      //UNUSED---   Teta += weight * dR * deta;
+      //UNUSED---   Tphi += weight * dR * dphi;
       sum_deta += deta*weight2;
       sum_dphi += dphi*weight2;
       sum_deta2 += deta*deta*weight2;
@@ -202,40 +200,41 @@ for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();
       jetPart_deta.push_back(deta);
       jetPart_dphi.push_back(dphi);
       //-----------------------------------      
-      if (fabs(pfConst[j]->charge()) > 0) {
-        jetPtMax = TMath::Max(jetPtMax,float(pfConst[j]->pt()));
-      }
+      //UNUSED---   if (fabs(pfConst[j]->charge()) > 0) {
+        //UNUSED---   jetPtMax = TMath::Max(jetPtMax,float(pfConst[j]->pt()));
+      //UNUSED---   }
     }// loop over the constituents
-    if (sumW > 0) {
-      Teta = Teta/sumW;
-      Tphi = Tphi/sumW;
-      if (Teta != 0 && Tphi !=0 ) {
-        Ttheta = atan2(Tphi,Teta);
-      }
-      ptD = sqrt(sumW2)/sumW;
-      ave_deta = sum_deta/sumW2;
-      ave_dphi = sum_dphi/sumW2;
-      ave_deta2 = sum_deta2/sumW2;
-      ave_dphi2 = sum_dphi2/sumW2;
-      float a = ave_deta2-ave_deta*ave_deta;
-      float b = ave_dphi2-ave_dphi*ave_dphi;
-      float c = -(sum_detadphi/sumW2-ave_deta*ave_dphi);
-      float delta = sqrt(fabs((a-b)*(a-b)+4*c*c));
-      if (a+b+delta > 0) {
-        axis1 = sqrt(0.5*(a+b+delta));
-      }
-      if (a+b-delta > 0) {  
-        axis2 = sqrt(0.5*(a+b-delta));
-      }
-      if (c != 0) {
-        tana = 0.5*(b-a+delta)/c;
-      }
-    }
+    //UNUSED---  if (sumW > 0) {
+    //UNUSED---    Teta = Teta/sumW;
+    //UNUSED---    Tphi = Tphi/sumW;
+    //UNUSED---    if (Teta != 0 && Tphi !=0 ) {
+    //UNUSED---      Ttheta = atan2(Tphi,Teta);
+    //UNUSED---    }
+    //UNUSED---    ptD = sqrt(sumW2)/sumW;
+    //UNUSED---    ave_deta = sum_deta/sumW2;
+    //UNUSED---    ave_dphi = sum_dphi/sumW2;
+    //UNUSED---    ave_deta2 = sum_deta2/sumW2;
+    //UNUSED---    ave_dphi2 = sum_dphi2/sumW2;
+    //UNUSED---    float a = ave_deta2-ave_deta*ave_deta;
+    //UNUSED---    float b = ave_dphi2-ave_dphi*ave_dphi;
+    //UNUSED---    float c = -(sum_detadphi/sumW2-ave_deta*ave_dphi);
+    //UNUSED---    float delta = sqrt(fabs((a-b)*(a-b)+4*c*c));
+    //UNUSED---    if (a+b+delta > 0) {
+    //UNUSED---      axis1 = sqrt(0.5*(a+b+delta));
+    //UNUSED---    }
+    //UNUSED---    if (a+b-delta > 0) {  
+    //UNUSED---      axis2 = sqrt(0.5*(a+b-delta));
+    //UNUSED---    }
+    //UNUSED---    if (c != 0) {
+    //UNUSED---      tana = 0.5*(b-a+delta)/c;
+    //UNUSED---    }
+    //UNUSED---  }
     if (sumW_QC > 0) {
       ave_deta_QC = sum_deta_QC/sumW2_QC;
       ave_dphi_QC = sum_dphi_QC/sumW2_QC;
       ave_deta2_QC = sum_deta2_QC/sumW2_QC;
       ave_dphi2_QC = sum_dphi2_QC/sumW2_QC;
+      ptD_QC = sqrt(sumW2_QC)/sumW_QC;
 
       float a_QC = ave_deta2_QC-ave_deta_QC*ave_deta_QC;
       float b_QC = ave_dphi2_QC-ave_dphi_QC*ave_dphi_QC;
@@ -249,74 +248,210 @@ for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();
         axis2_QC = sqrt(0.5*(a_QC+b_QC-delta_QC));
       }
     }
-    //-------calculate pull------
-    float ddetaR_sum(0.0), ddphiR_sum(0.0),ddetaR_sum_QC(0.0), ddphiR_sum_QC(0.0);
-    for(unsigned int i=0; i<jetPart_pt.size(); ++i) {
-      float weight = jetPart_pt[i] * jetPart_pt[i];
-      float ddeta, ddphi, ddeta_QC, ddphi_QC,ddR, ddR_QC;
-      ddeta = jetPart_deta[i] - ave_deta ;
-      ddphi = 2*atan(tan((jetPart_dphi[i] - ave_dphi)/2.)) ;
-      ddR = sqrt(ddeta*ddeta + ddphi*ddphi);
-      ddetaR_sum += ddR*ddeta*weight;
-      ddphiR_sum += ddR*ddphi*weight;
-      if (jetPart_forAxis[i]) {
-        ddeta_QC = jetPart_deta[i] - ave_deta_QC ;
-        ddphi_QC = 2*atan(tan((jetPart_dphi[i] - ave_dphi_QC)/2.)) ;
-        ddR_QC = sqrt(ddeta_QC*ddeta_QC + ddphi_QC*ddphi_QC);
-        ddetaR_sum_QC += ddR_QC *ddeta_QC *weight;
-        ddphiR_sum_QC  += ddR_QC *ddphi_QC *weight;  
+    //UNUSED---   int nChg  = ijet->chargedMultiplicity();
+    //UNUSED---   int nNeutral  = ijet->neutralMultiplicity();
+	
+	//------------variables defined compute QGL
+	QGL=-1.0;
+	int nPFCand_QC_ptCut=nChg_QC+nNeutral_ptCut;
+		if(debug>1) std::cout<<"--computeQGL"<<endl;
+	QGL=qglikeli_->computeQGLikelihood(corPt,*rho,ijet->eta(),nPFCand_QC_ptCut, ptD_QC ,axis1_QC, axis2_QC);
+	values.push_back(QGL);
+	}
+if(isPatJet_)
+for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();ijet++)
+{
+//----- calculations based on the constituents -----
+		if(debug>1) std::cout<<"BEGIN PAT JET"<<endl;
+    std::vector<PFCandidatePtr> pfConst(ijet->getPFConstituents());
+    int n_pf = pfConst.size();                                                                                          
+    float phiJet = ijet->phi();                                                                                         
+    float etaJet = ijet->eta();                                                                                         
+    float deta,dphi,weight,weight2,sumW(0.0),sumW2(0.0),sum_deta(0.0),sum_dphi(0.0),sum_deta2(0.0),sum_dphi2(0.0),sum_detadphi(0.0);              
+    //UNUSED---   float dR;
+    //UNUSED---   float Teta(0),Tphi(0),Ttheta(-9),jetPtMax(0),axis1(-999),axis2(-999),tana(-999),ptD(-999);                      
+    
+    float sumW_QC(0.0),sumW2_QC(0.0),sum_deta_QC(0.0),sum_dphi_QC(0.0),sum_deta2_QC(0.0),sum_dphi2_QC(0.0),sum_detadphi_QC(0.0);
+    float axis1_QC(-999),axis2_QC(-999),ptD_QC(-999);   
+
+    //UNUSED---   float ave_deta(0.0),ave_dphi(0.0),ave_deta2(0.0),ave_dphi2(0.0);
+    float ave_deta_QC(0.0),ave_dphi_QC(0.0),ave_deta2_QC(0.0),ave_dphi2_QC(0.0);
+    //UNUSED---   float pull(0.0);
+    //UNUSED---   float pull_QC(0.0);
+
+    float pTMax(0.0),pTMaxChg(0.0),pTMaxNeutral(0.0),pTMaxChg_QC(0.0);
+    int nChg_QC(0),nChg_ptCut(0),nChg_ptCut_QC(0),nNeutral_ptCut(0);
+    std::vector<float> jetPart_pt,jetPart_deta,jetPart_dphi;
+    std::vector<bool> jetPart_forMult,jetPart_forAxis;
+     
+    for(int j=0;j<n_pf;j++) {                                                                 
+      reco::TrackRef itrk ;
+      reco::PFCandidatePtr  part = ijet->getPFConstituent(j);
+      if (part.isNonnull())
+        itrk = (*part).trackRef();
+      if (part->pt() > pTMax) 
+        pTMax = part->pt();
+      if (itrk.isNonnull() && part->pt() > pTMaxChg) 
+        pTMaxChg = part->pt();
+      if (!itrk.isNonnull() && part->pt() > pTMaxNeutral) 
+        pTMaxNeutral = part->pt();
+      if (!itrk.isNonnull() && part->pt() > 1.0) 
+        nNeutral_ptCut++;
+ 
+      bool trkForAxis = false;
+      bool trkForMult = false;
+
+      //-----matching with vertex tracks-------
+      if (!itrk.isNonnull()) { 
+        trkForMult = true;
+        trkForAxis = true;
       }
-    }//second loop over constituents  
-    if (sumW2 > 0) {
-      float ddetaR_ave = ddetaR_sum/sumW2;
-      float ddphiR_ave = ddphiR_sum/sumW2;
-      pull = sqrt(ddetaR_ave*ddetaR_ave+ddphiR_ave*ddphiR_ave);
-    }
-    if (sumW2_QC > 0) {
-      float ddetaR_ave_QC = ddetaR_sum_QC/sumW2_QC;
-      float ddphiR_ave_QC = ddphiR_sum_QC/sumW2_QC;
-      pull_QC = sqrt(ddetaR_ave_QC*ddetaR_ave_QC+ddphiR_ave_QC*ddphiR_ave_QC);
-    }
-    int nChg  = ijet->chargedMultiplicity();
-    int nNeutral  = ijet->neutralMultiplicity();
-    float jetRchg = pTMaxChg/sumW;
-    float jetRneutral = pTMaxNeutral/sumW;
-    float jetR = pTMax/sumW;
-    float jetRchg_QC = pTMaxChg_QC/sumW_QC;
-   
-    //---- vertex association -----------
-    //---- get the vector of tracks -----
-    const reco::PFJet& pfJet = dynamic_cast <const reco::PFJet&> (*(ijet->originalObject()));
-    reco::TrackRefVector vTrks(pfJet.getTrackRefs());
-    float sumTrkPt(0.0),sumTrkPtBeta(0.0),beta(0.0);
-    float sumTrkPx(0.0),sumTrkPy(0.0),sumTrkP(0.0),leadTrkPt(0);
-    //---- loop over the tracks of the jet ----
-    for(reco::TrackRefVector::const_iterator i_trk = vTrks.begin(); i_trk != vTrks.end(); i_trk++) {
-      sumTrkPt += (*i_trk)->pt();
-      sumTrkPx+= (*i_trk)->px();
-      sumTrkPy+= (*i_trk)->py();
-      sumTrkP+=(*i_trk)->p();
-      leadTrkPt=TMath::Max(leadTrkPt,float((*i_trk)->pt()));
-      //---- loop over all vertices ----------------------------
-      for(unsigned ivtx = 0;ivtx < recVtxs->size();ivtx++) {
-        //---- loop over the tracks associated with the vertex ---
-        for(reco::Vertex::trackRef_iterator i_vtxTrk = (*recVtxs)[ivtx].tracks_begin(); i_vtxTrk != (*recVtxs)[ivtx].tracks_end(); ++i_vtxTrk) {
-          //---- match the jet track to the track from the vertex ----
-          reco::TrackRef trkRef(i_vtxTrk->castTo<reco::TrackRef>());
-          //---- check if the tracks match -------------------------
-          if (trkRef == (*i_trk)) {
-            if (ivtx > 0) {
-              sumTrkPtBeta += (*i_trk)->pt();
-            }   
-            break;
+      else {
+        if (part->pt() > 1.0)
+          nChg_ptCut++;
+        float dZmin = 999;
+        int index_min = 999;
+        reco::VertexCollection::const_iterator vtxClose;
+        for(unsigned ivtx = 0;ivtx < recVtxs->size();ivtx++) {
+          float dZ_cut = fabs(itrk->dz((*recVtxs)[ivtx].position()));
+          float sumpT = 0;
+          for(reco::Vertex::trackRef_iterator itk = (*recVtxs)[ivtx].tracks_begin();itk!=(*recVtxs)[ivtx].tracks_end(); ++itk) {
+            sumpT = sumpT + ((*itk)->pt())*((*itk)->pt());
           }
+          if (dZ_cut < dZmin) {
+            dZmin = dZ_cut;
+            index_min = ivtx;
+              //  std::cout<<"dz=="<<dZ_cut<<std::endl;
+          }
+        }//Loop over vertices 
+        if (index_min == 0) {
+          float dz = itrk->dz((*recVtxs)[0].position());
+          float d0 = itrk->dxy((*recVtxs)[0].position());
+          float vtx_xError = (*recVtxs)[0].xError();
+          float vtx_yError = (*recVtxs)[0].yError();
+          float vtx_zError = (*recVtxs)[0].zError();
+          float d0_sigma=sqrt(pow(itrk->d0Error(),2) + pow(vtx_xError,2) + pow(vtx_yError,2));
+          float dz_sigma=sqrt(pow(itrk->dzError(),2) + pow(vtx_zError,2));
+          if (itrk->quality(reco::TrackBase::qualityByName("highPurity")) && fabs(dz/dz_sigma) < 5.) {
+            trkForAxis = true;
+            if (fabs(d0/d0_sigma) < 5.)
+              trkForMult = true;
+          }//
         }
-      } 
+        if (trkForMult)
+          nChg_QC++;
+        if (itrk.isNonnull() && trkForMult && part->pt() > 1.0)
+          nChg_ptCut_QC++;
+        if (part->pt() > pTMaxChg_QC && trkForAxis) 
+          pTMaxChg_QC = part->pt();
+      }// for charged particles only
+
+      //-----------Store part info-----------------------
+      jetPart_pt.push_back(pfConst[j]->pt());
+      jetPart_forMult.push_back(trkForMult);
+      jetPart_forAxis.push_back(trkForAxis);
+  
+      deta = pfConst[j]->eta() - etaJet;                                                                                               
+      dphi = 2*atan(tan((pfConst[j]->phi()-phiJet)/2));                                                                              
+      //UNUSED---   dR = sqrt(deta*deta + dphi*dphi);                                                                                              
+      weight = pfConst[j]->pt(); // used for the thrust and ptD variables
+      weight2 = weight * weight; // used for the jet axis variables                                                          
+      sumW += weight;
+      sumW2 += weight2;                                                                                                   
+      //UNUSED---   Teta += weight * dR * deta;
+      //UNUSED---   Tphi += weight * dR * dphi;
+      sum_deta += deta*weight2;
+      sum_dphi += dphi*weight2;
+      sum_deta2 += deta*deta*weight2;
+      sum_detadphi += deta*dphi*weight2;
+      sum_dphi2 += dphi*dphi*weight2;
+      //-----Axis using charged tracks with quality cuts--- 
+      if (trkForAxis) {
+        sumW2_QC += weight2;
+        sumW_QC += weight;
+        sum_deta_QC += deta*weight2;
+        sum_dphi_QC += dphi*weight2;
+        sum_deta2_QC += deta*deta*weight2;
+        sum_detadphi_QC += deta*dphi*weight2;
+        sum_dphi2_QC += dphi*dphi*weight2;
+      }
+      jetPart_deta.push_back(deta);
+      jetPart_dphi.push_back(dphi);
+      //-----------------------------------      
+      //UNUSED---   if (fabs(pfConst[j]->charge()) > 0) {
+        //UNUSED---   jetPtMax = TMath::Max(jetPtMax,float(pfConst[j]->pt()));
+      //UNUSED---   }
+    }// loop over the constituents
+    //UNUSED---   if (sumW > 0) {
+      //UNUSED---   Teta = Teta/sumW;
+      //UNUSED---   Tphi = Tphi/sumW;
+      //UNUSED---   if (Teta != 0 && Tphi !=0 ) {
+      //UNUSED---   Ttheta = atan2(Tphi,Teta);
+      //UNUSED---   }
+      //UNUSED---   ptD = sqrt(sumW2)/sumW;
+      //UNUSED---   ave_deta = sum_deta/sumW2;
+      //UNUSED---   ave_dphi = sum_dphi/sumW2;
+      //UNUSED---   ave_deta2 = sum_deta2/sumW2;
+      //UNUSED---   ave_dphi2 = sum_dphi2/sumW2;
+      //UNUSED---   float a = ave_deta2-ave_deta*ave_deta;
+      //UNUSED---   float b = ave_dphi2-ave_dphi*ave_dphi;
+      //UNUSED---   float c = -(sum_detadphi/sumW2-ave_deta*ave_dphi);
+      //UNUSED---   float delta = sqrt(fabs((a-b)*(a-b)+4*c*c));
+      //UNUSED---   if (a+b+delta > 0) {
+        //UNUSED---   axis1 = sqrt(0.5*(a+b+delta));
+      //UNUSED---   }
+      //UNUSED---   if (a+b-delta > 0) {  
+      //UNUSED---   axis2 = sqrt(0.5*(a+b-delta));
+      //UNUSED---   }
+      //UNUSED---   if (c != 0) {
+      //UNUSED---   tana = 0.5*(b-a+delta)/c;
+      //UNUSED---   }
+    //UNUSED---   }
+    if (sumW_QC > 0) {
+      ave_deta_QC = sum_deta_QC/sumW2_QC;
+      ave_dphi_QC = sum_dphi_QC/sumW2_QC;
+      ave_deta2_QC = sum_deta2_QC/sumW2_QC;
+      ave_dphi2_QC = sum_dphi2_QC/sumW2_QC;
+
+      ptD_QC = sqrt(sumW2_QC)/sumW_QC;
+
+      float a_QC = ave_deta2_QC-ave_deta_QC*ave_deta_QC;
+      float b_QC = ave_dphi2_QC-ave_dphi_QC*ave_dphi_QC;
+      float c_QC = -(sum_detadphi_QC/sumW2_QC-ave_deta_QC*ave_dphi_QC);
+      float delta_QC = sqrt(fabs((a_QC-b_QC)*(a_QC-b_QC)+4*c_QC*c_QC));
+
+      if (a_QC+b_QC+delta_QC > 0) {
+        axis1_QC = sqrt(0.5*(a_QC+b_QC+delta_QC));
+      }
+      if (a_QC+b_QC-delta_QC > 0) {
+        axis2_QC = sqrt(0.5*(a_QC+b_QC-delta_QC));
+      }
     }
-    if (sumTrkPt > 0) {
-      beta = 1.-sumTrkPtBeta/sumTrkPt;  
-    }
-} //for
+    //UNUSED---   int nChg  = ijet->chargedMultiplicity();
+    //UNUSED---   int nNeutral  = ijet->neutralMultiplicity();
+   
+	
+	//------------variables defined compute QGL
+	QGL=-1.0;
+	int nPFCand_QC_ptCut=nChg_QC+nNeutral_ptCut;
+		if(debug>1) std::cout<<"--computeQGL"<<endl;
+	QGL=qglikeli_->computeQGLikelihood(ijet->pt(),*rho,ijet->eta(),nPFCand_QC_ptCut, ptD_QC ,axis1_QC, axis2_QC);
+		if(debug>0) std::cout<<"--- "<<QGL <<endl;
+		if(debug>1) std::cout<<"--- Pt"<<ijet->pt() <<endl;
+		if(debug>1) std::cout<<"--- rho"<<*rho <<endl;
+	values.push_back(QGL);
+	
+} //for - pat Jet
+
+//common code
+std::auto_ptr<edm::ValueMap<float> > out(new edm::ValueMap<float>());
+edm::ValueMap<float>::Filler filler(*out);
+if(!isPatJet_)
+	filler.insert(pfjets,values.begin(),values.end());
+else 
+	filler.insert(patjets,values.begin(),values.end());
+filler.fill();
+iEvent.put(out);
 
 }
 

@@ -11,6 +11,7 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 
   //map<string,JetCorrectorParameters*> JCP;
   //map<string,SimpleJetCorrector*> SJC;
+	debug = 0;
 	JCP.clear();
 	SJC.clear();
 	names.clear();
@@ -34,13 +35,13 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 	
 	for(vector<string>::iterator iStr=names.begin();iStr!=names.end();iStr++){
 	
-		if(JCP[(*iStr)+".quark"]->definitions().level() != (string("QGL")+(*iStr)+"_quark").c_str() )
-			throw cms::Exception("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"\' is not of the proper format. Check input files.";
-		if(JCP[(*iStr)+".gluon"]->definitions().level() != (string("QGL")+(*iStr)+"_gluon").c_str() )
+		if(JCP[(*iStr)+".quark"]->definitions().level() != (string("QGL_")+(*iStr)+"_quark").c_str() )
+			throw cms::Exception("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"\' is not of the proper format. Check input files. First="<<JCP[(*iStr)+".quark"]->definitions().level()<<"- Second="<<(string("QGL")+(*iStr)+"_quark") <<"-";
+		if(JCP[(*iStr)+".gluon"]->definitions().level() != (string("QGL_")+(*iStr)+"_gluon").c_str() )
 			throw cms::Exception("QuarkGluonTagger Config File Error")<<"gluon section of file\'"<< *iStr <<"\' is not of the proper format. Check input files.";
-		if(JCP[(*iStr)+".F.quark"]->definitions().level() != (string("QGL")+(*iStr)+"_F_quark").c_str() )
+		if(JCP[(*iStr)+".F.quark"]->definitions().level() != (string("QGL_")+(*iStr)+"_F_quark").c_str() )
 			throw cms::Exception("QuarkGluonTagger Config File Error")<<"quark section of file\'"<< *iStr <<"_F\' is not of the proper format. Check input files.";
-		if(JCP[(*iStr)+".F.gluon"]->definitions().level() != (string("QGL")+(*iStr)+"_F_gluon").c_str() )
+		if(JCP[(*iStr)+".F.gluon"]->definitions().level() != (string("QGL_")+(*iStr)+"_F_gluon").c_str() )
 			throw cms::Exception("QuarkGluonTagger Config File Error")<<"gluon section of file\'"<< *iStr <<"_F\' is not of the proper format. Check input files.";
 	}
 
@@ -48,8 +49,8 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 		SJC[(*iStr)+".quark"] = new SimpleJetCorrector(*JCP[(*iStr)+".quark"]);
 		SJC[(*iStr)+".gluon"] = new SimpleJetCorrector(*JCP[(*iStr)+".gluon"]);
 		
-		SJC[(*iStr)+".F.quark"] = new SimpleJetCorrector((*iStr)+".F.quark");
-		SJC[(*iStr)+".F.gluon"] = new SimpleJetCorrector((*iStr)+".F.gluon");
+		SJC[(*iStr)+".F.quark"] = new SimpleJetCorrector(*JCP[(*iStr)+".F.quark"]);
+		SJC[(*iStr)+".F.gluon"] = new SimpleJetCorrector(*JCP[(*iStr)+".F.gluon"]);
 	}
 
 }
@@ -69,7 +70,7 @@ QGLikelihoodCalculator::~QGLikelihoodCalculator() {
 
 float QGLikelihoodCalculator::computeQGLikelihood( float pt, float rhoPF, float eta, int nPFCand_QC_ptCut, float ptD_QC,float axis1_QC,float axis2_QC ) {
 
-
+if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
   std::vector<float> v_pt_rho;
   v_pt_rho.push_back( pt );
   v_pt_rho.push_back( rhoPF );
@@ -92,30 +93,32 @@ float QGLikelihoodCalculator::computeQGLikelihood( float pt, float rhoPF, float 
 	float gProb=1.0;
 	
 	if(fabs(eta)<2.5){ //CENTRAL REGION
-	qProb*=SJC[string("ptD_QC_quark")]->correction(v_pt_rho,v_ptD_QC);
-	gProb*=SJC[string("ptD_QC_gluon")]->correction(v_pt_rho,v_ptD_QC);
+		if(debug>1)std::cout<<"CENTRAL"<<std::endl;
+	qProb*=SJC[string("ptD_QC.quark")]->correction(v_pt_rho,v_ptD_QC);
+	gProb*=SJC[string("ptD_QC.gluon")]->correction(v_pt_rho,v_ptD_QC);
 	
-	qProb*=SJC[string("axis1_QC_quark")]->correction(v_pt_rho,v_axis1_QC);
-	gProb*=SJC[string("axis1_QC_gluon")]->correction(v_pt_rho,v_axis1_QC);
+	qProb*=SJC[string("axis1_QC.quark")]->correction(v_pt_rho,v_axis1_QC);
+	gProb*=SJC[string("axis1_QC.gluon")]->correction(v_pt_rho,v_axis1_QC);
 	
-	qProb*=SJC[string("axis2_QC_quark")]->correction(v_pt_rho,v_axis2_QC);
-	gProb*=SJC[string("axis2_QC_gluon")]->correction(v_pt_rho,v_axis2_QC);
+	qProb*=SJC[string("axis2_QC.quark")]->correction(v_pt_rho,v_axis2_QC);
+	gProb*=SJC[string("axis2_QC.gluon")]->correction(v_pt_rho,v_axis2_QC);
 
-	qProb*=SJC[string("nPFCand_QC_ptCut_quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
-	gProb*=SJC[string("nPFCand_QC_ptCut_gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+	qProb*=SJC[string("nPFCand_QC_ptCut.quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+	gProb*=SJC[string("nPFCand_QC_ptCut.gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
 	}
 	else if(fabs(eta)>=2.5) {
-	qProb*=SJC[string("ptD_QC_F_quark")]->correction(v_pt_rho,v_ptD_QC);
-	gProb*=SJC[string("ptD_QC_F_gluon")]->correction(v_pt_rho,v_ptD_QC);
+		if(debug>1)std::cout<<"FORWARD"<<std::endl;
+	qProb*=SJC[string("ptD_QC.F.quark")]->correction(v_pt_rho,v_ptD_QC);
+	gProb*=SJC[string("ptD_QC.F.gluon")]->correction(v_pt_rho,v_ptD_QC);
 	
-	qProb*=SJC[string("axis1_QC_F_quark")]->correction(v_pt_rho,v_axis1_QC);
-	gProb*=SJC[string("axis1_QC_F_gluon")]->correction(v_pt_rho,v_axis1_QC);
+	qProb*=SJC[string("axis1_QC.F.quark")]->correction(v_pt_rho,v_axis1_QC);
+	gProb*=SJC[string("axis1_QC.F.gluon")]->correction(v_pt_rho,v_axis1_QC);
 	
-	qProb*=SJC[string("axis2_QC_F_quark")]->correction(v_pt_rho,v_axis2_QC);
-	gProb*=SJC[string("axis2_QC_F_gluon")]->correction(v_pt_rho,v_axis2_QC);
+	qProb*=SJC[string("axis2_QC.F.quark")]->correction(v_pt_rho,v_axis2_QC);
+	gProb*=SJC[string("axis2_QC.F.gluon")]->correction(v_pt_rho,v_axis2_QC);
 
-	qProb*=SJC[string("nPFCand_QC_F_ptCut_quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
-	gProb*=SJC[string("nPFCand_QC_F_ptCut_gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+	qProb*=SJC[string("nPFCand_QC_ptCut.F.quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+	gProb*=SJC[string("nPFCand_QC_ptCut.F.gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
 	}
 
 

@@ -31,5 +31,6 @@ class QuarkGluonTagger2012 : public edm::EDProducer {
       bool isPatJet_;
       QGLikelihoodCalculator *qglikeli_;
       const JetCorrector *JEC_;           
+      int debug;
 };
 

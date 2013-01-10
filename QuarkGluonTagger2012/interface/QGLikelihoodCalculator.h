@@ -23,7 +23,7 @@ class QGLikelihoodCalculator {
  public:
 
   //QGLikelihoodCalculator( const std::string& fileName_nCharged="pandolf/QuarkGluonTagger/data/QGTaggerConfig_nCharged_AK5PF.txt", const std::string& fileName_nNeutral="pandolf/QuarkGluonTagger/data/QGTaggerConfig_nNeutral_AK5PF.txt", const std::string& fileName_ptD="pandolf/QuarkGluonTagger/data/QGTaggerConfig_ptD_AK5PF.txt");
-  QGLikelihoodCalculator( const std::string& dirName="amarini/QuarkGluonTagger/data/");
+  QGLikelihoodCalculator( const std::string& dirName="amarini/QuarkGluonTagger2012/data/");
    ~QGLikelihoodCalculator();
 
 
@@ -49,6 +49,7 @@ class QGLikelihoodCalculator {
   //SimpleJetCorrector *sjc_nNeutral_gluon_;
   //SimpleJetCorrector *sjc_ptD_quark_;
   //SimpleJetCorrector *sjc_ptD_gluon_;
+   int debug;
 
 };
 
