@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.23 2013/01/10 10:26:11 sandro Exp $
+// $Id: PATZJetsExpress.cc,v 1.24 2013/01/10 13:34:26 amarini Exp $
 //
 //
 
@@ -1657,7 +1657,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		if(leadPhotIdedFound)continue;
        		float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
 		if(myPhotons[i_pho].id)leadPhotIdedFound=true;
-       		if (DR < mJetPhoIsoR && myPhotons[i_pho].id) {
+       		if (DR < mJetPhoIsoR && (myPhotons[i_pho].id & (1<<3) )) {
        		  jetIsDuplicate = 1<<2;
        		}
        	      }// photon loop
