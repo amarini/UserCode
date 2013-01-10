@@ -23,10 +23,11 @@ from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
 # ---- access the global tag (needed for the JEC) -----------------------
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.load("Configuration.Geometry.GeometryIdeal_cff")
-process.GlobalTag.globaltag = 'GR_P_V41_AN1::All'
-#process.GlobalTag.globaltag = 'GR_R_42_V23::All'
-#process.GlobalTag.globaltag = 'FT_R_52_V8D::All'
-#process.GlobalTag.globaltag = 'START52_V9::All'
+process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
+#process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All' # DATA 2012B: multijet parked dataset re-reco with CMSSW_5_3_6 
+#process.GlobalTag.globaltag = 'FT53_V10A_AN3:All'  # DATA 2012Cv1: multijet parked dataset re-reco with CMSSW_5_3_6
+#process.GlobalTag.globaltag = 'FT_P_V42C_AN3::All' # DATA 2012Cv2: multijet parked dataset re-reco with CMSSW_5_3_6
+#process.GlobalTag.globaltag = 'FT_P_V42_AN3::All'  # DATA 2012D: multijet parked dataset re-reco with CMSSW_5_3_6
 
 ##--------- good primary vertices ---------------
 process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
@@ -45,12 +46,12 @@ process.patJets.addTagInfos = True
 
 # ---- format the message service ---------------------------------------
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 10000
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 # ---- load geometry package --------------------------------------------
-process.load("Configuration.StandardSequences.Geometry_cff")
+#process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
-#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
@@ -177,7 +178,7 @@ process.eleIsoSequence = setupPFElectronIso(process, 'gsfElectrons')
 process.phoIsoSequence = setupPFPhotonIso(process, 'photons')
 
 process.options = cms.untracked.PSet(
-	wantSummary = cms.untracked.bool(True)
+	wantSummary = cms.untracked.bool(False)
 	)
 
 # ---- ZJetsExpress analyzer --------------------------------------------
@@ -205,32 +206,45 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
    # GENCrossCleaning= cms.int32(1), #OBSOLETE
     GENType	    = cms.int32(1), #
     processName     = cms.string('HLT'),
-    triggerName     = cms.vstring('HLT_DoubleMu6_v', ### IMPORTANT always put _v in the end of each bit 
-                                  'HLT_DoubleMu7_v',
+    triggerName     = cms.vstring('HLT_DoubleMu7_v',
                                   'HLT_Mu13_Mu8_v',
                                   'HLT_Mu17_Mu8_v',
+                                  'HLT_Mu17_TkMu8_v', #end 2011
                                   'HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v',
-                                  'HLT_Ele17_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_Ele8_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_v',
-                                  'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
+                                  'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v', # end 2011
                                   'HLT_Mu17_Ele8_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
                                   'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v',
-				  #'HLT_Photon20_CaloIdVL_IsoL_v',
-				  #'HLT_Photon30_CaloIdVL_v',
-				  #'HLT_Photon30_CaloIdVL_IsoL_v', // we start offline at 70 GeV
 				  'HLT_Photon50_CaloIdVL_IsoL_v',
 				  'HLT_Photon75_CaloIdVL_v',
 				  'HLT_Photon90_CaloIdVL_v',
 				  'HLT_Photon90_CaloIdVL_IsoL_v',
 				  'HLT_Photon125_v',
 				  'HLT_Photon135_v',
-         	                 ),
+                                  'HLT_Mu15_v2',
+                                  'HLT_Mu24_v',
+                                  'HLT_Mu30_v',
+                                  'HLT_Mu40_v',
+                                  'HLT_Mu40_eta2p1_v',
+                                  'HLT_IsoMu17_v',
+                                  'HLT_IsoMu20_v',
+                                  'HLT_IsoMu24_v',
+                                  'HLT_IsoMu24_eta2p1_v', # end 2011
+                                  'HLT_Ele27_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v',
+                                  'HLT_Ele32_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v',
+                                  'HLT_Ele52_CaloIdVT_TrkIdT_v',
+                                  'HLT_Ele65_CaloIdVT_TrkIdT_v',
+                                  'HLT_Ele80_CaloIdVT_TrkIdT_v', # end of 2011
+                                  'HLT_Ele27_WP80_v'
+         	                 ),                     
     triggerResults  = cms.InputTag("TriggerResults","","HLT"),
     triggerEvent    = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
-    triggerFamily1  = cms.vstring('HLT_DoubleMu6_v','HLT_DoubleMu7_v','HLT_Mu13_Mu8_v','HLT_Mu17_Mu8_v'),
+    triggerFamily1  = cms.vstring('HLT_DoubleMu7_v',
+                                  'HLT_Mu13_Mu8_v',
+                                  'HLT_Mu17_Mu8_v',
+                                  'HLT_Mu17_TkMu8_v'),
     triggerFamily2  = cms.vstring('HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v',
-                                  'HLT_Ele17_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_Ele8_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_v',
                                   'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v'),
     triggerFamily3  = cms.vstring('HLT_Mu17_Ele8_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdL_v',
@@ -242,9 +256,27 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
                                   'HLT_Photon125_v',
                                   'HLT_Photon135_v'),
-
-    triggerFamily5  = cms.vstring('HLT_SingleMu_v'), ##NAMES TO BE CHECKED!
-    triggerFamily6  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
+    triggerFamily5  = cms.vstring('HLT_Mu15_v2',
+                                  'HLT_Mu24_v',
+                                  'HLT_Mu30_v',
+                                  'HLT_Mu40_v',
+                                  'HLT_Mu40_eta2p1_v',
+                                  'HLT_IsoMu17_v',
+                                  'HLT_IsoMu20_v',
+                                  'HLT_IsoMu24_v',
+                                  'HLT_IsoMu24_eta2p1_v', # end 2011
+                                  'HLT_DoubleMu7_v',
+                                  'HLT_Mu13_Mu8_v',
+                                  'HLT_Mu17_Mu8_v',
+                                  'HLT_Mu17_TkMu8_v'), # end 2011
+    triggerFamily6  = cms.vstring('HLT_Ele27_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v',
+                                  'HLT_Ele32_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v',
+                                  'HLT_Ele52_CaloIdVT_TrkIdT_v',
+                                  'HLT_Ele65_CaloIdVT_TrkIdT_v',
+                                  'HLT_Ele80_CaloIdVT_TrkIdT_v', # end of 2011
+                                  'HLT_Ele27_WP80_v',
+                                  'HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v',
+                                  'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v'), # end 2011
     triggerFamily7  = cms.vstring('HLT_SingleE_v'), ##TO BE CHECKED!
     triggerFamily8  = cms.vstring([]), ##TO BE CHECKED!
 
@@ -260,17 +292,31 @@ process.rejected = process.accepted.clone()
 process.hltFilter = cms.EDFilter('HLTHighLevel',
     TriggerResultsTag  = cms.InputTag('TriggerResults','','HLT'),
     HLTPaths           = cms.vstring(
-                                     'HLT_DoubleMu6_v*', # di-muon triggers
                                      'HLT_DoubleMu7_v*',
                                      'HLT_Mu13_Mu8_v*',
-                                     'HLT_Mu17_Mu8*', 
-                                     'HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v*', #di-electron trigger
-                                     'HLT_Ele17_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_Ele8_CaloIdT_TrkIdVL_CaloIsoVL_TrkIsoVL_v*',
-                                     'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*',
-				     'HLT_Mu17_Ele8_CaloIdL_v*', #di-emu trigger (for data-driven ttbar estimation)
+                                     'HLT_Mu17_Mu8_v*',
+                                     'HLT_Mu17_TkMu8_v*', #end 2011
+                                     'HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v*',
+                                     'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*', # end 2011
+                                     'HLT_Mu17_Ele8_CaloIdL_v*',
                                      'HLT_Mu8_Ele17_CaloIdL_v*',
                                      'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v*',
-                         	     'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v*'
+                                     'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v*',
+                                     'HLT_Mu15_v2*',
+                                     'HLT_Mu24_v*',
+                                     'HLT_Mu30_v*',
+                                     'HLT_Mu40_v*',
+                                     'HLT_Mu40_eta2p1_v*',
+                                     'HLT_IsoMu17_v*',
+                                     'HLT_IsoMu20_v*',
+                                     'HLT_IsoMu24_v*',
+                                     'HLT_IsoMu24_eta2p1_v*', # end 2011
+                                     'HLT_Ele27_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v*',
+                                     'HLT_Ele32_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v*',
+                                     'HLT_Ele52_CaloIdVT_TrkIdT_v*',
+                                     'HLT_Ele65_CaloIdVT_TrkIdT_v*',
+                                     'HLT_Ele80_CaloIdVT_TrkIdT_v*', # end of 2011
+                                     'HLT_Ele27_WP80_v*'
 ),
     eventSetupPathsKey = cms.string(''),
     andOr              = cms.bool(True), #----- True = OR, False = AND between the HLTPaths
@@ -282,6 +328,76 @@ process.ak5PFJets.doAreaFastjet = True
 ############# turn-on the fastjet area in |eta|<2.5 needed for the photonISO #############
 process.kt6PFJets25 = process.kt6PFJets.clone( doRhoFastjet = True )
 process.kt6PFJets25.Rho_EtaMax = cms.double(2.5)
+
+############# Trigger Matching #############
+pathTriggerMuons = '(path("HLT_DoubleMu7_v*", 1, 1) || path("HLT_Mu13_Mu8_v*", 1, 1) || path("HLT_Mu17_Mu8_v*", 1, 1) || path("HLT_Mu17_TkMu8_v*", 1, 1) || path("HLT_Mu15_v2*", 1, 1) || path("HLT_Mu24_v*", 1, 1) || path("HLT_Mu30_v*", 1, 1) || path("HLT_Mu40_v*", 1, 1) || path("HLT_Mu40_eta2p1_v*", 1, 1) || path("HLT_IsoMu17_v*", 1, 1) || path("HLT_IsoMu20_v*", 1, 1) || path("HLT_IsoMu24_v*", 1, 1) || path("HLT_IsoMu24_eta2p1_v*", 1, 1))' # selecting the trigger objects
+
+pathTriggerElectrons = '(path("HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v*", 1, 1) || path("HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*", 1, 1)  || path("HLT_Ele27_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v*", 1, 1) || path("HLT_Ele32_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v*", 1, 1) || path("HLT_Ele52_CaloIdVT_TrkIdT_v*", 1, 1) || path("HLT_Ele65_CaloIdVT_TrkIdT_v*", 1, 1) || path("HLT_Ele80_CaloIdVT_TrkIdT_v*", 1, 1) || path("HLT_Ele27_WP80_v*", 1, 1))' 
+
+pathTriggerPhotons = '(path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon125_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1))'
+
+process.muonTriggerMatchHLTMuons = cms.EDProducer(
+    "PATTriggerMatcherDRLessByR", 
+    src                   = cms.InputTag('cleanPatMuons'),
+    matched               = cms.InputTag('patTrigger'),
+    matchedCuts           = cms.string(pathTriggerMuons),
+    maxDPtRel             = cms.double(0.5),
+    maxDeltaR             = cms.double(0.5),
+    # maxDeltaEta         = cms.double(0.2),
+    resolveAmbiguities    = cms.bool(True),
+    resolveByMatchQuality = cms.bool(True)
+)
+
+process.electronTriggerMatchHLTElectrons = cms.EDProducer(
+    "PATTriggerMatcherDRLessByR",
+    src                   = cms.InputTag('cleanPatElectrons'),
+    matched               = cms.InputTag('patTrigger'),
+    matchedCuts           = cms.string(pathTriggerElectrons),
+    maxDPtRel             = cms.double(0.5),
+    maxDeltaR             = cms.double(0.5),
+    # maxDeltaEta         = cms.double(0.2),
+    resolveAmbiguities    = cms.bool(True),
+    resolveByMatchQuality = cms.bool(True)
+)
+
+process.photonTriggerMatchHLTPhotons = cms.EDProducer(
+    "PATTriggerMatcherDRLessByR", 
+    src                   = cms.InputTag('cleanPatPhotons'),
+    matched               = cms.InputTag('patTrigger'),
+    matchedCuts           = cms.string(pathTriggerPhotons),
+    maxDPtRel             = cms.double(1.0),
+    maxDeltaR             = cms.double(0.2),
+    # maxDeltaEta         = cms.double(0.2),
+    resolveAmbiguities    = cms.bool(True),
+    resolveByMatchQuality = cms.bool(True)
+)
+
+from PhysicsTools.PatAlgos.tools.coreTools import removeCleaning
+removeCleaning(process)
+
+from PhysicsTools.PatAlgos.tools.trigTools import *
+switchOnTrigger(process) 
+
+#switchOnTriggerMatching(process, triggerMatchers = ['muonTriggerMatchHLTMuons', 'electronTriggerMatchHLTElectrons', 'photonTriggerMatchHLTPhotons'])
+switchOnTriggerMatchEmbedding(process , triggerMatchers = ['muonTriggerMatchHLTMuons', 'electronTriggerMatchHLTElectrons', 'photonTriggerMatchHLTPhotons'])
+
+# Switch to selected PAT objects in the trigger matching
+removeCleaningFromTriggerMatching(process)
+
+process.muonTriggerMatchHLTMuons.src         = cms.InputTag('patMuons')
+process.selectedPatMuonsTriggerMatch.src     = cms.InputTag('patMuons')
+process.selectedPatMuonsTriggerMatch.matches = cms.VInputTag('muonTriggerMatchHLTMuons')
+
+process.electronTriggerMatchHLTElectrons.src     = cms.InputTag('patElectrons')
+process.selectedPatElectronsTriggerMatch.src     = cms.InputTag('patElectrons')
+process.selectedPatElectronsTriggerMatch.matches = cms.VInputTag('electronTriggerMatchHLTElectrons')
+
+process.photonTriggerMatchHLTPhotons.src      = cms.InputTag('patPhotons')
+process.selectedPatPhotonsTriggerMatch.src    = cms.InputTag('patPhotons')
+process.selectedPatPhotonsTriggerMatch.matches = cms.VInputTag('photonTriggerMatchHLTPhotons')
+
+process.patTriggerSequence = cms.Sequence(process.patTrigger + process.muonTriggerMatchHLTMuons + process.selectedPatMuonsTriggerMatch + process.electronTriggerMatchHLTElectrons + process.selectedPatElectronsTriggerMatch + process.photonTriggerMatchHLTPhotons + process.selectedPatPhotonsTriggerMatch)
+
 
 del process.outpath
 
@@ -296,7 +412,7 @@ process.p = cms.Path(process.pfParticleSelectionSequence
 
 if(isMC):
 	process.p += process.genParticlesForJets
-process.tail = cms.Sequence(process.patDefaultSequence  + process.jetExtender + process.qglAK5PF +  process.accepted)
+process.tail = cms.Sequence(process.patDefaultSequence + process.jetExtender + process.qglAK5PF + process.accepted)
 
 process.p += process.tail
 

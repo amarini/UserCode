@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.21 2012/12/21 11:37:35 bellan Exp $
+// $Id: PATZJetsExpress.cc,v 1.22 2013/01/09 16:02:17 meridian Exp $
 //
 //
 
@@ -89,6 +89,14 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+#include "DataFormats/PatCandidates/interface/TriggerEvent.h"
+#include "PhysicsTools/PatUtils/interface/TriggerHelper.h"
+#include "DataFormats/FWLite/interface/Handle.h"
+#include "DataFormats/PatCandidates/interface/PATObject.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Photon.h"
 
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
@@ -174,6 +182,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
 	// --- sigma IetaIeta
 	float sigmaIEtaIEta;
 	float hadronicOverEm;
+	// --- triggerObjectMatches
+        pat::TriggerObjectStandAloneCollection triObjMatch;
       };
       struct GENPARTICLE {
         // ---- momentum 4-vector ---------------------------------------
@@ -299,6 +309,13 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- trigger decisions -----------------------------------------
       std::vector<int> *fired_;
       int isTriggered_;
+      // ---- trigger Matching -----------------------------------------
+      int isTriggerMatchedFamily1_;
+      int isTriggerMatchedFamily2_;
+      int isTriggerMatchedFamily3_;
+      int isTriggerMatchedFamily4_;
+      int isTriggerMatchedFamily5_;
+      int isTriggerMatchedFamily6_;
       // ---- L1 prescale -----------------------------------------------
       std::vector<int> *prescaleL1_;
       // ---- HLT prescale -----------------------------------------------
@@ -1160,6 +1177,18 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 
       if (muonIsoPFdb > mMaxCombRelIso04)                                 continue;
 
+      pat::Muon PAT_muon;
+      Handle<View<pat::Muon> > PATmuons_;
+      iEvent.getByLabel("selectedPatMuonsTriggerMatch",PATmuons_);
+      for(View<pat::Muon>::const_iterator PATi_mu = PATmuons_->begin(); PATi_mu != PATmuons_->end(); ++PATi_mu){
+      	edm::Ptr<reco::Candidate> originalRef_mu = PATi_mu->originalObjectRef();
+      	const reco::Muon *originalMu = dynamic_cast<const reco::Muon *>(originalRef_mu.get());
+    	if(originalMu->pt() == i_mu->pt()) {
+	  PAT_muon = *PATi_mu; 
+	  break;
+	}
+      }
+
       
       PARTICLE aLepton;
       TLorentzVector lepP4(i_mu->p4().Px(),i_mu->p4().Py(),i_mu->p4().Pz(),i_mu->p4().E());
@@ -1171,6 +1200,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aLepton.isoPFRho = muonIsoPFRho;
       aLepton.sigmaIEtaIEta  = -1;
       aLepton.hadronicOverEm = -1;
+      aLepton.triObjMatch = PAT_muon.triggerObjectMatches();
       myLeptons.push_back(aLepton);
     }// muon loop
     // ---- loop over electrons -------------------------------------------
@@ -1227,6 +1257,18 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float electronIsoPFRho   = (sumChargedHadronPt + std::max(sumNeutralHadronEt + sumPhotonEt -  (*rho) * getEffectiveAreaForElectrons(i_el->eta()), 0.))/i_el->pt();     
 
       if(electronIsoPFRho > mMaxCombRelIso03)              continue;
+
+      pat::Electron PAT_electron;
+      Handle<View<pat::Electron> > PATelectrons_;
+      iEvent.getByLabel("selectedPatElectronsTriggerMatch",PATelectrons_);
+      for(View<pat::Electron>::const_iterator PATi_el = PATelectrons_->begin(); PATi_el != PATelectrons_->end(); ++PATi_el){
+      	edm::Ptr<reco::Candidate> originalRef_el = PATi_el->originalObjectRef();
+      	const reco::GsfElectron *originalEl = dynamic_cast<const reco::GsfElectron *>(originalRef_el.get());
+    	if(originalEl->pt() == i_el->pt()){
+          PAT_electron = *PATi_el;
+          break;
+        }
+      }
       
 
       PARTICLE aLepton;
@@ -1243,6 +1285,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aLepton.isoPFRho = electronIsoPFRho;
       aLepton.sigmaIEtaIEta = sigmaIetaIeta;
       aLepton.hadronicOverEm = hadronicOverEm;
+      aLepton.triObjMatch = PAT_electron.triggerObjectMatches();
       myLeptons.push_back(aLepton);
     } // electrons loop
     hRecoLeptons_->Fill(int(myLeptons.size()));
@@ -1499,7 +1542,20 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  photonBit |= (it->hasPixelSeed()  << 7);
 	  photonBit |= (isTriggerISO        << 8);
 	  photonBit |= (isMasked            << 9);
+
+	  pat::Photon PAT_photon;
+          Handle<View<pat::Photon> > PATphotons_;
+          iEvent.getByLabel("selectedPatPhotonsTriggerMatch",PATphotons_);
+          for(View<pat::Photon>::const_iterator PATi_ph = PATphotons_->begin(); PATi_ph != PATphotons_->end(); ++PATi_ph){
+      	    edm::Ptr<reco::Candidate> originalRef_ph = PATi_ph->originalObjectRef();
+      	    const reco::Photon *originalPh = dynamic_cast<const reco::Photon *>(originalRef_ph.get());
+    	    if(originalPh->pt() == it->pt()){ 
+              PAT_photon = *PATi_ph;
+              break;
+            }
+          }
 	  
+
 	  // chiara
 	  PARTICLE gamma; // define pseudo lepton half of the p4 of the real photon
 	  gamma.p4    = aPhoton;          // chiara ok
@@ -1541,7 +1597,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  //	  gamma.parameters[PARTICLE::phoHasConvTrks]=phoHasConvTrks;            
 	  gamma.parameters[PARTICLE::oldHadronicOverEm]=hadronicOverEm;             
 	  gamma.parameters[PARTICLE::hadronicOverEm2012]=hadronicOverEm2012;         
-	  
+    	  gamma.triObjMatch = PAT_photon.triggerObjectMatches();
+
 	  // --- save FSR photon candidates and gamma+jets in seperate paths
 	  
 //	  myFSRphotons.push_back(gamma);                          // FSR photons are *not* used in the photon+jet DR cone rejection
@@ -2118,7 +2175,43 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         prescaleL1_ ->push_back(preL1);
         prescaleHLT_->push_back(preHLT);
       }
-    
+
+      //------ trigger matching ---------
+      if(myLeptons.size()>1){
+        if(myLeptons[0].triObjMatch.size() && myLeptons[1].triObjMatch.size()){
+          if(myLeptons[0].chid*myLeptons[1].chid == -4){
+            isTriggerMatchedFamily1_ = 1;
+          } 
+          else if(myLeptons[0].chid*myLeptons[1].chid == -1){
+            isTriggerMatchedFamily2_ = 1;
+          }
+          else if(myLeptons[0].chid*myLeptons[1].chid == -2){
+            isTriggerMatchedFamily3_ = 1;
+          }
+        }        
+        else if(myLeptons[0].triObjMatch.size()){
+          if(abs(myLeptons[0].chid) == 2){
+            isTriggerMatchedFamily5_ = 1; 
+          } 
+          else if(abs(myLeptons[0].chid) == 1){
+            isTriggerMatchedFamily6_ = 1; 
+          }
+        }
+        else if(myLeptons[1].triObjMatch.size()){
+          if(abs(myLeptons[1].chid) == 2){
+            isTriggerMatchedFamily5_ = 1; 
+          } 
+          else if(abs(myLeptons[1].chid) == 1){
+            isTriggerMatchedFamily6_ = 1; 
+          }
+        }
+      }
+
+      if(myPhotons.size()>0){
+        if(myPhotons[0].triObjMatch.size()){
+          isTriggerMatchedFamily4_ = 1;
+        }  
+      }	
     }// if selection GEN 
     if (selectionGEN) {
       selGEN_ = 1;
@@ -2459,6 +2552,13 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("prescaleL1"       ,"vector<int>"       ,&prescaleL1_);
   myTree_->Branch("prescaleHLT"      ,"vector<int>"       ,&prescaleHLT_);
   myTree_->Branch("isTriggered"      ,&isTriggered_        ,"isTriggered/I");
+  // ---- trigger matching variables ---------------------------------------------
+  myTree_->Branch("isTriggerMatchedFamily1"          ,&isTriggerMatchedFamily1_           ,"isTriggerMatchedFamily1/I");
+  myTree_->Branch("isTriggerMatchedFamily2"          ,&isTriggerMatchedFamily2_           ,"isTriggerMatchedFamily2/I");
+  myTree_->Branch("isTriggerMatchedFamily3"          ,&isTriggerMatchedFamily3_           ,"isTriggerMatchedFamily3/I");
+  myTree_->Branch("isTriggerMatchedFamily4"          ,&isTriggerMatchedFamily4_           ,"isTriggerMatchedFamily4/I");
+  myTree_->Branch("isTriggerMatchedFamily5"          ,&isTriggerMatchedFamily5_           ,"isTriggerMatchedFamily5/I");
+  myTree_->Branch("isTriggerMatchedFamily6"          ,&isTriggerMatchedFamily6_           ,"isTriggerMatchedFamily6/I");
   // ---- lepton variables ----------------------------------------------
   myTree_->Branch("lepPt"            ,"vector<float>"     ,&lepPt_);
   myTree_->Branch("lepEta"           ,"vector<float>"     ,&lepEta_);
@@ -2675,6 +2775,12 @@ void PATZJetsExpress::clearTree()
 //   mPhotonj1_         = -999;
 //   ptPhotonj1_        = -999;
   isTriggered_       =    0; // please keep this 0
+  isTriggerMatchedFamily1_      =    0;
+  isTriggerMatchedFamily2_      =    0;
+  isTriggerMatchedFamily3_      =    0;
+  isTriggerMatchedFamily4_      =    0;
+  isTriggerMatchedFamily5_      =    0;
+  isTriggerMatchedFamily6_      =    0;
   jetPhotonDPhi_     ->clear();
   //  photonPar_         ->clear();
   //FSRphotonPar_      ->clear();
