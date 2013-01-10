@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.22 2013/01/09 16:02:17 meridian Exp $
+// $Id: PATZJetsExpress.cc,v 1.23 2013/01/10 10:26:11 sandro Exp $
 //
 //
 
@@ -567,6 +567,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
 PATZJetsExpress::~PATZJetsExpress()
 {
   delete cicPhotonId;
+  delete hcalHelper;
 }
 // ---
 bool PATZJetsExpress::checkTriggerName(string aString,std::vector<string> aFamily)
@@ -1641,6 +1642,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       
       //----- remove the leptons ------------------------------------------
       for(unsigned int i_lep = 0; i_lep < myLeptons.size(); i_lep++) {
+	if(i_lep>=2)continue;
 	float DR = myLeptons[i_lep].p4.DeltaR(jetP4);
 	if (DR < mJetLepIsoR) {
 	  jetIsDuplicate = 1<<i_lep; 
@@ -1650,12 +1652,15 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       // chiara: questo va cambiato e vanno rimossi tutti
       // paolo: Keeping the overlap between photon and jets will be removed later after the photonID requirements are applied
       //----- remove the leading photon ------------------------------------ (reminder nPhotons>0 only IF nLeptons==0)
-      //       for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) {
-      // 	float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
-      // 	if (DR < mJetPhoIsoR) {
-      // 	  jetIsDuplicate = 1<<2;
-      // 	}
-      //       }// photon loop
+	     bool leadPhotIdedFound=false;
+             for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) { //rejection only wrt the leading photon (ided)
+		if(leadPhotIdedFound)continue;
+       		float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
+		if(myPhotons[i_pho].id)leadPhotIdedFound=true;
+       		if (DR < mJetPhoIsoR && myPhotons[i_pho].id) {
+       		  jetIsDuplicate = 1<<2;
+       		}
+       	      }// photon loop
       
       // ---- get the jec and the uncertainty -----------------------------    
       //int index = i_jet - jets_->begin();
@@ -2033,6 +2038,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetId_       ->push_back(myJets[j].id);  
         jetQGL_     ->push_back(myJets[j].qgl);
         jetRMS_     ->push_back(myJets[j].rms);
+        jetVeto_     ->push_back(myJets[j].veto);
       }
      // for(unsigned j = 0; j < myRJets.size(); j++) {
      //   rjetPt_       ->push_back(myRJets[j].p4.Pt()); 
