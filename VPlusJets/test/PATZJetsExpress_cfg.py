@@ -46,17 +46,18 @@ process.patJets.addTagInfos = True
 
 # ---- format the message service ---------------------------------------
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 # ---- load geometry package --------------------------------------------
 #process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
+	'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
 #	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
-	'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
+	#'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/774/0CDC3936-889B-E111-9F82-001D09F25041.root', 
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/806/C8EE0F38-C89B-E111-9623-001D09F29619.root', 
@@ -194,7 +195,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     jetLepPhoRadius = cms.double(0.4),
     minJetPt        = cms.double(30),
     maxJetEta       = cms.double(2.5),
-    minPhoPt        = cms.double(130),
+    minPhoPt        = cms.double(40),
     maxPhoEta       = cms.double(3.0),
     minLepPt        = cms.double(20),
     maxLepEta       = cms.double(2.4),
@@ -204,7 +205,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     OnlyMC	    = cms.bool(False), 
     dressedRadius   = cms.double(0.1),
    # GENCrossCleaning= cms.int32(1), #OBSOLETE
-    GENType	    = cms.int32(1), #
+    GENType	    = cms.int32(0), #
     processName     = cms.string('HLT'),
     triggerName     = cms.vstring('HLT_DoubleMu7_v',
                                   'HLT_Mu13_Mu8_v',
@@ -216,13 +217,21 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Mu8_Ele17_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
                                   'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v',
+				  'HLT_DoubleMu5_Ele8_CaloIdT_TrkIdVL_v',
+				  'HLT_DoubleMu8_Ele8_CaloIdT_TrkIdVL_v',
+				  'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
+				  'HLT_Mu30_Ele30_CaloIdL_v',
+				  'HLT_Mu7_Ele7_CaloIdT_CaloIsoVL_v',
+				  'HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v',
+				  'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
+				  'HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v',
 				  'HLT_Photon50_CaloIdVL_IsoL_v',
 				  'HLT_Photon75_CaloIdVL_v',
 				  'HLT_Photon90_CaloIdVL_v',
 				  'HLT_Photon90_CaloIdVL_IsoL_v',
 				  'HLT_Photon125_v',
 				  'HLT_Photon135_v',
-                                  'HLT_Mu15_v2',
+                                  'HLT_Mu15_v',
                                   'HLT_Mu24_v',
                                   'HLT_Mu30_v',
                                   'HLT_Mu40_v',
@@ -249,14 +258,22 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     triggerFamily3  = cms.vstring('HLT_Mu17_Ele8_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
-                                  'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v'),
+                                  'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v',
+				  'HLT_DoubleMu5_Ele8_CaloIdT_TrkIdVL_v',
+				  'HLT_DoubleMu8_Ele8_CaloIdT_TrkIdVL_v',
+				  'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
+				  'HLT_Mu30_Ele30_CaloIdL_v',
+				  'HLT_Mu7_Ele7_CaloIdT_CaloIsoVL_v',
+				  'HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v',
+				  'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
+				  'HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v'),
     triggerFamily4  = cms.vstring('HLT_Photon50_CaloIdVL_IsoL_v',
                                   'HLT_Photon75_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
                                   'HLT_Photon125_v',
                                   'HLT_Photon135_v'),
-    triggerFamily5  = cms.vstring('HLT_Mu15_v2',
+    triggerFamily5  = cms.vstring('HLT_Mu15_v',
                                   'HLT_Mu24_v',
                                   'HLT_Mu30_v',
                                   'HLT_Mu40_v',
@@ -284,7 +301,16 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     prescaleDontAsk = cms.vstring('HLT_Mu17_Ele8_CaloIdL_v', # don't ask for L1 prescales for these bits
                                   'HLT_Mu8_Ele17_CaloIdL_v',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
-                                  'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v'),
+                                  'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v',
+				  'HLT_Ele27_WP80_v',
+				  'HLT_Photon50_CaloIdVL_IsoL_v',
+                                  'HLT_Photon75_CaloIdVL_v',
+                                  'HLT_Photon90_CaloIdVL_v',
+                                  'HLT_Photon90_CaloIdVL_IsoL_v',
+				  'HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v',
+				  'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
+				  'HLT_DoubleMu8_Ele8_CaloIdT_TrkIdVL_v',
+				  'HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v'),
 )
 # ---- duplicate the analyzer with different name -----------------------
 process.rejected = process.accepted.clone()
