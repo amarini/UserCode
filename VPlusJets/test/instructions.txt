@@ -1,7 +1,7 @@
 
 export "SCRAM_ARCH=slc5_amd64_gcc462"
-cmsrel CMSSW_5_3_3_patch3
-cd CMSSW_5_3_3_patch3/src
+cmsrel CMSSW_5_3_6
+cd CMSSW_5_3_6/src
 cmsenv
 
 #https://twiki.cern.ch/twiki/bin/viewauth/CMS/SuperClusterFootprintRemoval
