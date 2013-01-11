@@ -7,7 +7,7 @@ cmsenv
 #https://twiki.cern.ch/twiki/bin/viewauth/CMS/SuperClusterFootprintRemoval
 cvs co -r V00-02b -d PFIsolation/SuperClusterFootprintRemoval UserCode/peruzzi/PFIsolation/SuperClusterFootprintRemoval
 cvs co -d pandolf/QuarkGluonTagger UserCode/pandolf/QuarkGluonTagger
-cvs co  -d amarini/VPlusJets UserCode/amarini/VPlusJets
+cvs co -r V00-01 -d amarini/VPlusJets UserCode/amarini/VPlusJets
 cvs co -r V00-00-21 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
 
 addpkg  CommonTools/ParticleFlow V00-03-13  
