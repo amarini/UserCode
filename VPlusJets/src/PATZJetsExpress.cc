@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.24 2013/01/10 13:34:26 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.25 2013/01/10 13:41:42 amarini Exp $
 //
 //
 
@@ -124,6 +124,9 @@
 #include "EGamma/EGammaAnalysisTools/src/PFIsolationEstimator.cc"
 #include "RecoEgamma/EgammaElectronAlgos/interface/ElectronHcalHelper.h"
 
+//Marco Isolation
+#include "PFIsolation/SuperClusterFootprintRemoval/interface/SuperClusterFootprintRemoval.h"
+
 #include "amarini/VPlusJets/interface/CiCPhotonID.h"
 
 //
@@ -168,6 +171,11 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         int bit;
         // --- float paerameters
         std::vector<float> parameters;
+	
+	// --- MP foot print removal isolation	
+	float isoFPRNeutral;
+	float isoFPRCharged;
+	float isoFPRPhoton;
 
 	enum photonParameters {  passconv, pfIsoCH, pfIsoNH, pfIsoP, pfCic03P, pfCic03N, pfCic04P, pfCic04N , pfCic03Cg, pfCic04Cg, pfCic03Cb, pfCic04Cb, sieie, sieip, etaw, phiw,  r9, lR, s4, e25, sceta, ESEff,
 				 hcalTowerSumEtConeDR04,
@@ -381,6 +389,11 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       vector<float>* photontrkSumPtSolidConeDR04_;
       vector<float>* photonnTrkHollowConeDR04_;
       vector<float>* photontrkSumPtHollowConeDR04_;
+	
+	//PhotonIso
+	vector<float>* photonIsoFPRCharged_; //with FOOT PRINT REMOVAL FROM MP
+	vector<float>* photonIsoFPRNeutral_;
+	vector<float>* photonIsoFPRPhoton_;
   
       vector<float> *jetPhotonDPhi_;
 //       vector<float> *photonPar_;
@@ -1403,7 +1416,13 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  // --- PF isolation ---
 	  unsigned int ivtx = 0;
 	  VertexRef myVtxRef(vertices_, ivtx);
-	  
+	 
+	  //MP ISO
+	  SuperClusterFootprintRemoval remover(iEvent,edm::ParameterSet(),iSetup); 
+	  float photonIsoFPRCharged = remover.PFIsolation("charged",it->superCluster(),0);
+	  float photonIsoFPRNeutral = remover.PFIsolation("neutral",it->superCluster());
+	  float photonIsoFPRPhoton = remover.PFIsolation("photon",it->superCluster());
+
 	  // chiara: ma va fatto cosi'? c'era gia'
 	  isolator.fGetIsolation((&*it),pfCandidates.product(), myVtxRef, vertices_);
 	  float photonPfIsoCH = isolator.getIsolationCharged();
@@ -1599,6 +1618,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  gamma.parameters[PARTICLE::oldHadronicOverEm]=hadronicOverEm;             
 	  gamma.parameters[PARTICLE::hadronicOverEm2012]=hadronicOverEm2012;         
     	  gamma.triObjMatch = PAT_photon.triggerObjectMatches();
+	
+	  gamma.isoFPRCharged=photonIsoFPRCharged ;
+	  gamma.isoFPRNeutral=photonIsoFPRNeutral ;
+	  gamma.isoFPRPhoton=photonIsoFPRPhoton ;
 
 	  // --- save FSR photon candidates and gamma+jets in seperate paths
 	  
@@ -1973,6 +1996,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	photonnTrkHollowConeDR04_->push_back(myPhotons[gg].parameters[PARTICLE::nTrkHollowConeDR04]);
 	photontrkSumPtHollowConeDR04_->push_back(myPhotons[gg].parameters[PARTICLE::trkSumPtHollowConeDR04]);
 	photonBit_->push_back(myPhotons[gg].bit);
+	photonIsoFPRCharged_->push_back(myPhotons[gg].isoFPRCharged);
+	photonIsoFPRNeutral_->push_back(myPhotons[gg].isoFPRNeutral);
+	photonIsoFPRPhoton_->push_back(myPhotons[gg].isoFPRPhoton);
 	//        photonPar_= myPhotons[0].parameters;
 // 	float thePfHadPhoPt = (-pfmetP4 - myPhotons[gg].p4).Pt();
 //         pfhadPhoPt_ ->push_back(thePfHadPhoPt);
@@ -2448,6 +2474,9 @@ void PATZJetsExpress::buildTree()
   photontrkSumPtSolidConeDR04_= new std::vector<float>();
   photonnTrkHollowConeDR04_= new std::vector<float>();
   photontrkSumPtHollowConeDR04_= new std::vector<float>();
+  photonIsoFPRCharged_ = new std::vector<float>();
+  photonIsoFPRNeutral_ = new std::vector<float>();
+  photonIsoFPRPhoton_ = new std::vector<float>();
 
   //  photonPar_         = new std::vector<float>();
 //  FSRphotonPar_      = new std::vector<float>();
@@ -2535,6 +2564,9 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photontrkSumPtSolidConeDR04",          "vector<float>"   ,&photontrkSumPtSolidConeDR04_);
   myTree_->Branch("photonnTrkHollowConeDR04",          "vector<float>"   ,&photonnTrkHollowConeDR04_);
   myTree_->Branch("photontrkSumPtHollowConeDR04",          "vector<float>"   ,&photontrkSumPtHollowConeDR04_);
+  myTree_->Branch("photonIsoFPRCharged",          "vector<float>"   ,&photonIsoFPRCharged_);
+  myTree_->Branch("photonIsoFPRNeutral",          "vector<float>"   ,&photonIsoFPRNeutral_);
+  myTree_->Branch("photonIsoFPRPhoton",          "vector<float>"   ,&photonIsoFPRPhoton_);
   // myTree_->Branch("photonID"         ,"vector<float>"     ,&photonID_);
   myTree_->Branch("photonBit","vector<int>",&photonBit_ );
   // myTree_->Branch("pfhadPhoPt"       ,"vector<float>"        ,&pfhadPhoPt_);

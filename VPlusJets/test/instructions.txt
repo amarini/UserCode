@@ -4,8 +4,8 @@ cmsrel CMSSW_5_3_6
 cd CMSSW_5_3_6/src
 cmsenv
 
-#moved plugins of interest in plugins
-#cvs co -d KKousour/MultiJetAnalysis UserCode/KKousour/MultiJetAnalysis
+#https://twiki.cern.ch/twiki/bin/viewauth/CMS/SuperClusterFootprintRemoval
+cvs co -r V00-02b -d PFIsolation/SuperClusterFootprintRemoval UserCode/peruzzi/PFIsolation/SuperClusterFootprintRemoval
 cvs co -d pandolf/QuarkGluonTagger UserCode/pandolf/QuarkGluonTagger
 cvs co  -d amarini/VPlusJets UserCode/amarini/VPlusJets
 cvs co -r V00-00-21 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
