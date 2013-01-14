@@ -109,12 +109,16 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries();iEntry++)
 	//Triggers??
 	if(debug>1)cout<<"Passed Selection"<<endl;
 	int nJetsVeto=0;
-	for(int iJ=0;iJ<jetVeto->size();iJ++)if( !( ( (*jetVeto)[iJ]&1)  && ( (*jetVeto)[iJ]&2)) ) nJetsVeto++;
+	for(int iJ=0;iJ<jetVeto->size();iJ++)if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ) nJetsVeto++;
 	if(debug>1)cout<<"nJetsVeto "<<nJetsVeto<<endl;
 	
 	histos["nVtx"]->Fill(nVtx);
 	histos["nLeptons"]->Fill(nLeptons);
+	histos["nPhotons"]->Fill(nPhotons);
 	histos["nJets"]->Fill(nJetsVeto);
+
+	histos["rho"]->Fill(rho);
+	histos["rho25"]->Fill(rho25);
 
 	histos["llM"]->Fill(llM);
 	histos["llPt"]->Fill(llPt);
@@ -131,8 +135,8 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries();iEntry++)
 
 	if(debug>1)cout<<"jetSize Pt "<<jetPt->size()<<" Veto "<<jetVeto->size()<<endl;
 	int jet0=-1,jet1=-1;
-		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  && ( (*jetVeto)[iJ]&2)) ){jet0=iJ; break;}
-		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  && ((*jetVeto)[iJ]&2)) ){jet1=iJ; break;}
+		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ){jet0=iJ; break;}
+		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet1=iJ; break;}
 	if(debug>1)cout<<"Jet 0 Idx "<<jet0<<"Jet 1 Idx "<<jet1<<endl;
 
 	if(jet0>=0)histos["jet0Pt"]	->Fill((*jetPt)[jet0]);
@@ -175,7 +179,7 @@ for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++){
 	TCanvas *c=new TCanvas("c","c",800,800);
 	iM->second->SetMarkerStyle(24);
 	iM->second->Draw("P");
-	c->SaveAs(Form("%s/%s",dirOut,iM->first.c_str()));
+	c->SaveAs(Form("%s/%s.pdf",dirOut,iM->first.c_str()));
 	}
 
 fOut->cd();
