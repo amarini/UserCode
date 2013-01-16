@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.25 2013/01/10 13:41:42 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.26 2013/01/11 11:14:54 amarini Exp $
 //
 //
 
@@ -258,7 +258,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       edm::Service<TFileService> fTFileService;	
       TTree *myTree_;
   // ---- histogram to record the number of events ------------------
-  TH1I  *hRecoLeptons_,*hRecoPhotons_,*hGenLeptons_,*hEvents_,*hWEvents_;
+      TH1I  *hRecoLeptons_,*hRecoPhotons_,*hGenLeptons_,*hEvents_,*hWEvents_;
       TH1F  *hMuMuMass_,*hElElMass_,*hElMuMass_;
       TH1F  *hZMuMuMass_,*hZElElMass_;
       TH1F  *hMuMuMassWeighted_,*hElElMassWeighted_,*hElMuMassWeighted_;
@@ -300,7 +300,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- configurable parameters -----------------------------------
       bool          mIsMC,mOnlyMC;
       int           mMinNjets,mGENType, mDressedRadius;
-      double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMaxPhoEta;
+  double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMinPhoPtId,mMaxPhoEta;
       edm::InputTag pfIsoValEleCH03Name,pfIsoValEleNH03Name,pfIsoValEleG03Name;
       //int 	    mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
@@ -530,6 +530,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mMinLepPt          = iConfig.getParameter<double>                    ("minLepPt");
   mMaxLepEta         = iConfig.getParameter<double>                    ("maxLepEta");
   mMinPhoPt          = iConfig.getParameter<double>                    ("minPhoPt");
+  mMinPhoPtId       = iConfig.getParameter<double>                    ("minPhoPtId");
   mMaxPhoEta         = iConfig.getParameter<double>                    ("maxPhoEta");
   mMinLLMass         = iConfig.getParameter<double>                    ("minLLMass");
   mMaxCombRelIso03   = iConfig.getParameter<double>                    ("maxCombRelIso03");
@@ -906,6 +907,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   clearTree();
   isRealData_ = iEvent.isRealData() ? 1:0;
 
+  int nJets_lepVeto=0;
+  int nJets_phoVeto=0;
+
 
   // ----  MC truth block -----------------------------------------------
   vector<GENPARTICLE>      myGenLeptons;
@@ -1013,7 +1017,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         // ---- consider only photons -----------------
         if (abs(i_gen->pdgId()) == 22) {
            // ---- apply geometric and kinematic acceptance -------------
-          if ((i_gen->pt() > mMinPhoPt) && (fabs(i_gen->eta())) < mMaxPhoEta) {
+          if ((i_gen->pt() > mMinPhoPtId) && (fabs(i_gen->eta())) < mMaxPhoEta) {
             GENPARTICLE aGenPhoton;
             TLorentzVector phoP4GEN(i_gen->p4().Px(),i_gen->p4().Py(),i_gen->p4().Pz(),i_gen->p4().E());
             aGenPhoton.pdgId = i_gen->pdgId();
@@ -1340,6 +1344,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	int ipho = 0;
 	for(reco::PhotonCollection::const_iterator it = photons_->begin();it != photons_->end(); it++) {
 	  
+	  //for low pt photons we check isolation in order to reduce rate of saved events
+	  bool passPhotCaloId = false;
+
 	  //---- don't bother if it has pt less than 15 GeV ----------------------
 	  if(it->pt() < 15) continue;
 	  if(abs(it->eta()) > mMaxPhoEta) continue;
@@ -1576,6 +1583,24 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
           }
 	  
 
+	  if(it->isEB()){
+	    //if H/E<0.15 and sigmaietaieta<0.024 -> ID is passed
+	    if(sigmaIetaIeta<0.024 && hadronicOverEm<0.15){
+	      passPhotCaloId =true;
+	    }
+	    //if(it->pt()>mMinPhoPtId && it->pt()<mMinPhoPt){
+	    //cout<<"in EB pt"<< it->pt()<<"/"<<sigmaIetaIeta<<"/"<<hadronicOverEm<<" passed? "<<passPhotCaloId<<endl;
+	    //}
+	  }else if (it->isEE()){
+	    //if H/E<0.10 and sigmaietaieta<0.040 -> ID is passed
+	    if(sigmaIetaIeta<0.040 && hadronicOverEm<0.10){
+	      passPhotCaloId = true;
+	    }
+	    //if(it->pt()>mMinPhoPtId && it->pt()<mMinPhoPt){
+	    //cout<<"in EE pt"<< it->pt()<<"/"<<sigmaIetaIeta<<"/"<<hadronicOverEm<<" passed? "<<passPhotCaloId<<endl;
+	    //}
+	  }
+
 	  // chiara
 	  PARTICLE gamma; // define pseudo lepton half of the p4 of the real photon
 	  gamma.p4    = aPhoton;          // chiara ok
@@ -1630,7 +1655,11 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  //---- consider single event interpretation, exclusive di-lepton/photon interpretation (myLeptons.size()==0)  SINGLEEVENT:
 	  //if(it->pt() > mMinPhoPt && myLeptons.size()==0 && isTriggerISO) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
 	  //if(it->pt() > mMinPhoPt && isTriggerISO) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
-	  if(it->pt() > mMinPhoPt ) myPhotons.push_back(gamma);    //note: hard photons imply later a DR cone rejection wrt the jets
+	  //check first for harder photon cutoff without isolation requirement
+	  if(it->pt() > mMinPhoPt ){ myPhotons.push_back(gamma);  }  //note: hard photons imply later a DR cone rejection wrt the jets
+	  else if(it->pt() > mMinPhoPtId && passPhotCaloId ){//if photon not hard enough - check in addition for ID (CaloBased)
+	    myPhotons.push_back(gamma); 
+	  }
 	}
 	hRecoPhotons_->Fill(int(myPhotons.size()));   // chiara
       }
@@ -1669,7 +1698,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	float DR = myLeptons[i_lep].p4.DeltaR(jetP4);
 	if (DR < mJetLepIsoR) {
 	  jetIsDuplicate = 1<<i_lep; 
+	  nJets_lepVeto+=1;
+	  //cout<<"event/jets_lepVeto "<<iEvent.id().event()<<"/"<<nJets_lepVeto<<endl;
 	}
+	
       }// lepton loop 
       
       // chiara: questo va cambiato e vanno rimossi tutti
@@ -1680,9 +1712,11 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		if(leadPhotIdedFound)continue;
        		float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
 		if(myPhotons[i_pho].id)leadPhotIdedFound=true;
-       		if (DR < mJetPhoIsoR && (myPhotons[i_pho].id & (1<<3) )) {
+       		if (DR < mJetPhoIsoR /*&& (myPhotons[i_pho].id & (1<<3) )*/) {
        		  jetIsDuplicate = 1<<2;
-       		}
+		  nJets_phoVeto+=1;
+		  //cout<<"event/jets_phoVeto "<<iEvent.id().event()<<"/"<<nJets_phoVeto<<endl;
+		}       		
        	      }// photon loop
       
       // ---- get the jec and the uncertainty -----------------------------    
@@ -1895,16 +1929,39 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   // ---- keep only selected events -------------------------------------
   bool selectionRECO = false;
   if(!mOnlyMC){
-    selectionRECO = ((nVtx_ > 0) && (nLeptons_ > 1) && (nJets_ >= mMinNjets) && llP4.M()>mMinLLMass);
+    selectionRECO = ((nVtx_ > 0) && (nLeptons_ > 1) && ((nJets_-nJets_lepVeto)>=mMinNjets)/*(nJets_ >= mMinNjets)*/ && llP4.M()>mMinLLMass);
   }
-  selectionRECO = selectionRECO || ((nVtx_ > 0) &&  nPhotons_>0 && (nJets_ >= mMinNjets)); // add photon logic for RECO
+  bool selectionRECO_leptons=selectionRECO;
+  selectionRECO = selectionRECO || ((nVtx_ > 0) &&  nPhotons_>0 &&  ((nJets_ -nJets_phoVeto)>=mMinNjets)/*(nJets_ >= mMinNjets)*/); // add photon logic for RECO
   bool selection(selectionRECO);
   bool selectionGEN(false);
   selRECO_ = 0;
   if (!isRealData_) {
     selectionGEN = ((nLeptonsGEN_ > 1) && (nJetsGEN_ >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
-    //take in a QCD selection temporarily
-    selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets)) ||(nJetsGEN_ >= (mMinNjets+1));      // add photon logic for GEN 
+    selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
+
+    //check things here
+    if (!selectionGEN && !selectionRECO_leptons && selection){
+      bool veto_jets=false;
+      if (nPhotons_==1 && nJets_==mMinNjets){
+	for(int i=0;i<nJets_;i++){
+	  float DR = myPhotons[0].p4.DeltaR(myJets[i].p4);
+	  if (DR < mJetPhoIsoR) {
+	    veto_jets=true;
+	    if(nLeptons_>0){
+	      cout<<"jet vetoed by photon"<<DR<<"/"<<myLeptons[0].chid<<"/"<<nJets_lepVeto<<"/"<<nJets_phoVeto<<endl;
+	    }else{
+	      cout<<"jet vetoed by photon"<<DR<<"/"<<nLeptons_<<"/"<<nJets_lepVeto<<"/"<<nJets_phoVeto<<endl;
+	    }
+	  }
+	}
+      }
+      if(veto_jets){
+	selection=false;
+	//cout<<"selection newly decided as false jet veto "<<myJets[0].veto<<endl;
+      }
+    }
+    //stop check things here
     selection +=  selectionGEN;
     selGEN_ = 0;
   }

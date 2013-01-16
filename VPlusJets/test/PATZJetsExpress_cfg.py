@@ -55,7 +55,8 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-	'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+	'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
+	#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
 #	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 	#'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
@@ -151,7 +152,7 @@ process.jetExtender = cms.EDProducer("JetExtendedProducer",
 
 # ---- define the output file -------------------------------------------
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("PATZJetsExpress.root"),
+    fileName = cms.string("WJetsTest_PATZJetsExpress_patchV2.root"),
     closeFileFast = cms.untracked.bool(True)
 )
 
@@ -195,13 +196,14 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     jetLepPhoRadius = cms.double(0.4),
     minJetPt        = cms.double(30),
     maxJetEta       = cms.double(2.5),
-    minPhoPt        = cms.double(40),
+    minPhoPt        = cms.double(50),
+    minPhoPtId      = cms.double(30),
     maxPhoEta       = cms.double(3.0),
     minLepPt        = cms.double(20),
     maxLepEta       = cms.double(2.4),
     maxCombRelIso03 = cms.double(0.15),
     maxCombRelIso04 = cms.double(0.12),
-    minLLMass       = cms.double(40),
+    minLLMass       = cms.double(15),
     OnlyMC	    = cms.bool(False), 
     dressedRadius   = cms.double(0.1),
    # GENCrossCleaning= cms.int32(1), #OBSOLETE
@@ -225,6 +227,8 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
 				  'HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v',
 				  'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
 				  'HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v',
+				  'HLT_Photon30_v',
+				  'HLT_Photon30_CaloIdVL_v',
 				  'HLT_Photon50_CaloIdVL_IsoL_v',
 				  'HLT_Photon75_CaloIdVL_v',
 				  'HLT_Photon90_CaloIdVL_v',
@@ -267,7 +271,9 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
 				  'HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v',
 				  'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v',
 				  'HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v'),
-    triggerFamily4  = cms.vstring('HLT_Photon50_CaloIdVL_IsoL_v',
+    triggerFamily4  = cms.vstring('HLT_Photon30_CaloIdVL_v',
+				  'HLT_Photon30_v',
+				  'HLT_Photon50_CaloIdVL_IsoL_v',
                                   'HLT_Photon75_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
@@ -303,6 +309,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v',
                                   'HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v',
 				  'HLT_Ele27_WP80_v',
+			          'HLT_Photon30_CaloIdVL_v',
 				  'HLT_Photon50_CaloIdVL_IsoL_v',
                                   'HLT_Photon75_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_v',
