@@ -23,11 +23,13 @@ from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
 # ---- access the global tag (needed for the JEC) -----------------------
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.load("Configuration.Geometry.GeometryIdeal_cff")
-process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
-#process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All' # DATA 2012B: multijet parked dataset re-reco with CMSSW_5_3_6 
-#process.GlobalTag.globaltag = 'FT53_V10A_AN3:All'  # DATA 2012Cv1: multijet parked dataset re-reco with CMSSW_5_3_6
-#process.GlobalTag.globaltag = 'FT_P_V42C_AN3::All' # DATA 2012Cv2: multijet parked dataset re-reco with CMSSW_5_3_6
-#process.GlobalTag.globaltag = 'FT_P_V42_AN3::All'  # DATA 2012D: multijet parked dataset re-reco with CMSSW_5_3_6
+if(isMC):
+	process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
+else:
+	#process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All' # DATA 2012B: multijet parked dataset re-reco with CMSSW_5_3_6 
+	#process.GlobalTag.globaltag = 'FT53_V10A_AN3:All'  # DATA 2012Cv1: multijet parked dataset re-reco with CMSSW_5_3_6
+	#process.GlobalTag.globaltag = 'FT_P_V42C_AN3::All' # DATA 2012Cv2: multijet parked dataset re-reco with CMSSW_5_3_6
+	process.GlobalTag.globaltag = 'FT_P_V42_AN3::All'  # DATA 2012D: multijet parked dataset re-reco with CMSSW_5_3_6
 
 ##--------- good primary vertices ---------------
 process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
@@ -55,48 +57,12 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-	'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
+#	'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+	#'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
 	#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
 #	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 	#'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/774/0CDC3936-889B-E111-9F82-001D09F25041.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/806/C8EE0F38-C89B-E111-9623-001D09F29619.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/812/A66C70B4-D09B-E111-9589-001D09F24664.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/818/5AF2B989-E69B-E111-9ADF-0019B9F72F97.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/822/0E10C6A2-EF9B-E111-B28A-001D09F291D7.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/828/0A3345B7-009C-E111-9EAB-001D09F25041.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/829/B0B54F12-049C-E111-871F-0030486780B4.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/830/1635A18E-059C-E111-B6BE-003048D2BED6.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/833/DA7007CB-1C9C-E111-B053-001D09F242EF.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/834/0281DB15-5C9C-E111-A58E-001D09F26509.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/835/7A99502C-4F9C-E111-9D71-0025901D624A.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/836/3E413843-3F9C-E111-8435-003048D37560.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/840/DE717A5B-1E9C-E111-B03A-001D09F251FE.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/842/9CE9122E-1E9C-E111-8E93-00237DDBE41A.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/844/7C90F03A-2F9C-E111-8DA4-BCAEC53296F8.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/849/2A223F7B-389C-E111-AA16-001D09F2905B.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/852/2EA28439-389C-E111-A2A4-001D09F28EA3.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/865/0A28DF77-429C-E111-B75E-0025901D5DB8.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/870/8ED00431-469C-E111-A16F-001D09F27067.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/871/2E0CDCD0-489C-E111-9A00-001D09F2305C.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/875/3CC38E9E-499C-E111-BD9B-003048D3C932.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/877/ECD954C2-4D9C-E111-94FF-BCAEC518FF44.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/878/F87C3D36-B09C-E111-8CDE-0025901D6288.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/895/A25B9129-639C-E111-A056-003048F1183E.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/898/440D88FF-F19C-E111-8173-0019B9F581C9.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/913/84BC6806-D59C-E111-98AB-001D09F25479.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/917/26695F97-C29C-E111-A66A-5404A63886AF.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/919/A8CF7C3B-DC9C-E111-B2B7-001D09F28F25.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/922/68762909-D39C-E111-BA15-00215AEDFD98.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/925/64F05EB7-DD9C-E111-A2D4-0025B32036D2.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/928/10D325A5-C29C-E111-BFA0-003048D2BC38.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/928/1E55A719-009D-E111-A80F-001D09F29619.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/928/A24670EC-D59C-E111-A453-5404A63886D6.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/928/F44F623C-D49C-E111-9331-003048D3C90E.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/935/6C232E04-9B9C-E111-945A-00237DDC5C24.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/938/DE593E7D-AF9C-E111-99CC-0025901D626C.root', 
-# '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/942/6EEA2E74-B59D-E111-A05D-002481E0D7EC.root'	
     )
 )
 ## 
@@ -152,7 +118,7 @@ process.jetExtender = cms.EDProducer("JetExtendedProducer",
 
 # ---- define the output file -------------------------------------------
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("WJetsTest_PATZJetsExpress_patchV2.root"),
+    fileName = cms.string("PATZJetsExpress.root"),
     closeFileFast = cms.untracked.bool(True)
 )
 
