@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.26 2013/01/11 11:14:54 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.27 2013/01/16 16:22:20 webermat Exp $
 //
 //
 
@@ -1697,7 +1697,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	if(i_lep>=2)continue;
 	float DR = myLeptons[i_lep].p4.DeltaR(jetP4);
 	if (DR < mJetLepIsoR) {
-	  jetIsDuplicate = 1<<i_lep; 
+	  jetIsDuplicate |= 1<<i_lep; 
 	  nJets_lepVeto+=1;
 	  //cout<<"event/jets_lepVeto "<<iEvent.id().event()<<"/"<<nJets_lepVeto<<endl;
 	}
@@ -1713,7 +1713,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
        		float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
 		if(myPhotons[i_pho].id)leadPhotIdedFound=true;
        		if (DR < mJetPhoIsoR /*&& (myPhotons[i_pho].id & (1<<3) )*/) {
-       		  jetIsDuplicate = 1<<2;
+       		  jetIsDuplicate |= 1<<2;
 		  nJets_phoVeto+=1;
 		  //cout<<"event/jets_phoVeto "<<iEvent.id().event()<<"/"<<nJets_phoVeto<<endl;
 		}       		
@@ -2411,7 +2411,7 @@ Vars->push_back(	jet->userFloat("axis1_QC") ); 	//7
 Vars->push_back(	jet->userFloat("axis2_QC") ); 	//8
 Vars->push_back(	jet->userFloat("nNeutral_ptCut") ) ; 	//9
 Vars->push_back(	jet->userFloat("nChg_QC") ) ; 	//9
-Vars->push_back( -1.);
+Vars->push_back( -99);
 return Vars;
 }
 
