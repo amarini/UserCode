@@ -1,0 +1,9 @@
+#pt-range eta-range alpha
+#TEST VALUES. NOT USE!!
+[alpha]
+30 50 0 20 .1
+50 100 0 100 .4
+
+#pt-range eta-range N l-min l-max values
+[EffCutData]
+30 50 0 10 10 0 1.0001 .95 .94 .90 .8 .7 .5 .2 .1 .05 
