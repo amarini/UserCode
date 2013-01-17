@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.28 2013/01/16 17:33:23 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.29 2013/01/17 12:12:10 meridian Exp $
 //
 //
 
@@ -1587,17 +1587,11 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	    if(sigmaIetaIeta<0.024 && hadronicOverEm<0.15){
 	      passPhotCaloId =true;
 	    }
-	    //if(it->pt()>mMinPhoPtId && it->pt()<mMinPhoPt){
-	    //cout<<"in EB pt"<< it->pt()<<"/"<<sigmaIetaIeta<<"/"<<hadronicOverEm<<" passed? "<<passPhotCaloId<<endl;
-	    //}
 	  }else if (it->isEE()){
 	    //if H/E<0.10 and sigmaietaieta<0.040 -> ID is passed
 	    if(sigmaIetaIeta<0.040 && hadronicOverEm<0.10){
 	      passPhotCaloId = true;
 	    }
-	    //if(it->pt()>mMinPhoPtId && it->pt()<mMinPhoPt){
-	    //cout<<"in EE pt"<< it->pt()<<"/"<<sigmaIetaIeta<<"/"<<hadronicOverEm<<" passed? "<<passPhotCaloId<<endl;
-	    //}
 	  }
 
 	  // chiara
@@ -1698,13 +1692,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	if (DR < mJetLepIsoR) {
 	  jetIsDuplicate |= 1<<i_lep; 
 	  nJets_lepVeto+=1;
-	  //cout<<"event/jets_lepVeto "<<iEvent.id().event()<<"/"<<nJets_lepVeto<<endl;
 	}
 	
       }// lepton loop 
       
       // chiara: questo va cambiato e vanno rimossi tutti
-      // paolo: Keeping the overlap between photon and jets will be removed later after the photonID requirements are applied
+      // paolo: Keeping the overlap between photon andn jets will be removed later after the photonID requirements are applied
       //----- remove the leading photon ------------------------------------ (reminder nPhotons>0 only IF nLeptons==0)
 	     bool leadPhotIdedFound=false;
              for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) { //rejection only wrt the leading photon (ided)
@@ -1714,7 +1707,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
        		if (DR < mJetPhoIsoR /*&& (myPhotons[i_pho].id & (1<<3) )*/) {
        		  jetIsDuplicate |= 1<<2;
 		  nJets_phoVeto+=1;
-		  //cout<<"event/jets_phoVeto "<<iEvent.id().event()<<"/"<<nJets_phoVeto<<endl;
 		}       		
        	      }// photon loop
       
@@ -1925,12 +1917,25 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     }
   }
 
+  //we only want to veto on the leading photon - so maximally 1 jet will be removed:
+  //check if for n photons we have n vetoed jets - then nJets_phoVeto=1
+  //if we have less vetoed jets - put nJets_phoVeto=0 
+  //as the "real" photon candidate might be the one which doesn't veto a jet
+  
+  if(nPhotons_< nJets_phoVeto){
+    nJets_phoVeto=0;
+  }else{
+    nJets_phoVeto=1;
+  }
+  //if(nJets_phoVeto>1 || nJets_lepVeto>2){
+  //cout<<"nJets_phoVeto/nJets_lepVeto off "<<nJets_phoVeto<<"/"<<nJets_lepVeto<<endl;
+  //}
   // ---- keep only selected events -------------------------------------
   bool selectionRECO = false;
   if(!mOnlyMC){
     selectionRECO = ((nVtx_ > 0) && (nLeptons_ > 1) && ((nJets_-nJets_lepVeto)>=mMinNjets)/*(nJets_ >= mMinNjets)*/ && llP4.M()>mMinLLMass);
   }
-  bool selectionRECO_leptons=selectionRECO;
+
   selectionRECO = selectionRECO || ((nVtx_ > 0) &&  nPhotons_>0 &&  ((nJets_ -nJets_phoVeto)>=mMinNjets)/*(nJets_ >= mMinNjets)*/); // add photon logic for RECO
   bool selection(selectionRECO);
   bool selectionGEN(false);
@@ -1938,29 +1943,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   if (!isRealData_) {
     selectionGEN = ((nLeptonsGEN_ > 1) && (nJetsGEN_ >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
     selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
-
-    //check things here
-    if (!selectionGEN && !selectionRECO_leptons && selection){
-      bool veto_jets=false;
-      if (nPhotons_==1 && nJets_==mMinNjets){
-	for(int i=0;i<nJets_;i++){
-	  float DR = myPhotons[0].p4.DeltaR(myJets[i].p4);
-	  if (DR < mJetPhoIsoR) {
-	    veto_jets=true;
-	    if(nLeptons_>0){
-	      cout<<"jet vetoed by photon"<<DR<<"/"<<myLeptons[0].chid<<"/"<<nJets_lepVeto<<"/"<<nJets_phoVeto<<endl;
-	    }else{
-	      cout<<"jet vetoed by photon"<<DR<<"/"<<nLeptons_<<"/"<<nJets_lepVeto<<"/"<<nJets_phoVeto<<endl;
-	    }
-	  }
-	}
-      }
-      if(veto_jets){
-	selection=false;
-	//cout<<"selection newly decided as false jet veto "<<myJets[0].veto<<endl;
-      }
-    }
-    //stop check things here
     selection +=  selectionGEN;
     selGEN_ = 0;
   }

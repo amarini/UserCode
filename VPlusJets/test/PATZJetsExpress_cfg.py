@@ -57,9 +57,8 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-#	'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
-	#'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
 	#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+	#'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
 #	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 	#'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
@@ -333,7 +332,7 @@ pathTriggerMuons = '(path("HLT_DoubleMu7_v*", 1, 1) || path("HLT_Mu13_Mu8_v*", 1
 
 pathTriggerElectrons = '(path("HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL_v*", 1, 1) || path("HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*", 1, 1)  || path("HLT_Ele27_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v*", 1, 1) || path("HLT_Ele32_CaloIdVT_CaloIsoT_TrkIdT_TrkIsoT_v*", 1, 1) || path("HLT_Ele52_CaloIdVT_TrkIdT_v*", 1, 1) || path("HLT_Ele65_CaloIdVT_TrkIdT_v*", 1, 1) || path("HLT_Ele80_CaloIdVT_TrkIdT_v*", 1, 1) || path("HLT_Ele27_WP80_v*", 1, 1))' 
 
-pathTriggerPhotons = '(path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon125_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1))'
+pathTriggerPhotons = '(path("HLT_Photon30_v*", 1, 1) ||path("HLT_Photon30_CaloIdVL_v*", 1, 1) || path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon125_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1))'
 
 process.muonTriggerMatchHLTMuons = cms.EDProducer(
     "PATTriggerMatcherDRLessByR", 
