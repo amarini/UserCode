@@ -16,18 +16,20 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 	SJC.clear();
 	names.clear();
 	
-	names.push_back("ptD_QC");
 	names.push_back("nPFCand_QC_ptCut");
-	names.push_back("axis1_QC");
+	names.push_back("ptD_QC");
+//	names.push_back("axis1_QC");
 	names.push_back("axis2_QC");
  
 	
 	for(vector<string>::iterator iStr=names.begin();iStr!=names.end();iStr++){
-		string path=edm::FileInPath( (dirName+ (*iStr)+"Jet0.txt").c_str() ).fullPath();
+		//string path=edm::FileInPath( (dirName+ (*iStr)+"Jet0.txt").c_str() ).fullPath();
+		string path= (dirName+ (*iStr)+"Jet0.txt");
 		JCP[(*iStr)+".quark"] = new JetCorrectorParameters(path,"quark");
 		JCP[(*iStr)+".gluon"] = new JetCorrectorParameters(path,"gluon");
 		
-		path=edm::FileInPath( (dirName+ (*iStr)+"Jet0_F.txt").c_str() ).fullPath();
+		//path=edm::FileInPath( (dirName+ (*iStr)+"Jet0_F.txt").c_str() ).fullPath();
+		path=(dirName+ (*iStr)+"Jet0_F.txt");
 		JCP[(*iStr)+".F.quark"] = new JetCorrectorParameters(path,"quark");
 		JCP[(*iStr)+".F.gluon"] = new JetCorrectorParameters(path,"gluon");
 	}
@@ -68,7 +70,7 @@ QGLikelihoodCalculator::~QGLikelihoodCalculator() {
 
 }
 
-float QGLikelihoodCalculator::computeQGLikelihood( float pt, float rhoPF, float eta, int nPFCand_QC_ptCut, float ptD_QC,float axis1_QC,float axis2_QC ) {
+float QGLikelihoodCalculator::computeQGLikelihood( float pt, float eta, float rhoPF, int nPFCand_QC_ptCut, float ptD_QC, float axis2_QC ) {
 
 if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
   std::vector<float> v_pt_rho;
@@ -78,9 +80,9 @@ if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
   std::vector<float> v_nPFCand_QC_ptCut;
   v_nPFCand_QC_ptCut.push_back( (float)nPFCand_QC_ptCut);
 
-  if(axis1_QC<=0) return -2;
-  std::vector<float> v_axis1_QC;
-  v_axis1_QC.push_back( TMath::Log((float)axis1_QC) );
+  //if(axis1_QC<=0) return -2;
+  //std::vector<float> v_axis1_QC;
+  //v_axis1_QC.push_back( TMath::Log((float)axis1_QC) );
 
   if(axis2_QC<=0) return -2.1;
   std::vector<float> v_axis2_QC;
@@ -97,8 +99,8 @@ if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
 	qProb*=SJC[string("ptD_QC.quark")]->correction(v_pt_rho,v_ptD_QC);
 	gProb*=SJC[string("ptD_QC.gluon")]->correction(v_pt_rho,v_ptD_QC);
 	
-	qProb*=SJC[string("axis1_QC.quark")]->correction(v_pt_rho,v_axis1_QC);
-	gProb*=SJC[string("axis1_QC.gluon")]->correction(v_pt_rho,v_axis1_QC);
+	//qProb*=SJC[string("axis1_QC.quark")]->correction(v_pt_rho,v_axis1_QC);
+	//gProb*=SJC[string("axis1_QC.gluon")]->correction(v_pt_rho,v_axis1_QC);
 	
 	qProb*=SJC[string("axis2_QC.quark")]->correction(v_pt_rho,v_axis2_QC);
 	gProb*=SJC[string("axis2_QC.gluon")]->correction(v_pt_rho,v_axis2_QC);
@@ -111,8 +113,8 @@ if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
 	qProb*=SJC[string("ptD_QC.F.quark")]->correction(v_pt_rho,v_ptD_QC);
 	gProb*=SJC[string("ptD_QC.F.gluon")]->correction(v_pt_rho,v_ptD_QC);
 	
-	qProb*=SJC[string("axis1_QC.F.quark")]->correction(v_pt_rho,v_axis1_QC);
-	gProb*=SJC[string("axis1_QC.F.gluon")]->correction(v_pt_rho,v_axis1_QC);
+	//qProb*=SJC[string("axis1_QC.F.quark")]->correction(v_pt_rho,v_axis1_QC);
+	//gProb*=SJC[string("axis1_QC.F.gluon")]->correction(v_pt_rho,v_axis1_QC);
 	
 	qProb*=SJC[string("axis2_QC.F.quark")]->correction(v_pt_rho,v_axis2_QC);
 	gProb*=SJC[string("axis2_QC.F.gluon")]->correction(v_pt_rho,v_axis2_QC);

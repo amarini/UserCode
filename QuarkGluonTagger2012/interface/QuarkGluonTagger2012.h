@@ -25,8 +25,8 @@ class QuarkGluonTagger2012 : public edm::EDProducer {
       virtual void produce(edm::Event&, const edm::EventSetup&);
       virtual void endJob() ;
 
-      // ----------member data --------------------------
-      edm::InputTag src_,srcRho_,srcRho2_;
+      // ----------member data -------------------------
+      edm::InputTag src_,srcRho_;
       std::string jecService_;
       bool isPatJet_;
       QGLikelihoodCalculator *qglikeli_;

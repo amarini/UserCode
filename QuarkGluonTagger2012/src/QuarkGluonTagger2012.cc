@@ -28,12 +28,12 @@ QuarkGluonTagger2012::QuarkGluonTagger2012(const edm::ParameterSet& iConfig)
 {
         src_        = iConfig.getParameter<edm::InputTag> ("jets");
         srcRho_     = iConfig.getParameter<edm::InputTag> ("rho");
-        srcRho2_     = iConfig.getParameter<edm::InputTag> ("rho2");
         jecService_ = iConfig.getParameter<std::string>   ("jec");
 	isPatJet_ = iConfig.existsAs<bool>("isPatJet") ? iConfig.getParameter<bool>("isPatJet") : false ; 
+
        
         produces<edm::ValueMap<float> >().setBranchAlias("qg");
-        qglikeli_ = new QGLikelihoodCalculator(); 
+        qglikeli_ = new QGLikelihoodCalculator();
 	debug=0;
 }
 
@@ -64,7 +64,7 @@ iEvent.getByLabel(srcRho_,rho);
 JEC_ = JetCorrector::getJetCorrector(jecService_,iSetup);
 //------ Vtxs -----------------------------------------------------------------------------
 edm::Handle<reco::VertexCollection> recVtxs;
-iEvent.getByLabel("goodOfflinePrimaryVertices",recVtxs);
+iEvent.getByLabel("offlinePrimaryVerticesWithBS",recVtxs);
 
 
 //------ Variables -----------------------------------------------------------------------------
@@ -94,7 +94,8 @@ for(reco::PFJetCollection::const_iterator ijet=pfjets->begin();ijet!=pfjets->end
     //UNUSED---   float Teta(0),Tphi(0),Ttheta(-9),jetPtMax(0),axis1(-999),axis2(-999),tana(-999),ptD(-999);                      
     
     float sumW_QC(0.0),sumW2_QC(0.0),sum_deta_QC(0.0),sum_dphi_QC(0.0),sum_deta2_QC(0.0),sum_dphi2_QC(0.0),sum_detadphi_QC(0.0);
-    float axis1_QC(-999),axis2_QC(-999),ptD_QC(-999);   
+    float axis2_QC(-999),ptD_QC(-999);   
+    //float axis1_QC(-999),axis2_QC(-999),ptD_QC(-999);   
 
     //UNUSED---   float ave_deta(0.0),ave_dphi(0.0),ave_deta2(0.0),ave_dphi2(0.0);
     float ave_deta_QC(0.0),ave_dphi_QC(0.0),ave_deta2_QC(0.0),ave_dphi2_QC(0.0);
@@ -241,9 +242,9 @@ for(reco::PFJetCollection::const_iterator ijet=pfjets->begin();ijet!=pfjets->end
       float c_QC = -(sum_detadphi_QC/sumW2_QC-ave_deta_QC*ave_dphi_QC);
       float delta_QC = sqrt(fabs((a_QC-b_QC)*(a_QC-b_QC)+4*c_QC*c_QC));
 
-      if (a_QC+b_QC+delta_QC > 0) {
-        axis1_QC = sqrt(0.5*(a_QC+b_QC+delta_QC));
-      }
+      //if (a_QC+b_QC+delta_QC > 0) {
+      //  axis1_QC = sqrt(0.5*(a_QC+b_QC+delta_QC));
+      //}
       if (a_QC+b_QC-delta_QC > 0) {
         axis2_QC = sqrt(0.5*(a_QC+b_QC-delta_QC));
       }
@@ -255,7 +256,7 @@ for(reco::PFJetCollection::const_iterator ijet=pfjets->begin();ijet!=pfjets->end
 	QGL=-1.0;
 	int nPFCand_QC_ptCut=nChg_QC+nNeutral_ptCut;
 		if(debug>1) std::cout<<"--computeQGL"<<endl;
-	QGL=qglikeli_->computeQGLikelihood(corPt,*rho,ijet->eta(),nPFCand_QC_ptCut, ptD_QC ,axis1_QC, axis2_QC);
+	QGL=qglikeli_->computeQGLikelihood(corPt,ijet->eta(),*rho,nPFCand_QC_ptCut, ptD_QC, axis2_QC);
 	values.push_back(QGL);
 	}
 if(isPatJet_)
@@ -272,7 +273,8 @@ for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();
     //UNUSED---   float Teta(0),Tphi(0),Ttheta(-9),jetPtMax(0),axis1(-999),axis2(-999),tana(-999),ptD(-999);                      
     
     float sumW_QC(0.0),sumW2_QC(0.0),sum_deta_QC(0.0),sum_dphi_QC(0.0),sum_deta2_QC(0.0),sum_dphi2_QC(0.0),sum_detadphi_QC(0.0);
-    float axis1_QC(-999),axis2_QC(-999),ptD_QC(-999);   
+    float axis2_QC(-999),ptD_QC(-999);   
+    //float axis1_QC(-999),axis2_QC(-999),ptD_QC(-999);   
 
     //UNUSED---   float ave_deta(0.0),ave_dphi(0.0),ave_deta2(0.0),ave_dphi2(0.0);
     float ave_deta_QC(0.0),ave_dphi_QC(0.0),ave_deta2_QC(0.0),ave_dphi2_QC(0.0);
@@ -420,9 +422,9 @@ for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();
       float c_QC = -(sum_detadphi_QC/sumW2_QC-ave_deta_QC*ave_dphi_QC);
       float delta_QC = sqrt(fabs((a_QC-b_QC)*(a_QC-b_QC)+4*c_QC*c_QC));
 
-      if (a_QC+b_QC+delta_QC > 0) {
-        axis1_QC = sqrt(0.5*(a_QC+b_QC+delta_QC));
-      }
+      //if (a_QC+b_QC+delta_QC > 0) {
+      //  axis1_QC = sqrt(0.5*(a_QC+b_QC+delta_QC));
+      //}
       if (a_QC+b_QC-delta_QC > 0) {
         axis2_QC = sqrt(0.5*(a_QC+b_QC-delta_QC));
       }
@@ -435,7 +437,7 @@ for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();
 	QGL=-1.0;
 	int nPFCand_QC_ptCut=nChg_QC+nNeutral_ptCut;
 		if(debug>1) std::cout<<"--computeQGL"<<endl;
-	QGL=qglikeli_->computeQGLikelihood(ijet->pt(),*rho,ijet->eta(),nPFCand_QC_ptCut, ptD_QC ,axis1_QC, axis2_QC);
+	QGL=qglikeli_->computeQGLikelihood(ijet->pt(),ijet->eta(),*rho,nPFCand_QC_ptCut, ptD_QC, axis2_QC);
 		if(debug>0) std::cout<<"--- "<<QGL <<endl;
 		if(debug>1) std::cout<<"--- Pt"<<ijet->pt() <<endl;
 		if(debug>1) std::cout<<"--- rho"<<*rho <<endl;
