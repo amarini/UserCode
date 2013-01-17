@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.27 2013/01/16 16:22:20 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.28 2013/01/16 17:33:23 amarini Exp $
 //
 //
 
@@ -1351,13 +1351,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  if(it->pt() < 15) continue;
 	  if(abs(it->eta()) > mMaxPhoEta) continue;
 	  if(it->isEBEEGap())continue;
+	  if(ConversionTools::hasMatchedPromptElectron(it->superCluster(), electrons_, hConversions, beamspot.position())) continue;
 
-// 	  if(it->isEB() && it->hadronicOverEm()>0.15)continue; // on-line requirement 
-// 	  if(it->isEB() && it->sigmaIetaIeta()>0.024)continue; // on-line requirement 
-// 	  if(it->isEE() && it->hadronicOverEm()>0.10)continue; // on-line requirement 
-// 	  if(it->isEE() && it->sigmaIetaIeta()>0.040)continue; // on-line requirement 
-
-	  //Maybe adding the 
+//  	  if(it->isEB() && it->hadronicOverEm()>0.15)continue; // on-line requirement 
+//  	  if(it->isEB() && it->sigmaIetaIeta()>0.024)continue; // on-line requirement 
+//  	  if(it->isEE() && it->hadronicOverEm()>0.10)continue; // on-line requirement 
+//  	  if(it->isEE() && it->sigmaIetaIeta()>0.040)continue; // on-line requirement 
 	  
 	  reco::PhotonRef phoRef(photons_,ipho++);
 	  int photonID=0;
