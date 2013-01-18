@@ -1,6 +1,6 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 
-isMC=False;
+isMC=True;
 
 process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('RecoJets.Configuration.RecoPFJets_cff')
@@ -48,7 +48,7 @@ process.patJets.addTagInfos = True
 
 # ---- format the message service ---------------------------------------
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 # ---- load geometry package --------------------------------------------
 #process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
@@ -60,7 +60,7 @@ process.source = cms.Source("PoolSource",
 	#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
 	#'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
 #	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
-	#'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
+#'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
     )
 )

@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.29 2013/01/17 12:12:10 meridian Exp $
+// $Id: PATZJetsExpress.cc,v 1.30 2013/01/17 17:26:50 webermat Exp $
 //
 //
 
@@ -1691,7 +1691,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	float DR = myLeptons[i_lep].p4.DeltaR(jetP4);
 	if (DR < mJetLepIsoR) {
 	  jetIsDuplicate |= 1<<i_lep; 
-	  nJets_lepVeto+=1;
+	   //set veto counter on jets which would survive the final selection
+	  if (jetP4.Pt()>=mMinJetPt && (fabs(i_jet->eta()) <= mMaxJetEta)){
+	    nJets_lepVeto+=1;
+	  }
 	}
 	
       }// lepton loop 
@@ -1706,7 +1709,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		if(myPhotons[i_pho].id)leadPhotIdedFound=true;
        		if (DR < mJetPhoIsoR /*&& (myPhotons[i_pho].id & (1<<3) )*/) {
        		  jetIsDuplicate |= 1<<2;
-		  nJets_phoVeto+=1;
+		  //set veto counter on jets which would survive the final selection
+		  if (jetP4.Pt()>mMinJetPt && (fabs(i_jet->eta()) < mMaxJetEta)){
+		    nJets_phoVeto+=1;
+		  }
 		}       		
        	      }// photon loop
       
