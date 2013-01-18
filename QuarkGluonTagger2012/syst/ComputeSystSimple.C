@@ -91,6 +91,7 @@ int loop=0;
 	fgets(str,MAX_STR_LEN,fr);
 		if(debug_>2)printf("Readed String ==%s==\n",str);
 	if(c=='#') continue;
+	if(c=='!') {printf("%s",str);continue;}
 	if(c=='\n') continue;
 	if(c=='[') {loop++;continue;}
 	if(debug_>2)printf("Loop ==%d==\n",loop);

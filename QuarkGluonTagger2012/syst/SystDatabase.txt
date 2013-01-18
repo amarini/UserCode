@@ -1,5 +1,5 @@
 #pt-range eta-range alpha
-#TEST VALUES. NOT USE!!
+!TEST VALUES. NOT USE!!
 [alpha]
 30 50 0 20 .1
 50 100 0 100 .4
