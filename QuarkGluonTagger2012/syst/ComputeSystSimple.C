@@ -5,27 +5,23 @@
 #include <vector>
 #include <math.h>
 
-//Exceptions
-//class exp_nofile: public std::exception
-//{
-//  virtual const char* what() const throw()
-//  {
-//    return "File does not exists";
-//  }
-//} nofile;
+#ifndef COMP_SYST_SIMPLE_H
+#define COMP_SYST_SIMPLE_H
+
 
 #define MAX_STR_LEN 1023
 
 class range{
 	public:
-		range(float pt0,float pt1, float rho0, float rho1){
-			ptmin=pt0;ptmax=pt1;rhomin=rho0;rhomax=rho1;
+		range(float pt0,float pt1, float rho0, float rho1,const char eta0){
+			ptmin=pt0;ptmax=pt1;rhomin=rho0;rhomax=rho1;eta=eta0;
 		};
-		range(){range(0,0,0,0);}
+		range(){range(0,0,0,0,'C');}
 		float ptmin;
 		float ptmax;
 		float rhomin;
 		float rhomax;
+		char eta;
 };
 
 class histo{
@@ -42,7 +38,8 @@ const bool operator<(const range &x,const range &y){
 	else if(x.ptmax != y.ptmax) return x.ptmax<y.ptmax;
 	else if(x.rhomin !=y.rhomin) return x.rhomin<y.rhomin;
 	else if(x.rhomax != y.rhomax) return x.rhomax<y.rhomax;
-	else return false;
+	else return x.eta < y.eta;
+	//else return false;
 	}
 
 class ComputeSystSimple{
@@ -51,8 +48,10 @@ public:
 	ComputeSystSimple(std::string fileName="SystDatabase.txt");
 	~ComputeSystSimple();
 		//l is the likelihood. 
-	float GetSystSimple(float pt, float rho, float l);
+	float GetSystSimple(float pt, float rho,float eta, float l);
+	float GetSystSimple(float pt, float rho,const char eta, float l);
 	void SetDebug(int d){debug_=d;}
+	void Print();
 protected:
 	char GetChar(FILE *fr);
 	int debug_;
@@ -99,9 +98,10 @@ int loop=0;
 		case 1:
 			{ 
 			float pt0,pt1,rho0,rho1,a;
-			if(sscanf(str,"%f %f %f %f %f",&pt0,&pt1,&rho0,&rho1,&a) >=0  ) {
-			alpha[range(pt0,pt1,rho0,rho1)]=a;
-			if(debug_>1)printf("Setting alpha %.0f %.0f %.0f %.0f %.1f\n",pt0,pt1,rho0,rho1,a);
+			char eta;
+			if(sscanf(str,"%f %f %f %f %c %f",&pt0,&pt1,&rho0,&rho1,&eta,&a) >=0  ) {
+			alpha[range(pt0,pt1,rho0,rho1,eta)]=a;
+			if(debug_>1)printf("Setting alpha %.0f %.0f %.0f %.0f %c %.1f\n",pt0,pt1,rho0,rho1,eta,a);
 			}
 			else fprintf(stderr,"Error reading line: %s\n--- Undesired lines should begin with #\n",str);
 			break;
@@ -109,20 +109,21 @@ int loop=0;
 		case 2:
 			{
 			float pt0,pt1,rho0,rho1,lmin,lmax,x;
+			char eta;
 			int N,n;
 			char *str_ptr;
-			if(sscanf(str,"%f %f %f %f %d %f %f%n",&pt0,&pt1,&rho0,&rho1,&N,&lmin,&lmax,&n) >=0  ) {
+			if(sscanf(str,"%f %f %f %f %c %d %f %f%n",&pt0,&pt1,&rho0,&rho1,&eta,&N,&lmin,&lmax,&n) >=0  ) {
 			str_ptr=str+n;
-			eff[range(pt0,pt1,rho0,rho1)].lmin=lmin;
-			eff[range(pt0,pt1,rho0,rho1)].lmax=lmax;
-			eff[range(pt0,pt1,rho0,rho1)].N=N;
+			eff[range(pt0,pt1,rho0,rho1,eta)].lmin=lmin;
+			eff[range(pt0,pt1,rho0,rho1,eta)].lmax=lmax;
+			eff[range(pt0,pt1,rho0,rho1,eta)].N=N;
 			if(debug_>1)printf("Setting eff %.0f %.0f %.0f %.0f %d %.2f %.2f\n",pt0,pt1,rho0,rho1,N,lmin,lmax);
 			for(int i=0;i<N;i++)
 				{
 				x=-1;
 				sscanf(str_ptr,"%f%n",&x,&n);
 				str_ptr+=n;
-				eff[range(pt0,pt1,rho0,rho1)].values.push_back(x);
+				eff[range(pt0,pt1,rho0,rho1,eta)].values.push_back(x);
 				}
 			}
 			break;
@@ -137,8 +138,12 @@ int loop=0;
 ComputeSystSimple::~ComputeSystSimple(){
 }
 
+float ComputeSystSimple::GetSystSimple(float pt, float rho,float eta, float l){
+if(eta<2.5)return GetSystSimple(pt,rho,'C',l);
+if(eta>=2.5)return GetSystSimple(pt,rho,'F',l);
+}
 
-float ComputeSystSimple::GetSystSimple(float pt, float rho, float l){
+float ComputeSystSimple::GetSystSimple(float pt, float rho,const char eta, float l){
 	//find the range in pt
 	//find the eff cut 
 	float x=-999;
@@ -149,6 +154,7 @@ float ComputeSystSimple::GetSystSimple(float pt, float rho, float l){
 		if(pt>it->first.ptmin)
 		if(rho<it->first.rhomax)
 		if(rho>it->first.rhomin)
+		if(eta==it->first.eta)
 			{
 			int N=it->second.N;
 			float lmin=it->second.lmin;
@@ -173,12 +179,23 @@ float ComputeSystSimple::GetSystSimple(float pt, float rho, float l){
 		if(pt>it->first.ptmin)
 		if(rho<it->first.rhomax)
 		if(rho>it->first.rhomin)
+		if(eta==it->first.eta)
 			a=it->second;	
 			findA=true;
 	}
+	//fprintf(stderr,"--x=%.2f a0=%.2f a=%.2f\n",x,a,4*a*x*(1-x));//DEBUG
 	if(findX&&findA)
 		return 4*a*x*(1-x);
 	else return -1;
 }
 
+void ComputeSystSimple::Print(){
+	printf("[alpha]\n");	
+	for(std::map< range,float>::iterator it=alpha.begin();it!=alpha.end();it++){
+		printf("%.0f %.0f %.0f %.0f %c %.5f\n",it->first.ptmin,it->first.ptmax,it->first.rhomin,it->first.rhomax,it->first.eta,it->second);
+		}
+		
+	}
+#endif 
+//COMP_SYST_SIMPLE_H 
 
