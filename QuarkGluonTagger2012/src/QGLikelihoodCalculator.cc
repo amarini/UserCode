@@ -72,7 +72,12 @@ QGLikelihoodCalculator::~QGLikelihoodCalculator() {
 
 float QGLikelihoodCalculator::computeQGLikelihood( float pt, float eta, float rhoPF, int nPFCand_QC_ptCut, float ptD_QC, float axis2_QC ) {
 
-if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
+if(debug>1) {
+  std::cout<<"START COMPUTE"<<std::endl;
+  std::cout << "pt: " << pt << " eta: " << eta << " rho: " << rhoPF << std::endl;
+  std::cout << "nPFCand_QC_ptCut: " << nPFCand_QC_ptCut << " axis2_QC: " << axis2_QC << " ptD_QC: " << ptD_QC << std::endl;
+}
+
   std::vector<float> v_pt_rho;
   v_pt_rho.push_back( pt );
   v_pt_rho.push_back( rhoPF );
@@ -86,7 +91,7 @@ if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
 
   if(axis2_QC<=0) return -2.1;
   std::vector<float> v_axis2_QC;
-  v_axis2_QC.push_back( TMath::Log((float)axis2_QC) );
+  v_axis2_QC.push_back( -TMath::Log((float)axis2_QC) );
 
   std::vector<float> v_ptD_QC;
   v_ptD_QC.push_back( (float)ptD_QC );
@@ -95,18 +100,38 @@ if(debug>1)std::cout<<"START COMPUTE"<<std::endl;
 	float gProb=1.0;
 	
 	if(fabs(eta)<2.5){ //CENTRAL REGION
-		if(debug>1)std::cout<<"CENTRAL"<<std::endl;
+		if(debug>1) {
+              std::cout<<"CENTRAL"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
+
 	qProb*=SJC[string("ptD_QC.quark")]->correction(v_pt_rho,v_ptD_QC);
 	gProb*=SJC[string("ptD_QC.gluon")]->correction(v_pt_rho,v_ptD_QC);
+		if(debug>1) {
+              std::cout<<"after ptD_QC:"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 	
 	//qProb*=SJC[string("axis1_QC.quark")]->correction(v_pt_rho,v_axis1_QC);
 	//gProb*=SJC[string("axis1_QC.gluon")]->correction(v_pt_rho,v_axis1_QC);
+	qProb*=SJC[string("nPFCand_QC_ptCut.quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+	gProb*=SJC[string("nPFCand_QC_ptCut.gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+		if(debug>1) {
+              std::cout<<"after nPFCand_QC_ptCut:"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 	
 	qProb*=SJC[string("axis2_QC.quark")]->correction(v_pt_rho,v_axis2_QC);
 	gProb*=SJC[string("axis2_QC.gluon")]->correction(v_pt_rho,v_axis2_QC);
+		if(debug>1) {
+              std::cout<<"after axis2_QC:"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 
-	qProb*=SJC[string("nPFCand_QC_ptCut.quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
-	gProb*=SJC[string("nPFCand_QC_ptCut.gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
 	}
 	else if(fabs(eta)>=2.5) {
 		if(debug>1)std::cout<<"FORWARD"<<std::endl;
