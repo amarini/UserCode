@@ -258,6 +258,7 @@ for(reco::PFJetCollection::const_iterator ijet=pfjets->begin();ijet!=pfjets->end
 		if(debug>1) std::cout<<"--computeQGL"<<endl;
 	QGL=qglikeli_->computeQGLikelihood(corPt,ijet->eta(),*rho,nPFCand_QC_ptCut, ptD_QC, axis2_QC);
 	values.push_back(QGL);
+
 	}
 if(isPatJet_)
 for(vector<pat::Jet>::const_iterator ijet=patjets->begin();ijet!=patjets->end();ijet++)

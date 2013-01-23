@@ -72,6 +72,8 @@ QGLikelihoodCalculator::~QGLikelihoodCalculator() {
 
 float QGLikelihoodCalculator::computeQGLikelihood( float pt, float eta, float rhoPF, int nPFCand_QC_ptCut, float ptD_QC, float axis2_QC ) {
 
+  if( pt<20. ) return -1.;
+
 if(debug>1) {
   std::cout<<"START COMPUTE"<<std::endl;
   std::cout << "pt: " << pt << " eta: " << eta << " rho: " << rhoPF << std::endl;
@@ -134,23 +136,43 @@ if(debug>1) {
 
 	}
 	else if(fabs(eta)>=2.5) {
-		if(debug>1)std::cout<<"FORWARD"<<std::endl;
+		if(debug>1) {
+              std::cout<<"FORWARD"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 	qProb*=SJC[string("ptD_QC.F.quark")]->correction(v_pt_rho,v_ptD_QC);
 	gProb*=SJC[string("ptD_QC.F.gluon")]->correction(v_pt_rho,v_ptD_QC);
+		if(debug>1) {
+              std::cout<<"after ptD_QC:"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 	
 	//qProb*=SJC[string("axis1_QC.F.quark")]->correction(v_pt_rho,v_axis1_QC);
 	//gProb*=SJC[string("axis1_QC.F.gluon")]->correction(v_pt_rho,v_axis1_QC);
 	
 	qProb*=SJC[string("axis2_QC.F.quark")]->correction(v_pt_rho,v_axis2_QC);
 	gProb*=SJC[string("axis2_QC.F.gluon")]->correction(v_pt_rho,v_axis2_QC);
+		if(debug>1) {
+              std::cout<<"after axis2_QC:"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 
 	qProb*=SJC[string("nPFCand_QC_ptCut.F.quark")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
 	gProb*=SJC[string("nPFCand_QC_ptCut.F.gluon")]->correction(v_pt_rho,v_nPFCand_QC_ptCut);
+		if(debug>1) {
+              std::cout<<"after nPFCand_QC_ptCut:"<<std::endl;
+	        std::cout << "qProb: " <<  qProb << std::endl;
+	        std::cout << "gProb: " <<  gProb << std::endl;
+            }
 	}
 
 
 
-  float QGLikelihood = ( (qProb+gProb) > 0) ? qProb/(qProb+gProb) : -1 ;
+  float QGLikelihood = ( (qProb+gProb) > 0.) ? qProb/(qProb+gProb) : -1 ;
+  if(debug>1) std::cout << "QGLikelihood: " << QGLikelihood << std::endl;
 
   return QGLikelihood;
 
