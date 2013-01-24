@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.30 2013/01/17 17:26:50 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.31 2013/01/18 14:12:23 webermat Exp $
 //
 //
 
@@ -352,12 +352,10 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       int nLeptons_,nLeptonsGEN_;
       // ---- photon variables
       int nPhotons_;
-      int isPhotonlead_;
       vector<float>* photonPt_;
       vector<float>* photonE_;
       vector<float>* photonEta_;
       vector<float>* photonPhi_;
-  //      vector<float>* photonIso_;
       vector<int>* photonBit_;
       vector<float>* photonPassConversionVeto_;
       vector<float>* photonPfIsoChargedHad_;
@@ -404,17 +402,6 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float photonPhiGEN_;
       int photonMotherIdGEN_;
       float photonRECODRGEN_;
-      // ---- FSR photon
- //     float FSRphotonE_;
- //     float FSRphotonPt_;
- //     float FSRphotonEta_;
- //     float FSRphotonPhi_;
- //     float FSRphotonIso_;
- //     float FSRphotonID_;
- //     float FSRphotonllM_;
- //     int   FSRphotonBit_;
- //     int   FSRphotonJet_;
- //     vector<float> *FSRphotonPar_;
       // ---- VBParton variables
       float VBPartonM_;
       float VBPartonE_;
@@ -423,69 +410,28 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float VBPartonPhi_;
       int VBPartonDM_; // decay mode
       // ---- jet kinematics --------------------------------------------
-      vector<float> *jetPt_,*jetEta_,*jetY_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetYGEN_,*jetPhiGEN_,*jetEGEN_;
+      vector<float> *jetPt_,*jetEta_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetPhiGEN_,*jetEGEN_;
       vector<int> *jetVetoGEN_;
       // ---- jet composition fractions ---------------------------------
       vector<float> *jetCHF_,*jetPHF_,*jetNHF_,*jetMUF_,*jetELF_;
       // ---- other jet properties --------------------------------------
       vector<float> *jetBeta_,*jetBtag_,*jetTagInfoNVtx_,*jetTagInfoNTracks_,*jetTagInfoVtxMass_,*jetArea_,*jetJEC_,*jetUNC_,*jetQGL_,*jetRMS_;
       vector<int> *jetVeto_, *jetMCFlavour_;
-      // ---- tight jet id ----------------------------------------------
-      vector<int>   *jetId_; 
-      // ---- DR rejected jet kinematics --------------------------------------------
-     // vector<float> *rjetPt_,*rjetEta_,*rjetY_,*rjetPhi_,*rjetE_,*rjetPtGEN_,*rjetEtaGEN_,*rjetYGEN_,*rjetPhiGEN_,*rjetEGEN_;
-      // ---- rjet composition fractions ---------------------------------
-     // vector<float> *rjetCHF_,*rjetPHF_,*rjetNHF_,*rjetMUF_,*rjetELF_;
-      // ---- other rjet properties --------------------------------------
-     // vector<float> *rjetBeta_,*rjetBtag_,*rjetArea_,*rjetJEC_,*rjetUNC_;
-      // ---- tight rjet id ----------------------------------------------
-     // vector<int>   *rjetId_; 
       // ---- QG ----
       vector<float> *QGVars_;
       // ---- number of jets --------------------------------------------
       int nJets_,nJetsGEN_;
      // int nRJets_;
-      // ---- flag to determine if the Z is one of the 2 leading objects-
-      int isZlead_,isZleadGEN_;
-      // ---- HT of the two leading objects -----------------------------
-      float htLead_,htLeadGEN_;
-      // ---- jet pt geometric mean -------------------------------------
-      float jetPtGeMean_,jetPtGeMeanGEN_;
-      // ---- jet pt arithmetic mean ------------------------------------
-      float jetPtArMean_,jetPtArMeanGEN_;
-      // ---- dphi between jets -----------------------------------------
-      float j1j2DPhi_,j1j3DPhi_,j2j3DPhi_,j1j2DPhiGEN_,j1j3DPhiGEN_,j2j3DPhiGEN_;
-      // ---- dR between jets -------------------------------------------
-      float j1j2DR_,j1j3DR_,j2j3DR_,j1j2DRGEN_,j1j3DRGEN_,j2j3DRGEN_; 
       // ---- pf met ----------------------------------------------------
       float pfmet_;
       // ---- pf sumEt --------------------------------------------------
       float pfSumEt_;
-      // ---- sum of pt of all jets --------------------------------------
-      float HTJetSum_;
-      // ---- sum of pt of all GEN jets --------------------------------------
-      float HTJetSumGEN_;
       // ---- sum of the pt of all status 3 parton: madgraph cut? ---------------------- 
       float HTParSum_;
       // ---- pf met phi ------------------------------------------------
       float pfmetPhi_;
       // ---- pt of the hadronic recoil ---------------------------------
       float pfhadPt_; 
-      // ---- invariant mass of the Z and the leading jets -------------- 
-      float mZj1_,mZj1GEN_;
-      float mZj1j2_;
-      float mZj1j2j3_;
-      // ---- transverse momentum of Z and the leading jet -------------- 
-      float ptZj1_,ptZj1GEN_;
-      // ---- transverse momentum of Z and the leading jet -------------- 
-      float costhetaZj1_,costhetaZj1GEN_;
-  //      float costhetaPhotonj1_;
-      // ---- invariant mass of jets (aka potatoes) ---------------------
-      float mj1j2_,mj1j2GEN_;
-      float mj1j2j3_;
-      float mrj1rj2_;
-      // ---- invariant mas of all leptons ------------------------------
-      float mLep_,mLepGEN_;
       // ---- pf pt density ---------------------------------------------
       float rho_;
       float rho25_;
@@ -495,8 +441,6 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       int   nVtx_;
       // ---- number of simulated pu interactions -----------------------
       int   puINT_,puOOT_;
-      // ---- RECO, GEN accepted flags for MC ---------------------------
-      int selRECO_,selGEN_;
       // ---- MC weight
       float mcWeight_;
 
@@ -1945,30 +1889,17 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   selectionRECO = selectionRECO || ((nVtx_ > 0) &&  nPhotons_>0 &&  ((nJets_ -nJets_phoVeto)>=mMinNjets)/*(nJets_ >= mMinNjets)*/); // add photon logic for RECO
   bool selection(selectionRECO);
   bool selectionGEN(false);
-  selRECO_ = 0;
   if (!isRealData_) {
     selectionGEN = ((nLeptonsGEN_ > 1) && (nJetsGEN_ >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
     selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
     selection +=  selectionGEN;
-    selGEN_ = 0;
   }
   if (selection) {
     eventNum_   = iEvent.id().event();
     runNum_     = iEvent.id().run();
     lumi_       = iEvent.luminosityBlock();
     isRealData_ = isRealData_; // just pass through 
-    /* //move members below to definition of values
-       //less problematic to define mOnlyMC
-    if(!mOnlyMC){
-      rho_        = *rho; 
-      rho25_      = *rho25; 
-      pfmet_      = (pfmetCol_->front()).pt();
-      pfmetPhi_   = (pfmetCol_->front()).phi();
-      pfSumEt_    = (pfmetCol_->front()).sumEt();
-    }
-    */
     if (selectionRECO) {
-      selRECO_ = 1;
       // ---- hadronic recoil vector --------------------------------------
       TLorentzVector pfmetP4=mypfmetP4;
       TLorentzVector pfhadP4(0,0,0,0);
@@ -1998,7 +1929,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         lepSigmaIEtaIEta_      ->push_back(myLeptons[l].sigmaIEtaIEta);
       }      
       pfhadPt_    = pfhadP4.Pt();
-      mLep_       = lepP4.M(); 
       // ---- store photon variables ------------------------------------
       for(unsigned gg = 0; gg < myPhotons.size(); gg++) {
 	// myTree_->Branch("mPhotonj1"        ,"vector<float>"        ,&mPhotonj1_);
@@ -2008,7 +1938,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         photonPt_  -> push_back(myPhotons[gg].p4.Pt());
         photonEta_ -> push_back(myPhotons[gg].p4.Eta());
         photonPhi_ -> push_back(myPhotons[gg].p4.Phi());
-	//        photonIso_ -> push_back(myPhotons[gg].iso);
 	photonPassConversionVeto_ -> push_back(myPhotons[gg].parameters[PARTICLE::passconv]);   
 	photonPfIsoChargedHad_    -> push_back(myPhotons[gg].parameters[PARTICLE::pfIsoCH]);
 	photonPfIsoNeutralHad_    -> push_back(myPhotons[gg].parameters[PARTICLE::pfIsoNH]);
@@ -2043,37 +1972,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	photonIsoFPRCharged_->push_back(myPhotons[gg].isoFPRCharged);
 	photonIsoFPRNeutral_->push_back(myPhotons[gg].isoFPRNeutral);
 	photonIsoFPRPhoton_->push_back(myPhotons[gg].isoFPRPhoton);
-	//        photonPar_= myPhotons[0].parameters;
-// 	float thePfHadPhoPt = (-pfmetP4 - myPhotons[gg].p4).Pt();
-//         pfhadPhoPt_ ->push_back(thePfHadPhoPt);
       }
 
-     // if(myFSRphotons.size()>0 && myLeptons.size()>1) { // save FSR photons for di-lepton only events
-
-     //   bool writeFSR = true;
-     //   if(myLeptons[0].p4.DeltaR(myFSRphotons[0].p4)<0.2 && abs(myLeptons[0].chid)==1)writeFSR=false; //don't consider FSR when very close with electrons
-     //   if(myLeptons[1].p4.DeltaR(myFSRphotons[0].p4)<0.2 && abs(myLeptons[1].chid)==1)writeFSR=false;
- 
-     //   if(writeFSR) {
-     //     FSRphotonE_   = myFSRphotons[0].p4.Energy();
-     //     FSRphotonPt_  = myFSRphotons[0].p4.Pt();
-     //     FSRphotonEta_ = myFSRphotons[0].p4.Eta();
-     //     FSRphotonPhi_ = myFSRphotons[0].p4.Phi();
-     //     FSRphotonIso_ = myFSRphotons[0].iso;
-     //     FSRphotonID_  = myFSRphotons[0].id;
-     //     FSRphotonBit_ = myFSRphotons[0].bit;
-     //     *FSRphotonPar_= myFSRphotons[0].parameters;
-     //     FSRphotonllM_  = (llP4 + myFSRphotons[0].p4).M();
-  
-     //     bool isFSRphotonCountedAsJet = false;
-     //     for(unsigned j = 0; j < myJets.size(); j++) {
-     //     float DR = myJets[j].p4.DeltaR(myFSRphotons[0].p4);
-     //     if(DR<mJetPhoIsoR)isFSRphotonCountedAsJet=true;
-     //     }
-
-     //     FSRphotonJet_ = isFSRphotonCountedAsJet;
-     //   }
-     // }
 
 
       vector<TLorentzVector> allP4;
@@ -2090,7 +1990,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetEta_      ->push_back(myJets[j].p4.Eta()); 
         jetPhi_      ->push_back(myJets[j].p4.Phi()); 
         jetE_        ->push_back(myJets[j].p4.Energy()); 
-        jetY_        ->push_back(myJets[j].p4.Rapidity()); 
         jetArea_     ->push_back(myJets[j].area);
         jetBeta_     ->push_back(myJets[j].beta);
         jetBtag_     ->push_back(myJets[j].btag);
@@ -2105,81 +2004,13 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetNHF_      ->push_back(myJets[j].nhf);
         jetMUF_      ->push_back(myJets[j].muf);
         jetELF_      ->push_back(myJets[j].elf);
-        jetId_       ->push_back(myJets[j].id);  
         jetQGL_     ->push_back(myJets[j].qgl);
         jetRMS_     ->push_back(myJets[j].rms);
         jetVeto_     ->push_back(myJets[j].veto);
       }
-     // for(unsigned j = 0; j < myRJets.size(); j++) {
-     //   rjetPt_       ->push_back(myRJets[j].p4.Pt()); 
-     //   rjetEta_      ->push_back(myRJets[j].p4.Eta()); 
-     //   rjetPhi_      ->push_back(myRJets[j].p4.Phi()); 
-     //   rjetE_        ->push_back(myRJets[j].p4.Energy()); 
-     //   rjetY_        ->push_back(myRJets[j].p4.Rapidity()); 
-     //   rjetArea_     ->push_back(myRJets[j].area);
-     //   rjetBeta_     ->push_back(myRJets[j].beta);
-     //   rjetBtag_     ->push_back(myRJets[j].btag);
-     //   rjetJEC_      ->push_back(myRJets[j].jec);
-     //   rjetUNC_      ->push_back(myRJets[j].unc);
-     //   rjetCHF_      ->push_back(myRJets[j].chf);
-     //   rjetPHF_      ->push_back(myRJets[j].phf);
-     //   rjetNHF_      ->push_back(myRJets[j].nhf);
-     //   rjetMUF_      ->push_back(myRJets[j].muf);
-     //   rjetELF_      ->push_back(myRJets[j].elf);
-     //   rjetId_       ->push_back(myRJets[j].id);  
-     // }
-
-      if(nLeptons_>1) isZlead_ = 1;
-      if(nPhotons_>0) isPhotonlead_ = 1;
-      //if (nRJets_ > 1) mrj1rj2_  = (myRJets[0].p4 + myRJets[1].p4).M();
-
-      if (nJets_ > 0) {
-        if(nLeptons_ > 1) {
-	  mZj1_        = (llP4+myJets[0].p4).M();
-	  ptZj1_       = (llP4+myJets[0].p4).Pt();
-	  costhetaZj1_ = tanh(0.5*(llP4.Rapidity() - myJets[0].p4.Rapidity()));
-	}
-
-//         if(nPhotons_>0) {
-// 	  mPhotonj1_        = (myJets[0].p4 + myPhotons[0].p4).M();
-// 	  ptPhotonj1_       = (myJets[0].p4 + myPhotons[0].p4).Pt();
-// 	  costhetaPhotonj1_ = tanh(0.5*(myPhotons[0].p4.Rapidity() - myJets[0].p4.Rapidity()));
-// 	}
-
-        jetPtGeMean_ = pow(prod,1./nJets_);
-        jetPtArMean_ = sum/nJets_;
-	HTJetSum_    = sum;
-
- 	  
-        if (nJets_ > 1) {
-	  if(nLeptons_ > 1) mZj1j2_   = (llP4 + myJets[0].p4 + myJets[1].p4).M();
-          mj1j2_    = (myJets[0].p4 + myJets[1].p4).M();
-          j1j2DPhi_ = fabs(myJets[0].p4.DeltaPhi(myJets[1].p4));
-          j1j2DR_   = myJets[0].p4.DeltaR(myJets[1].p4);
-
-          if(nLeptons_>1) {
-  	    if (llPt_ < myJets[1].p4.Pt()) {
-  	      isZlead_ = 0;
-	    }
-	  }
 
 
-
-          if (nJets_ > 2) {
-	    if(nLeptons_ > 1) mZj1j2j3_ = (llP4+myJets[0].p4 + myJets[1].p4 + myJets[2].p4).M();
-	    mj1j2j3_  = (myJets[0].p4 + myJets[1].p4 + myJets[2].p4).M();
-            j1j3DPhi_ = fabs(myJets[0].p4.DeltaPhi(myJets[2].p4));
-            j2j3DPhi_ = fabs(myJets[1].p4.DeltaPhi(myJets[2].p4));
-            j1j3DR_   = myJets[0].p4.DeltaR(myJets[2].p4);
-            j2j3DR_   = myJets[1].p4.DeltaR(myJets[2].p4);
-          }  
-        }
-      }
       sort(allP4.begin(),allP4.end(),p4SortingRule);
-      htLead_ = 0.0;
-      for(int i=0;i<TMath::Min(int(allP4.size()),2);i++) {
-        htLead_ += allP4[i].Pt();
-      }
 
       // ----  Trigger block: Bother for trigger info only if event is selected (saves time)-------------
       iEvent.getByLabel(triggerResultsTag_,triggerResultsHandle_);
@@ -2290,7 +2121,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       }	
     }// if selection GEN 
     if (selectionGEN) {
-      selGEN_ = 1;
 
       if(llP4GEN.Pt()>0) {
        	llMGEN_                      = llP4GEN.M();
@@ -2321,7 +2151,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 
       }   
 
-      mLepGEN_ = lepP4GEN.M(); 
       vector<TLorentzVector> allP4GEN;
       allP4GEN.push_back(llP4GEN);
       double prod(1.0),sum(0.0);
@@ -2334,37 +2163,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetEtaGEN_      ->push_back(myGenJets[j].Eta()); 
         jetPhiGEN_      ->push_back(myGenJets[j].Phi()); 
         jetEGEN_        ->push_back(myGenJets[j].Energy()); 
-        jetYGEN_        ->push_back(myGenJets[j].Rapidity());   
         jetVetoGEN_     ->push_back(myGenJets[j].veto); 
       }
-      isZleadGEN_ = 1;
-      if (nJetsGEN_ > 0) {
-        mZj1GEN_        = (llP4GEN + myGenJets[0]).M();
-        ptZj1GEN_       = (llP4GEN + myGenJets[0]).Pt();
-        costhetaZj1GEN_ = tanh(0.5*(llP4GEN.Rapidity() - myGenJets[0].Rapidity()));
-        jetPtGeMeanGEN_ = pow(prod,1./nJetsGEN_);
-        jetPtArMeanGEN_ = sum/nJetsGEN_;
-	HTJetSumGEN_    = sum;
-        if (nJetsGEN_ > 1) {
-          mj1j2GEN_    = (myGenJets[0] + myGenJets[1]).M();
-          j1j2DPhiGEN_ = fabs(myGenJets[0].DeltaPhi(myGenJets[1]));
-          j1j2DRGEN_   = myGenJets[0].DeltaR(myGenJets[1]);
-          if (llPtGEN_ < myGenJets[1].Pt()) {
-            isZleadGEN_ = 0;
-          }
-          if (nJetsGEN_ > 2) {
-            j1j3DPhiGEN_ = fabs(myGenJets[0].DeltaPhi(myGenJets[2]));
-            j2j3DPhiGEN_ = fabs(myGenJets[1].DeltaPhi(myGenJets[2]));
-            j1j3DRGEN_   = myGenJets[0].DeltaR(myGenJets[2]);
-            j2j3DRGEN_   = myGenJets[1].DeltaR(myGenJets[2]);
-          }  
-        }
-      }
       sort(allP4GEN.begin(),allP4GEN.end(),p4SortingRule);
-      htLeadGEN_ = 0.0;
-      for(int i=0;i<TMath::Min(int(allP4GEN.size()),2);i++) {
-        htLeadGEN_ += allP4GEN[i].Pt();
-      }
     }// if selection GEN 
     myTree_->Fill();
   }// if selectionRECO || selectionGEN
@@ -2428,7 +2229,6 @@ void PATZJetsExpress::buildTree()
   jetEta_            = new std::vector<float>();
   jetPhi_            = new std::vector<float>();
   jetE_              = new std::vector<float>();
-  jetY_              = new std::vector<float>();
   jetArea_           = new std::vector<float>();
   jetBeta_           = new std::vector<float>();
   jetQGL_            = new std::vector<float>();
@@ -2445,24 +2245,7 @@ void PATZJetsExpress::buildTree()
   jetNHF_            = new std::vector<float>();
   jetMUF_            = new std::vector<float>();
   jetELF_            = new std::vector<float>();
-  jetId_             = new std::vector<int>();
   jetVeto_           = new std::vector<int>(); 
-//  rjetPt_            = new std::vector<float>(); 
-//  rjetEta_           = new std::vector<float>();
-//  rjetPhi_           = new std::vector<float>();
-//  rjetE_             = new std::vector<float>();
-//  rjetY_             = new std::vector<float>();
-//  rjetArea_          = new std::vector<float>();
-//  rjetBeta_          = new std::vector<float>();
-//  rjetBtag_          = new std::vector<float>();
-//  rjetJEC_           = new std::vector<float>();
-//  rjetUNC_           = new std::vector<float>();
-//  rjetCHF_           = new std::vector<float>();
-//  rjetPHF_           = new std::vector<float>();
-//  rjetNHF_           = new std::vector<float>();
-//  rjetMUF_           = new std::vector<float>();
-//  rjetELF_           = new std::vector<float>();
-//  rjetId_            = new std::vector<int>();
   vtxZ_              = new std::vector<float>();
   vtxNdof_           = new std::vector<float>();
   lepPtGEN_          = new std::vector<float>();
@@ -2476,7 +2259,6 @@ void PATZJetsExpress::buildTree()
   jetEtaGEN_         = new std::vector<float>();
   jetPhiGEN_         = new std::vector<float>();
   jetEGEN_           = new std::vector<float>();
-  jetYGEN_           = new std::vector<float>();
   jetVetoGEN_          = new std::vector<int>(); 
   jetllDPhiGEN_      = new std::vector<float>();
   jetllDPhi_         = new std::vector<float>();
@@ -2486,7 +2268,6 @@ void PATZJetsExpress::buildTree()
   photonE_= new std::vector<float>();
   photonEta_= new std::vector<float>();
   photonPhi_= new std::vector<float>();
-  //  photonIso_= new std::vector<float>();
   photonBit_= new std::vector<int>();
   photonPassConversionVeto_= new std::vector<float>();
   photonPfIsoChargedHad_= new std::vector<float>();
@@ -2526,7 +2307,6 @@ void PATZJetsExpress::buildTree()
 //  FSRphotonPar_      = new std::vector<float>();
   // ---- global event variables ----------------------------------------
   myTree_->Branch("isRealData"       ,&isRealData_        ,"isRealData/I");
-  myTree_->Branch("selRECO"          ,&selRECO_           ,"selRECO/I");
   myTree_->Branch("eventNum"         ,&eventNum_          ,"eventNum/l"); // 64 bit unsigned integer (ULong64_t)
   myTree_->Branch("runNum"           ,&runNum_            ,"runNum/I");
   myTree_->Branch("lumi"             ,&lumi_              ,"lumi/I");
@@ -2534,36 +2314,13 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("nLeptons"         ,&nLeptons_          ,"nLeptons/I");
   myTree_->Branch("nPhotons"         ,&nPhotons_          ,"nPhotons/I");
   myTree_->Branch("nJets"            ,&nJets_             ,"nJets/I"); 
-//  myTree_->Branch("nRJets"           ,&nRJets_            ,"nRJets/I"); 
-  myTree_->Branch("isZlead"          ,&isZlead_           ,"isZlead/I");
-  myTree_->Branch("isPhotonlead"     ,&isPhotonlead_      ,"isPhotonlead/I");
   myTree_->Branch("rho"              ,&rho_               ,"rho/F");
   myTree_->Branch("rho25"            ,&rho25_             ,"rho25/F");
-  myTree_->Branch("mZj1"             ,&mZj1_              ,"mZj1/F");
-  myTree_->Branch("mZj1j2"           ,&mZj1j2_            ,"mZj1j2/F");
-  myTree_->Branch("mZj1j2j3"         ,&mZj1j2j3_          ,"mZj1j2j3/F");
-  myTree_->Branch("ptZj1"            ,&ptZj1_             ,"ptZj1/F");
-  myTree_->Branch("costhetaZj1"      ,&costhetaZj1_       ,"costhetaZj1/F");
-  //  myTree_->Branch("costhetaPhotonj1" ,&costhetaPhotonj1_  ,"costhetaPhotonj1/F");
-  myTree_->Branch("mj1j2"            ,&mj1j2_             ,"mj1j2/F");
-  myTree_->Branch("mj1j2j3"          ,&mj1j2j3_           ,"mj1j2j3/F");
-  myTree_->Branch("mrj1rj2"          ,&mrj1rj2_           ,"mrj1rj2/F");
-  myTree_->Branch("mLep"             ,&mLep_              ,"mLep/F");
-  myTree_->Branch("htLead"           ,&htLead_            ,"htLead/F");
-  myTree_->Branch("j1j2DPhi"         ,&j1j2DPhi_          ,"j1j2DPhi/F");
-  myTree_->Branch("j1j3DPhi"         ,&j1j3DPhi_          ,"j1j3DPhi/F");
-  myTree_->Branch("j2j3DPhi"         ,&j2j3DPhi_          ,"j2j3DPhi/F");
-  myTree_->Branch("j1j2DR"           ,&j1j2DR_            ,"j1j2DR/F");
-  myTree_->Branch("j1j3DR"           ,&j1j3DR_            ,"j1j3DR/F");
-  myTree_->Branch("j2j3DR"           ,&j2j3DR_            ,"j2j3DR/F");
-  myTree_->Branch("jetPtGeMean"      ,&jetPtGeMean_       ,"jetPtGeMean/F");
-  myTree_->Branch("jetPtArMean"      ,&jetPtArMean_       ,"jetPtArMean/F");
   // ---- met variables -------------------------------------------------
   myTree_->Branch("pfmet"            ,&pfmet_             ,"pfmet/F");
   myTree_->Branch("pfmetPhi"         ,&pfmetPhi_          ,"pfmetPhi/F");
   myTree_->Branch("pfhadPt"          ,&pfhadPt_           ,"pfhadPt/F");
   myTree_->Branch("pfSumEt"          ,&pfSumEt_           ,"pfSumEt/F");  
-  myTree_->Branch("HTJetSum"         ,&HTJetSum_          ,"HTJetSum/F");  
   // ---- dilepton variables --------------------------------------------
   myTree_->Branch("llM"              ,&llM_               ,"llM/F");
   myTree_->Branch("llPt"             ,&llPt_              ,"llPt/F");
@@ -2577,7 +2334,6 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonE"          ,"vector<float>"     ,&photonE_);
   myTree_->Branch("photonEta"        ,"vector<float>"     ,&photonEta_);
   myTree_->Branch("photonPhi"        ,"vector<float>"     ,&photonPhi_);
-  //  myTree_->Branch("photonIso"        ,"vector<float>"     ,&photonIso_);
   myTree_->Branch("photonPassConversionVeto","vector<float>"   ,&photonPassConversionVeto_);
   myTree_->Branch("photonPfIsoChargedHad"   ,"vector<float>"   ,&photonPfIsoChargedHad_);  // chiara: li lasciamo? 
   myTree_->Branch("photonPfIsoNeutralHad"   ,"vector<float>"   ,&photonPfIsoNeutralHad_);  // chiara: li lasciamo? 
@@ -2611,24 +2367,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonIsoFPRCharged",          "vector<float>"   ,&photonIsoFPRCharged_);
   myTree_->Branch("photonIsoFPRNeutral",          "vector<float>"   ,&photonIsoFPRNeutral_);
   myTree_->Branch("photonIsoFPRPhoton",          "vector<float>"   ,&photonIsoFPRPhoton_);
-  // myTree_->Branch("photonID"         ,"vector<float>"     ,&photonID_);
   myTree_->Branch("photonBit","vector<int>",&photonBit_ );
-  // myTree_->Branch("pfhadPhoPt"       ,"vector<float>"        ,&pfhadPhoPt_);
-  // myTree_->Branch("mPhotonj1"        ,"vector<float>"        ,&mPhotonj1_);
-  // myTree_->Branch("ptPhotonj1"       ,"vector<float>"        ,&ptPhotonj1_);
-  // myTree_->Branch("jetPhotonDPhi"    ,"vector<float>"        ,&jetPhotonDPhi_);  // chiara: questi erano gia' vector... 
-  // myTree_->Branch("photonPar"        ,"vector<float>"        ,&photonPar_);      // chiara: questi erano gia' vector...  
-  // ---- FSRphoton variables ----------------------------------------------
-//  myTree_->Branch("FSRphotonPt"      ,&FSRphotonPt_       ,"FSRphotonPt/F");
-//  myTree_->Branch("FSRphotonE"       ,&FSRphotonE_        ,"FSRphotonE/F");
-//  myTree_->Branch("FSRphotonEta"     ,&FSRphotonEta_      ,"FSRphotonEta/F");
-//  myTree_->Branch("FSRphotonPhi"     ,&FSRphotonPhi_      ,"FSRphotonPhi/F");
-//  myTree_->Branch("FSRphotonIso"     ,&FSRphotonIso_      ,"FSRphotonIso/F");
-//  myTree_->Branch("FSRphotonID"      ,&FSRphotonID_       ,"FSRphotonID/F");
-//  myTree_->Branch("FSRphotonBit"     ,&FSRphotonBit_      ,"FSRphotonBit/I");
-//  myTree_->Branch("FSRphotonJet"     ,&FSRphotonJet_      ,"FSRphotonJet/I");
-//  myTree_->Branch("FSRphotonPar"     ,"vector<float>"     ,&FSRphotonPar_);
-//  myTree_->Branch("FSRphotonllM"     ,&FSRphotonllM_      ,"FSRphotonllM/F");
   // ---- trigger variables ---------------------------------------------
   myTree_->Branch("fired"            ,"vector<int>"       ,&fired_);
   myTree_->Branch("prescaleL1"       ,"vector<int>"       ,&prescaleL1_);
@@ -2656,7 +2395,6 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetEta"           ,"vector<float>"     ,&jetEta_);
   myTree_->Branch("jetPhi"           ,"vector<float>"     ,&jetPhi_);
   myTree_->Branch("jetE"             ,"vector<float>"     ,&jetE_);
-  myTree_->Branch("jetY"             ,"vector<float>"     ,&jetY_);
   myTree_->Branch("jetArea"          ,"vector<float>"     ,&jetArea_);
   myTree_->Branch("jetBeta"          ,"vector<float>"     ,&jetBeta_);
   myTree_->Branch("jetQGL"           ,"vector<float>"     ,&jetQGL_);
@@ -2674,49 +2412,14 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetNHF"           ,"vector<float>"     ,&jetNHF_);
   myTree_->Branch("jetMUF"           ,"vector<float>"     ,&jetMUF_);
   myTree_->Branch("jetELF"           ,"vector<float>"     ,&jetELF_);
-  myTree_->Branch("jetId"            ,"vector<int>"       ,&jetId_);
- // // ---- DR rejected jet variables ------------------------------------
- // myTree_->Branch("rjetPt"           ,"vector<float>"     ,&rjetPt_);
- // myTree_->Branch("rjetEta"          ,"vector<float>"     ,&rjetEta_);
- // myTree_->Branch("rjetPhi"          ,"vector<float>"     ,&rjetPhi_);
- // myTree_->Branch("rjetE"            ,"vector<float>"     ,&rjetE_);
- // myTree_->Branch("rjetY"            ,"vector<float>"     ,&rjetY_);
- // myTree_->Branch("rjetArea"         ,"vector<float>"     ,&rjetArea_);
- // myTree_->Branch("rjetBeta"         ,"vector<float>"     ,&rjetBeta_);
- // myTree_->Branch("rjetBtag"         ,"vector<float>"     ,&rjetBtag_);
- // myTree_->Branch("rjetJEC"          ,"vector<float>"     ,&rjetJEC_);
- // myTree_->Branch("rjetUNC"          ,"vector<float>"     ,&rjetUNC_);
- // myTree_->Branch("rjetCHF"          ,"vector<float>"     ,&rjetCHF_);
- // myTree_->Branch("rjetPHF"          ,"vector<float>"     ,&rjetPHF_);
- // myTree_->Branch("rjetNHF"          ,"vector<float>"     ,&rjetNHF_);
- // myTree_->Branch("rjetMUF"          ,"vector<float>"     ,&rjetMUF_);
- // myTree_->Branch("rjetELF"          ,"vector<float>"     ,&rjetELF_);
- // myTree_->Branch("rjetId"           ,"vector<int>"       ,&rjetId_);
   // ---- vertex variables ----------------------------------------------
   myTree_->Branch("vtxZ"             ,"vector<float>"     ,&vtxZ_);
   myTree_->Branch("vtxNdof"          ,"vector<float>"     ,&vtxNdof_);
   // ---- gen variables ----------------------------------------------
-  myTree_->Branch("selGEN"           ,&selGEN_            ,"selGEN/I");
   myTree_->Branch("puINT"            ,&puINT_             ,"puINT/I");
   myTree_->Branch("puOOT"            ,&puOOT_             ,"puOOT/I");
   myTree_->Branch("nLeptonsGEN"      ,&nLeptonsGEN_       ,"nLeptonsGEN/I");
   myTree_->Branch("nJetsGEN"         ,&nJetsGEN_          ,"nJetsGEN/I");
-  myTree_->Branch("isZleadGEN"       ,&isZleadGEN_        ,"isZleadGEN/I");
-  myTree_->Branch("mZj1GEN"          ,&mZj1GEN_           ,"mZj1GEN/F");
-  myTree_->Branch("ptZj1GEN"         ,&ptZj1GEN_          ,"ptZj1GEN/F");
-  myTree_->Branch("costhetaZj1GEN"   ,&costhetaZj1GEN_    ,"costhetaZj1GEN/F");
-  myTree_->Branch("mj1j2GEN"         ,&mj1j2GEN_          ,"mj1j2GEN/F");
-  myTree_->Branch("mLepGEN"          ,&mLepGEN_           ,"mLepGEN/F");
-  myTree_->Branch("htLeadGEN"        ,&htLeadGEN_         ,"htLeadGEN/F");
-  myTree_->Branch("j1j2DPhiGEN"      ,&j1j2DPhiGEN_       ,"j1j2DPhiGEN/F");
-  myTree_->Branch("j1j3DPhiGEN"      ,&j1j3DPhiGEN_       ,"j1j3DPhiGEN/F");
-  myTree_->Branch("j2j3DPhiGEN"      ,&j2j3DPhiGEN_       ,"j2j3DPhiGEN/F");
-  myTree_->Branch("j1j2DRGEN"        ,&j1j2DRGEN_         ,"j1j2DRGEN/F");
-  myTree_->Branch("j1j3DRGEN"        ,&j1j3DRGEN_         ,"j1j3DRGEN/F");
-  myTree_->Branch("j2j3DRGEN"        ,&j2j3DRGEN_         ,"j2j3DRGEN/F");
-  myTree_->Branch("jetPtGeMeanGEN"   ,&jetPtGeMeanGEN_    ,"jetPtGeMeanGEN/F");
-  myTree_->Branch("jetPtArMeanGEN"   ,&jetPtArMeanGEN_    ,"jetPtArMeanGEN/F");
-  myTree_->Branch("jetVeto"         ,"vector<int>"     	  ,&jetVeto_);
   myTree_->Branch("llMGEN"           ,&llMGEN_            ,"llMGEN/F");
   myTree_->Branch("llPtGEN"          ,&llPtGEN_           ,"llPtGEN/F");
   myTree_->Branch("llPhiGEN"         ,&llPhiGEN_          ,"llPhiGEN/F");
@@ -2736,7 +2439,6 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetEGEN"          ,"vector<float>"     ,&jetEGEN_);
   myTree_->Branch("jetVetoGEN"         ,"vector<int>"     ,&jetVetoGEN_);
   myTree_->Branch("jetllDPhiGEN"     ,"vector<float>"     ,&jetllDPhiGEN_);
-  myTree_->Branch("HTJetSumGEN"      ,&HTJetSumGEN_       ,"HTJetSumGEN/F");  
   myTree_->Branch("HTParSum"         ,&HTParSum_          ,"HTParSum/F");  
   myTree_->Branch("mcWeight"         ,&mcWeight_          ,"mcWeight/F");
   myTree_->Branch("nPhotonsGEN"      ,&nPhotonsGEN_       ,"nPhotonsGEN/I");
@@ -2763,7 +2465,6 @@ void PATZJetsExpress::clearTree()
    lepHadronicOverEm_->clear();
 
   QGVars_->clear();
-  selRECO_           = -999;
   isRealData_        = -999;
   eventNum_          = 0; //ULong64_t can't be negative
   runNum_            = -999;
@@ -2774,36 +2475,13 @@ void PATZJetsExpress::clearTree()
   nPhotons_          = -999;
   nJets_             = -999;
  // nRJets_            = -999;
-  isZlead_           = -999;
-  isPhotonlead_      = -999;
   rho_               = -999;
   rho25_             = -999;
   pfmet_             = -999;
   pfmetPhi_          = -999;
   pfhadPt_           = -999;
   pfSumEt_           = -999;
-  HTJetSum_          = -999;
   HTParSum_          = -999;
-  HTJetSumGEN_       = -999;
-  mZj1_              = -999; 
-  mZj1j2_            = -999; 
-  mZj1j2j3_          = -999; 
-  ptZj1_             = -999; 
-  costhetaZj1_       = -999; 
-  //  costhetaPhotonj1_  = -999; 
-  mj1j2_             = -999;
-  mj1j2j3_           = -999;
-  mrj1rj2_           = -999;
-  mLep_              = -999;
-  htLead_            = -999;
-  jetPtGeMean_       = -999;
-  jetPtArMean_       = -999; 
-  j1j2DPhi_          = -999;
-  j1j3DPhi_          = -999; 
-  j2j3DPhi_          = -999;
-  j1j2DR_            = -999;
-  j1j3DR_            = -999; 
-  j2j3DR_            = -999;
   llM_               = -999;
   llPt_              = -999; 
   llPhi_             = -999;
@@ -2816,7 +2494,6 @@ void PATZJetsExpress::clearTree()
   photonPt_          ->clear();
   photonEta_         ->clear();
   photonPhi_         ->clear();
-  //  photonIso_         ->clear();
   photonPassConversionVeto_ ->clear();
   photonPfIsoChargedHad_   ->clear();
   photonPfIsoNeutralHad_   ->clear();
@@ -2844,18 +2521,6 @@ void PATZJetsExpress::clearTree()
   //  photonID_          ->clear();
   photonBit_         ->clear();
 
-  //FSRphotonE_        = -999;
-  //FSRphotonPt_       = -999;
-  //FSRphotonllM_      = -999;
-  //FSRphotonEta_      = -999;
-  //FSRphotonPhi_      = -999;
-  //FSRphotonIso_      = -999;
-  //FSRphotonID_       = -999;
-  //FSRphotonBit_      =    0; // please keep this 0
-  //FSRphotonJet_      =    0; // please keep this 0
-  //  pfhadPhoPt_        = -999;
-//   mPhotonj1_         = -999;
-//   ptPhotonj1_        = -999;
   isTriggered_       =    0; // please keep this 0
   isTriggerMatchedFamily1_      =    0;
   isTriggerMatchedFamily2_      =    0;
@@ -2884,7 +2549,6 @@ void PATZJetsExpress::clearTree()
   jetEta_            ->clear();
   jetPhi_            ->clear();
   jetE_              ->clear();
-  jetY_              ->clear();
   jetArea_           ->clear();
   jetBeta_           ->clear();
   jetQGL_            ->clear();
@@ -2902,13 +2566,11 @@ void PATZJetsExpress::clearTree()
   jetNHF_            ->clear();
   jetMUF_            ->clear();
   jetELF_            ->clear();
-  jetId_             ->clear();
   jetVeto_          ->clear();
   //rjetPt_            ->clear();
   //rjetEta_           ->clear();
   //rjetPhi_           ->clear();
   //rjetE_             ->clear();
-  //rjetY_             ->clear();
   //rjetArea_          ->clear();
   //rjetBeta_          ->clear();
   //rjetBtag_          ->clear();
@@ -2919,30 +2581,13 @@ void PATZJetsExpress::clearTree()
   //rjetNHF_           ->clear();
   //rjetMUF_           ->clear();
   //rjetELF_           ->clear();
-  //rjetId_            ->clear();
   vtxZ_              ->clear();
   vtxNdof_           ->clear();
-  selGEN_            = -999;
   puINT_             = -999;
   puOOT_             = -999;
   isRealData_        = -999;
   nLeptonsGEN_       = -999;
   nJetsGEN_          = -999;
-  isZleadGEN_        = -999;
-  mZj1GEN_           = -999; 
-  ptZj1GEN_          = -999; 
-  costhetaZj1GEN_    = -999; 
-  mj1j2GEN_          = -999;
-  mLepGEN_           = -999;
-  htLeadGEN_         = -999;
-  jetPtGeMeanGEN_    = -999;
-  jetPtArMeanGEN_    = -999; 
-  j1j2DPhiGEN_       = -999;
-  j1j3DPhiGEN_       = -999; 
-  j2j3DPhiGEN_       = -999;
-  j1j2DRGEN_         = -999;
-  j1j3DRGEN_         = -999; 
-  j2j3DRGEN_         = -999;
   llMGEN_            = -999;
   llPtGEN_           = -999; 
   llPhiGEN_          = -999;
@@ -2958,7 +2603,6 @@ void PATZJetsExpress::clearTree()
   jetEtaGEN_         ->clear();
   jetPhiGEN_         ->clear();
   jetEGEN_           ->clear();
-  jetYGEN_           ->clear();
   jetVetoGEN_          ->clear();
   jetllDPhiGEN_      ->clear();
   photonEGEN_        = -999;
