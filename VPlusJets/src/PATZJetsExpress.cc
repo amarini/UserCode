@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.31 2013/01/18 14:12:23 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.32 2013/01/24 18:16:12 theofil Exp $
 //
 //
 
@@ -298,9 +298,9 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
       HLTConfigProvider hltConfig_;
       // ---- configurable parameters -----------------------------------
-      bool          mIsMC,mOnlyMC;
+      bool          mIsMC,mOnlyMC,mReducedPh;
       int           mMinNjets,mGENType, mDressedRadius;
-  double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMinPhoPtId,mMaxPhoEta;
+      double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMinPhoPtId,mMaxPhoEta;
       edm::InputTag pfIsoValEleCH03Name,pfIsoValEleNH03Name,pfIsoValEleG03Name;
       //int 	    mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
@@ -412,8 +412,6 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- jet kinematics --------------------------------------------
       vector<float> *jetPt_,*jetEta_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetPhiGEN_,*jetEGEN_;
       vector<int> *jetVetoGEN_;
-      // ---- jet composition fractions ---------------------------------
-      vector<float> *jetCHF_,*jetPHF_,*jetNHF_,*jetMUF_,*jetELF_;
       // ---- other jet properties --------------------------------------
       vector<float> *jetBeta_,*jetBtag_,*jetTagInfoNVtx_,*jetTagInfoNTracks_,*jetTagInfoVtxMass_,*jetArea_,*jetJEC_,*jetUNC_,*jetQGL_,*jetRMS_;
       vector<int> *jetVeto_, *jetMCFlavour_;
@@ -501,6 +499,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mGENType           = iConfig.getParameter<int>                       ("GENType");
   mDressedRadius     = iConfig.getParameter<double>                    ("dressedRadius");
   mOnlyMC	     = iConfig.getParameter<bool>		       ("OnlyMC");
+  mReducedPh         = iConfig.getParameter<bool>		       ("ReducedPh");
   pfIsoValEleCH03Name= iConfig.getParameter<edm::InputTag>("pfIsoValEleCH03");
   pfIsoValEleNH03Name= iConfig.getParameter<edm::InputTag>("pfIsoValEleNH03");
   pfIsoValEleG03Name = iConfig.getParameter<edm::InputTag>("pfIsoValEleG03");
@@ -1999,11 +1998,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	jetMCFlavour_ ->push_back(myJets[j].mcflavour);
         jetJEC_      ->push_back(myJets[j].jec);
         jetUNC_      ->push_back(myJets[j].unc);
-        jetCHF_      ->push_back(myJets[j].chf);
-        jetPHF_      ->push_back(myJets[j].phf);
-        jetNHF_      ->push_back(myJets[j].nhf);
-        jetMUF_      ->push_back(myJets[j].muf);
-        jetELF_      ->push_back(myJets[j].elf);
         jetQGL_     ->push_back(myJets[j].qgl);
         jetRMS_     ->push_back(myJets[j].rms);
         jetVeto_     ->push_back(myJets[j].veto);
@@ -2240,11 +2234,6 @@ void PATZJetsExpress::buildTree()
   jetMCFlavour_      = new std::vector<int>();
   jetJEC_            = new std::vector<float>();
   jetUNC_            = new std::vector<float>();
-  jetCHF_            = new std::vector<float>();
-  jetPHF_            = new std::vector<float>();
-  jetNHF_            = new std::vector<float>();
-  jetMUF_            = new std::vector<float>();
-  jetELF_            = new std::vector<float>();
   jetVeto_           = new std::vector<int>(); 
   vtxZ_              = new std::vector<float>();
   vtxNdof_           = new std::vector<float>();
@@ -2334,40 +2323,42 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonE"          ,"vector<float>"     ,&photonE_);
   myTree_->Branch("photonEta"        ,"vector<float>"     ,&photonEta_);
   myTree_->Branch("photonPhi"        ,"vector<float>"     ,&photonPhi_);
-  myTree_->Branch("photonPassConversionVeto","vector<float>"   ,&photonPassConversionVeto_);
-  myTree_->Branch("photonPfIsoChargedHad"   ,"vector<float>"   ,&photonPfIsoChargedHad_);  // chiara: li lasciamo? 
-  myTree_->Branch("photonPfIsoNeutralHad"   ,"vector<float>"   ,&photonPfIsoNeutralHad_);  // chiara: li lasciamo? 
-  myTree_->Branch("photonPfIsoPhoton"       ,"vector<float>"   ,&photonPfIsoPhoton_);      // chiara: li lasciamo? 
-  myTree_->Branch("photonPfIsoPhoton03ForCic",      "vector<float>"   ,&photonPfIsoPhotons03ForCic_);      
-  myTree_->Branch("photonPfIsoNeutrals03ForCic",    "vector<float>"   ,&photonPfIsoNeutrals03ForCic_);      
-  myTree_->Branch("photonPfIsoCharged03ForCicVtx0", "vector<float>"   ,&photonPfIsoCharged03ForCicVtx0_);      
-  myTree_->Branch("photonPfIsoCharged03BadForCic",  "vector<float>"   ,&photonPfIsoCharged03BadForCic_);      
-  myTree_->Branch("photonPfIsoPhoton04ForCic",      "vector<float>"   ,&photonPfIsoPhotons04ForCic_);      
-  myTree_->Branch("photonPfIsoNeutrals04ForCic",    "vector<float>"   ,&photonPfIsoNeutrals04ForCic_);      
-  myTree_->Branch("photonPfIsoCharged04ForCicVtx0", "vector<float>"   ,&photonPfIsoCharged04ForCicVtx0_);      
-  myTree_->Branch("photonPfIsoCharged04BadForCic",  "vector<float>"   ,&photonPfIsoCharged04BadForCic_);     
-  myTree_->Branch("photonid_sieie",                 "vector<float>"   ,&photonid_sieie_);
-  myTree_->Branch("photonid_sieip",                 "vector<float>"   ,&photonid_sieip_);
-  myTree_->Branch("photonid_etawidth",              "vector<float>"   ,&photonid_etawidth_);
-  myTree_->Branch("photonid_phiwidth",              "vector<float>"   ,&photonid_phiwidth_);  
-  myTree_->Branch("photonid_r9",                    "vector<float>"   ,&photonid_r9_);
-  myTree_->Branch("photonid_lambdaRatio",           "vector<float>"   ,&photonid_lambdaRatio_);
-  myTree_->Branch("photonid_s4Ratio",               "vector<float>"   ,&photonid_s4Ratio_);
-  myTree_->Branch("photonid_e25",               "vector<float>"   ,&photonid_e25_);
-  myTree_->Branch("photonid_sceta",                 "vector<float>"   ,&photonid_sceta_);
-  myTree_->Branch("photonid_ESEffSigmaRR",          "vector<float>"   ,&photonid_ESEffSigmaRR_);
-  myTree_->Branch("photonid_hadronicOverEm",          "vector<float>"   ,&photonid_hadronicOverEm_);
-  myTree_->Branch("photonid_hadronicOverEm2012",          "vector<float>"   ,&photonid_hadronicOverEm2012_);
-  myTree_->Branch("photonhcalTowerSumEtConeDR04",          "vector<float>"   ,&photonhcalTowerSumEtConeDR04_);
-  myTree_->Branch("photonecalRecHitSumEtConeDR04",          "vector<float>"   ,&photonecalRecHitSumEtConeDR04_);
-  myTree_->Branch("photonnTrkSolidConeDR04",          "vector<float>"   ,&photonnTrkSolidConeDR04_);
-  myTree_->Branch("photontrkSumPtSolidConeDR04",          "vector<float>"   ,&photontrkSumPtSolidConeDR04_);
-  myTree_->Branch("photonnTrkHollowConeDR04",          "vector<float>"   ,&photonnTrkHollowConeDR04_);
-  myTree_->Branch("photontrkSumPtHollowConeDR04",          "vector<float>"   ,&photontrkSumPtHollowConeDR04_);
-  myTree_->Branch("photonIsoFPRCharged",          "vector<float>"   ,&photonIsoFPRCharged_);
-  myTree_->Branch("photonIsoFPRNeutral",          "vector<float>"   ,&photonIsoFPRNeutral_);
-  myTree_->Branch("photonIsoFPRPhoton",          "vector<float>"   ,&photonIsoFPRPhoton_);
-  myTree_->Branch("photonBit","vector<int>",&photonBit_ );
+  if(!mReducedPh){
+    myTree_->Branch("photonPassConversionVeto","vector<float>"   ,&photonPassConversionVeto_);
+    myTree_->Branch("photonPfIsoChargedHad"   ,"vector<float>"   ,&photonPfIsoChargedHad_);  // chiara: li lasciamo? 
+    myTree_->Branch("photonPfIsoNeutralHad"   ,"vector<float>"   ,&photonPfIsoNeutralHad_);  // chiara: li lasciamo? 
+    myTree_->Branch("photonPfIsoPhoton"       ,"vector<float>"   ,&photonPfIsoPhoton_);      // chiara: li lasciamo? 
+    myTree_->Branch("photonPfIsoPhoton03ForCic",      "vector<float>"   ,&photonPfIsoPhotons03ForCic_);      
+    myTree_->Branch("photonPfIsoNeutrals03ForCic",    "vector<float>"   ,&photonPfIsoNeutrals03ForCic_);      
+    myTree_->Branch("photonPfIsoCharged03ForCicVtx0", "vector<float>"   ,&photonPfIsoCharged03ForCicVtx0_);      
+    myTree_->Branch("photonPfIsoCharged03BadForCic",  "vector<float>"   ,&photonPfIsoCharged03BadForCic_);      
+    myTree_->Branch("photonPfIsoPhoton04ForCic",      "vector<float>"   ,&photonPfIsoPhotons04ForCic_);      
+    myTree_->Branch("photonPfIsoNeutrals04ForCic",    "vector<float>"   ,&photonPfIsoNeutrals04ForCic_);      
+    myTree_->Branch("photonPfIsoCharged04ForCicVtx0", "vector<float>"   ,&photonPfIsoCharged04ForCicVtx0_);      
+    myTree_->Branch("photonPfIsoCharged04BadForCic",  "vector<float>"   ,&photonPfIsoCharged04BadForCic_);     
+    myTree_->Branch("photonid_sieie",                 "vector<float>"   ,&photonid_sieie_);
+    myTree_->Branch("photonid_sieip",                 "vector<float>"   ,&photonid_sieip_);
+    myTree_->Branch("photonid_etawidth",              "vector<float>"   ,&photonid_etawidth_);
+    myTree_->Branch("photonid_phiwidth",              "vector<float>"   ,&photonid_phiwidth_);  
+    myTree_->Branch("photonid_r9",                    "vector<float>"   ,&photonid_r9_);
+    myTree_->Branch("photonid_lambdaRatio",           "vector<float>"   ,&photonid_lambdaRatio_);
+    myTree_->Branch("photonid_s4Ratio",               "vector<float>"   ,&photonid_s4Ratio_);
+    myTree_->Branch("photonid_e25",               "vector<float>"   ,&photonid_e25_);
+    myTree_->Branch("photonid_sceta",                 "vector<float>"   ,&photonid_sceta_);
+    myTree_->Branch("photonid_ESEffSigmaRR",          "vector<float>"   ,&photonid_ESEffSigmaRR_);
+    myTree_->Branch("photonid_hadronicOverEm",          "vector<float>"   ,&photonid_hadronicOverEm_);
+    myTree_->Branch("photonid_hadronicOverEm2012",          "vector<float>"   ,&photonid_hadronicOverEm2012_);
+    myTree_->Branch("photonhcalTowerSumEtConeDR04",          "vector<float>"   ,&photonhcalTowerSumEtConeDR04_);
+    myTree_->Branch("photonecalRecHitSumEtConeDR04",          "vector<float>"   ,&photonecalRecHitSumEtConeDR04_);
+    myTree_->Branch("photonnTrkSolidConeDR04",          "vector<float>"   ,&photonnTrkSolidConeDR04_);
+    myTree_->Branch("photontrkSumPtSolidConeDR04",          "vector<float>"   ,&photontrkSumPtSolidConeDR04_);
+    myTree_->Branch("photonnTrkHollowConeDR04",          "vector<float>"   ,&photonnTrkHollowConeDR04_);
+    myTree_->Branch("photontrkSumPtHollowConeDR04",          "vector<float>"   ,&photontrkSumPtHollowConeDR04_);
+    myTree_->Branch("photonIsoFPRCharged",          "vector<float>"   ,&photonIsoFPRCharged_);
+    myTree_->Branch("photonIsoFPRNeutral",          "vector<float>"   ,&photonIsoFPRNeutral_);
+    myTree_->Branch("photonIsoFPRPhoton",          "vector<float>"   ,&photonIsoFPRPhoton_);
+    myTree_->Branch("photonBit","vector<int>",&photonBit_ );
+  }
   // ---- trigger variables ---------------------------------------------
   myTree_->Branch("fired"            ,"vector<int>"       ,&fired_);
   myTree_->Branch("prescaleL1"       ,"vector<int>"       ,&prescaleL1_);
@@ -2407,11 +2398,6 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetJEC"           ,"vector<float>"     ,&jetJEC_);
   myTree_->Branch("jetUNC"           ,"vector<float>"     ,&jetUNC_);
   myTree_->Branch("jetllDPhi"        ,"vector<float>"     ,&jetllDPhi_);
-  myTree_->Branch("jetCHF"           ,"vector<float>"     ,&jetCHF_);
-  myTree_->Branch("jetPHF"           ,"vector<float>"     ,&jetPHF_);
-  myTree_->Branch("jetNHF"           ,"vector<float>"     ,&jetNHF_);
-  myTree_->Branch("jetMUF"           ,"vector<float>"     ,&jetMUF_);
-  myTree_->Branch("jetELF"           ,"vector<float>"     ,&jetELF_);
   // ---- vertex variables ----------------------------------------------
   myTree_->Branch("vtxZ"             ,"vector<float>"     ,&vtxZ_);
   myTree_->Branch("vtxNdof"          ,"vector<float>"     ,&vtxNdof_);
@@ -2561,26 +2547,7 @@ void PATZJetsExpress::clearTree()
   jetJEC_            ->clear();
   jetUNC_            ->clear();
   jetllDPhi_         ->clear();
-  jetCHF_            ->clear();
-  jetPHF_            ->clear();
-  jetNHF_            ->clear();
-  jetMUF_            ->clear();
-  jetELF_            ->clear();
   jetVeto_          ->clear();
-  //rjetPt_            ->clear();
-  //rjetEta_           ->clear();
-  //rjetPhi_           ->clear();
-  //rjetE_             ->clear();
-  //rjetArea_          ->clear();
-  //rjetBeta_          ->clear();
-  //rjetBtag_          ->clear();
-  //rjetJEC_           ->clear();
-  //rjetUNC_           ->clear();
-  //rjetCHF_           ->clear();
-  //rjetPHF_           ->clear();
-  //rjetNHF_           ->clear();
-  //rjetMUF_           ->clear();
-  //rjetELF_           ->clear();
   vtxZ_              ->clear();
   vtxNdof_           ->clear();
   puINT_             = -999;

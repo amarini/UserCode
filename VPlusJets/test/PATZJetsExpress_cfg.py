@@ -1,6 +1,6 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 
-isMC=False
+isMC=True
 
 process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('RecoJets.Configuration.RecoPFJets_cff')
@@ -62,7 +62,7 @@ process.source = cms.Source("PoolSource",
 #	'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 # '/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
-'/store/data/Run2012C/DoubleMu/AOD/24Aug2012-v1/00000/FE2746F7-5AEF-E111-8B40-E0CB4E29C4E5.root'
+#'/store/data/Run2012C/DoubleMu/AOD/24Aug2012-v1/00000/FE2746F7-5AEF-E111-8B40-E0CB4E29C4E5.root'
     )
 )
 ## 
@@ -170,7 +170,8 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     maxCombRelIso03 = cms.double(0.15),
     maxCombRelIso04 = cms.double(0.12),
     minLLMass       = cms.double(15),
-    OnlyMC	    = cms.bool(False), 
+    OnlyMC	    = cms.bool(False),
+    ReducedPh       = cms.bool(False),#if TRUE: reduce photon information to 4-Vector				  
     dressedRadius   = cms.double(0.1),
    # GENCrossCleaning= cms.int32(1), #OBSOLETE
     GENType	    = cms.int32(0), #
