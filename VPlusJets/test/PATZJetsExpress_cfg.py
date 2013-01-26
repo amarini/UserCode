@@ -26,10 +26,10 @@ process.load("Configuration.Geometry.GeometryIdeal_cff")
 if(isMC):
 	process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
 else:
-	#process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All' # DATA 2012B: multijet parked dataset re-reco with CMSSW_5_3_6 
-	#process.GlobalTag.globaltag = 'FT53_V10A_AN3:All'  # DATA 2012Cv1: multijet parked dataset re-reco with CMSSW_5_3_6
-	#process.GlobalTag.globaltag = 'FT_P_V42C_AN3::All' # DATA 2012Cv2: multijet parked dataset re-reco with CMSSW_5_3_6
-	process.GlobalTag.globaltag = 'FT_P_V42_AN3::All'   # DATA 2012D: multijet parked dataset re-reco with CMSSW_5_3_6
+	process.GlobalTag.globaltag = 'FT_R_53_V18' 	# For 2012A+B+C data reprocessing in 53X.
+	                                              #(Snapshot not valid for runs > 210041 [= 2013-01-15])[2]
+	#process.GlobalTag.globaltag = 'GR_P_V41_AN3' #	>=533X 	To be used for analysis of 2012C v2 prompt reco data. 
+	#process.GlobalTag.globaltag = 'GR_P_V42_AN3' #	>=533X 	To be used for analysis of 2012D prompt reco data
 
 ##--------- good primary vertices ---------------
 process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
