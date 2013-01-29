@@ -26,10 +26,10 @@ process.load("Configuration.Geometry.GeometryIdeal_cff")
 if(isMC):
 	process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
 else:
-	process.GlobalTag.globaltag = 'FT_R_53_V18' 	# For 2012A+B+C data reprocessing in 53X.
+	process.GlobalTag.globaltag = 'FT_R_53_V18::All' 	# For 2012A+B+C data reprocessing in 53X.
 	                                              #(Snapshot not valid for runs > 210041 [= 2013-01-15])[2]
-	#process.GlobalTag.globaltag = 'GR_P_V41_AN3' #	>=533X 	To be used for analysis of 2012C v2 prompt reco data. 
-	#process.GlobalTag.globaltag = 'GR_P_V42_AN3' #	>=533X 	To be used for analysis of 2012D prompt reco data
+	#process.GlobalTag.globaltag = 'GR_P_V41_AN3::All' #	>=533X 	To be used for analysis of 2012C v2 prompt reco data. 
+	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All' #	>=533X 	To be used for analysis of 2012D prompt reco data
 
 ##--------- good primary vertices ---------------
 process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
@@ -54,6 +54,7 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 100
 # ---- maximum number of events to run over -----------------------------
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+#process.maxLuminosityBlocks = cms.untracked.PSet(input = cms.untracked.int32(1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
