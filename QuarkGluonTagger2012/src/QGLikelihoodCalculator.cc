@@ -7,7 +7,7 @@
 using namespace std;
 
 //--------- Constructor ----------------------------------------------------------------------------------------
-QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
+QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName, bool chs ) {
 
   //map<string,JetCorrectorParameters*> JCP;
   //map<string,SimpleJetCorrector*> SJC;
@@ -24,12 +24,16 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName ) {
 	
 	for(vector<string>::iterator iStr=names.begin();iStr!=names.end();iStr++){
 		//string path=edm::FileInPath( (dirName+ (*iStr)+"Jet0.txt").c_str() ).fullPath();
-		string path= (dirName+ (*iStr)+"Jet0.txt");
+		string path= dirName+ (*iStr)+"Jet0";
+            if( chs ) path += "_CHS";
+            path += ".txt";
 		JCP[(*iStr)+".quark"] = new JetCorrectorParameters(path,"quark");
 		JCP[(*iStr)+".gluon"] = new JetCorrectorParameters(path,"gluon");
 		
 		//path=edm::FileInPath( (dirName+ (*iStr)+"Jet0_F.txt").c_str() ).fullPath();
-		path=(dirName+ (*iStr)+"Jet0_F.txt");
+		path=dirName+ (*iStr)+"Jet0";
+            if( chs ) path += "_CHS";
+            path += "_F.txt";
 		JCP[(*iStr)+".F.quark"] = new JetCorrectorParameters(path,"quark");
 		JCP[(*iStr)+".F.gluon"] = new JetCorrectorParameters(path,"gluon");
 	}

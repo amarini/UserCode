@@ -31,9 +31,10 @@ QuarkGluonTagger2012::QuarkGluonTagger2012(const edm::ParameterSet& iConfig)
         jecService_ = iConfig.getParameter<std::string>   ("jec");
 	isPatJet_ = iConfig.existsAs<bool>("isPatJet") ? iConfig.getParameter<bool>("isPatJet") : false ; 
 
+        bool isCHS = (src_.label())=="ak5PFNoPUJets";
        
         produces<edm::ValueMap<float> >().setBranchAlias("qg");
-        qglikeli_ = new QGLikelihoodCalculator();
+        qglikeli_ = new QGLikelihoodCalculator("", isCHS);
 	debug=0;
 }
 
