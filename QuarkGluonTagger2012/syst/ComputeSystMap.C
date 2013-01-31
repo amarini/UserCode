@@ -1,0 +1,144 @@
+
+
+#include "TTree.h"
+#include "TFile.h"
+#include "TH1F.h"
+#include "TCut.h"
+#include "TEventList.h"
+
+#include <string>
+#include <cstdio>
+
+#define MAXP 10
+
+class ComputeSystMap
+{
+
+public:
+	ComputeSystMap();
+	~ComputeSystMap();
+	void InitHisto(int nBins,float xmin,float xmax);
+	void SetTree(TTree *T){t=T;};
+	int FillHisto(int type, const char *varName="QGL2012");//0 data; 1 mc
+	void SetSelection(const char *selection);
+	void ScaleMCtoData();
+	void SetOverFlow(int i=1){overflow=i;return;}
+	int GetOverFlow(){return overflow;}
+	void SetNpars(int i=1){if(i<=MAXP)nPar=i;else {fprintf(stderr,"Parameters set to %d",MAXP);nPar=MAXP;}return;}
+	int GetNpars(){return nPar;}
+	void SetActivePar(int i=1){if(i>=MAXP){fprintf(stderr,"Nothing can be done for Par %d",i);return ;};active[i]=1;return ;}
+	void UnsetActivePar(int i=1){if(i>=MAXP){fprintf(stderr,"Nothing can be done for Par %d",i);}else active[i]=0; return; }
+	void MinimizePars(int nCycle=4,int depth=8,float delta=0.1,const char *varName="QGL2012");
+	void Print();
+protected:
+	TH1F* h_data;
+	TH1F* h_mc;
+	int overflow;
+	int nPar;
+	int nBins_;float xmin_;float xmax_;
+	double pars[MAXP];
+	short active[MAXP]; //char = 1byte, short 2, int 4, long 4, float 4, double 8;
+	TEventList *elist;
+	TTree *t;
+
+};
+
+ComputeSystMap::ComputeSystMap() 
+	{
+	h_data=NULL;
+	h_mc=NULL;
+	overflow=0;
+	elist=NULL;
+	for(int i=0;i<MAXP;i++) active[i]=0;
+	for(int i=0;i<MAXP;i++) pars[i]=0;
+	}
+ComputeSystMap::~ComputeSystMap()
+	{
+	if(h_data!=NULL) delete h_data;
+	if(h_mc!=NULL) delete h_mc;
+	}
+void ComputeSystMap::InitHisto(int nBins,float xmin, float xmax){
+	nBins_=nBins;
+	xmin_=xmin;
+	xmax_=xmax;
+	if(h_data!=NULL) delete h_data;
+	if(h_mc!=NULL) delete h_mc;
+	h_data=new TH1F("h_data","Data;L;events",nBins,xmin,xmax);
+	h_mc=new TH1F("h_mc","MC;L;events",nBins,xmin,xmax);
+	
+	h_data->Sumw2();
+	h_mc->Sumw2();
+	return;
+}
+
+void ComputeSystMap::SetSelection(const char *selection)
+	{
+	elist=new TEventList("elist","elist");
+	t->Draw(">>elist",selection);
+	t->SetEventList(elist);
+	}
+int ComputeSystMap::FillHisto(int type,const char *varName)//0 data; 1 mc
+	{
+	using namespace std;
+	TH1F *h=NULL;
+	if(type==0) h=h_data;
+	if(type>0) h=h_mc;
+
+	if(h==NULL)return -1;
+	if(t==NULL)return -1;
+	
+	string target;
+	string var;
+	if(type==0) target="h_data";
+	if(type>0) target="h_mc";
+		
+	if(type==0) var=varName;
+	if(type>0){var=varName;
+		if(nPar>0 && active[0]) { var += Form("+( %f )",pars[0]);}
+		if(nPar>1 && active[1]) { var += Form("+( %f*(%s-0.5) )",pars[1],varName);} //Not TMath -> Speed
+		for(int i=2;i<nPar;i++) if(active[i]) { var += Form("+( %f*TMath::Power( %s-0.5,%d) )",pars[i],varName,i);}
+		}
+
+	//no need of selection: EVENT LIST
+	t->Draw(   Form("%s>>%s",var.c_str(),target.c_str()),"" );
+		
+	return 0;
+	}
+void ComputeSystMap::ScaleMCtoData(){
+	if(!overflow)
+		h_mc->Scale(h_data->Integral()/h_mc->Integral());
+	else 
+		h_mc->Scale(h_data->Integral(0,h_data->GetNbinsX()+1)/h_mc->Integral(0, h_mc->GetNbinsX()+1) );
+	}
+void ComputeSystMap::MinimizePars(int nCycle/*4*/,int depth/*8*/,float delta/*=0.2*/,const char *varName/*="QGL2012"*/){
+for(int c=0;c<nCycle;c++){
+	float d= delta*2;	
+	
+	const char opt[]="CHI2 WW";
+	FillHisto(0,varName);	
+	float min=h_data->Chi2Test(h_mc,opt);
+	for(int i=0;i<nPar;i++)
+	{
+	if(!active[i])continue;
+	float parmin=pars[i];
+	for(int k=0;k<depth;k++)
+		{
+		d*=0.5;	
+		bool change=0;
+		pars[i]+=d;	
+		FillHisto(0,varName);if(min>h_data->Chi2Test(h_mc,opt) ){min=h_data->Chi2Test(h_mc,opt);parmin=pars[i]; change=1;}
+		else{pars[i]-=2*d;
+			FillHisto(0,varName);if(min>h_data->Chi2Test(h_mc,opt) ){min=h_data->Chi2Test(h_mc,opt);parmin=pars[i];change=1;}
+    		     }
+
+		if(change)k--;
+		else pars[i]=parmin;
+		}
+	}
+	}
+}
+void ComputeSystMap::Print()
+{
+for(int i=0;i<nPar;i++){if(!active[i])continue;printf("par %d: %f\n",i,pars[i]);}	
+return;
+}
