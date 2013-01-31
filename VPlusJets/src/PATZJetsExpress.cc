@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.33 2013/01/24 18:47:25 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.34 2013/01/26 12:37:40 sandro Exp $
 //
 //
 
@@ -860,6 +860,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   int nJets_lepVeto=0;
   int nJets_phoVeto=0;
 
+  int nJets_lepVetoGEN=0;
+  int nJets_phoVetoGEN=0;
+
 
   // ----  MC truth block -----------------------------------------------
   vector<GENPARTICLE>      myGenLeptons;
@@ -1010,6 +1013,15 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         if (l >= 2) continue; 
         if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi()) < mJetLepIsoR) {
           isVETO |= (1<<l);
+	  if (i_genjet->pt()>=mMinJetPt && (fabs(i_genjet->eta()) <= mMaxJetEta)){
+	    //cout<<"DR is in GEN, lep "<<deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi())<<"/"<<l<<" pt gen/lep "<<i_genjet->pt()<<"/"<<myGenLeptons[l].p4.Pt()<<" ID "<<myGenLeptons[l].pdgId<<"/"<<i_genjet->energy()<<"/"<<i_genjet->emEnergy()<<"/"<<i_genjet->hadEnergy()<<endl;
+	    //if(abs(myGenLeptons[l].pdgId)==13){
+	    //for(unsigned int i=0;i<i_genjet->getGenConstituents().size();i++){
+	    //cout<<"particle "<<i<<" ID/pt "<<i_genjet->getGenConstituents()[i]->pdgId()<<"/"<<i_genjet->getGenConstituents()[i]->pt()<<endl;
+	    //}
+	    //}
+	    nJets_lepVetoGEN+=1;
+	  }
           continue;
         }
       }
@@ -1020,6 +1032,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       if (myGenPhotons.size()>0) {
        if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenPhotons[0].p4.Eta(),myGenPhotons[0].p4.Phi()) < mJetPhoIsoR) { 
 	  isVETO|= (1<<2);
+	  if (i_genjet->pt()>=mMinJetPt && (fabs(i_genjet->eta()) <= mMaxJetEta)){
+	    nJets_phoVetoGEN+=1;
+	  }
           continue;
         }
       }
@@ -1923,9 +1938,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   }else{
     nJets_phoVeto=1;
   }
-  //if(nJets_phoVeto>1 || nJets_lepVeto>2){
-  //cout<<"nJets_phoVeto/nJets_lepVeto off "<<nJets_phoVeto<<"/"<<nJets_lepVeto<<endl;
-  //}
+
   // ---- keep only selected events -------------------------------------
   bool selectionRECO = false;
   if(!mOnlyMC){
@@ -1936,8 +1949,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   bool selection(selectionRECO);
   bool selectionGEN(false);
   if (!isRealData_) {
-    selectionGEN = ((nLeptonsGEN_ > 1) && (nJetsGEN_ >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
-    selectionGEN = selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
+    selectionGEN = ((nLeptonsGEN_ > 1) && ((nJetsGEN_ - nJets_lepVetoGEN) >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
+    selectionGEN = selectionGEN || (((nPhotonsGEN_ -nJets_phoVetoGEN)> 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
     selection +=  selectionGEN;
   }
   if (selection) {
@@ -2429,6 +2442,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("lepChId"          ,"vector<int>"       ,&lepChId_);
   myTree_->Branch("lepId"            ,"vector<int>"       ,&lepId_);
   // ---- jet variables -------------------------------------------------
+  myTree_->Branch("jetVeto"          ,"vector<int>"     ,&jetVeto_);
   myTree_->Branch("jetPt"            ,"vector<float>"     ,&jetPt_);
   myTree_->Branch("jetEta"           ,"vector<float>"     ,&jetEta_);
   myTree_->Branch("jetPhi"           ,"vector<float>"     ,&jetPhi_);
