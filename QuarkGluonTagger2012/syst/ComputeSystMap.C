@@ -5,6 +5,9 @@
 #include "TH1F.h"
 #include "TCut.h"
 #include "TEventList.h"
+#include "TROOT.h"
+#include "TStyle.h"
+#include "TDirectory.h"
 
 #include <string>
 #include <cstdio>
@@ -30,6 +33,11 @@ public:
 	void UnsetActivePar(int i=1){if(i>=MAXP){fprintf(stderr,"Nothing can be done for Par %d",i);}else active[i]=0; return; }
 	void MinimizePars(int nCycle=4,int depth=8,float delta=0.1,const char *varName="QGL2012");
 	void Print();
+	//--- Access to sturctures
+	TH1F* GetHistData(){return h_data;}
+	TH1F* GetHistMC(){return h_mc;}
+	TTree* GetTree(){return t;}
+	TEventList* GetEventList(){return elist;}
 protected:
 	TH1F* h_data;
 	TH1F* h_mc;
@@ -39,6 +47,7 @@ protected:
 	double pars[MAXP];
 	short active[MAXP]; //char = 1byte, short 2, int 4, long 4, float 4, double 8;
 	TEventList *elist;
+	std::string Sel;
 	TTree *t;
 
 };
@@ -73,9 +82,11 @@ void ComputeSystMap::InitHisto(int nBins,float xmin, float xmax){
 
 void ComputeSystMap::SetSelection(const char *selection)
 	{
-	elist=new TEventList("elist","elist");
+//	elist=new TEventList("elist","elist");
 	t->Draw(">>elist",selection);
+	elist=(TEventList*)gDirectory->Get("elist");
 	t->SetEventList(elist);
+	Sel=selection;
 	}
 int ComputeSystMap::FillHisto(int type,const char *varName)//0 data; 1 mc
 	{
@@ -100,7 +111,9 @@ int ComputeSystMap::FillHisto(int type,const char *varName)//0 data; 1 mc
 		}
 
 	//no need of selection: EVENT LIST
-	t->Draw(   Form("%s>>%s",var.c_str(),target.c_str()),"" );
+	fprintf(stderr,"DEBUG: Going to Draw: ---%s--- with selection ---%s---\n",Form("%s>>%s",var.c_str(),target.c_str()),Sel.c_str() );
+	int R=t->Draw(   Form("%s>>%s",var.c_str(),target.c_str()),Sel.c_str() );
+	fprintf(stderr,"DEBUG: %d entries",R);
 		
 	return 0;
 	}
