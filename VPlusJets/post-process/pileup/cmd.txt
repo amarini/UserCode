@@ -1,0 +1,1 @@
+pileupCalc.py -i json/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt --inputLumiJSON pileup_JSON_DCSONLY_190389-208686_corr.txt --calcMode true --minBiasXsec 69400 --maxPileupBin 100 --numPileupBins 100  MyPileup.root
