@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.34 2013/01/26 12:37:40 sandro Exp $
+// $Id: PATZJetsExpress.cc,v 1.35 2013/01/31 17:43:52 webermat Exp $
 //
 //
 
@@ -445,7 +445,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- number of good reconstructed vertices ---------------------
       int   nVtx_;
       // ---- number of simulated pu interactions -----------------------
-      int   puINT_,puOOT_;
+      int   puINT_,puOOT_,puTrueINT_,puTrueOOT_;
       // ---- MC weight
       float mcWeight_;
 
@@ -878,11 +878,18 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       vector<PileupSummaryInfo>::const_iterator PUI;
       puOOT_ = 0;
       puINT_ = 0;
+      puTrueINT_= 0;
+      puTrueOOT_= 0;
       for(PUI = pileupInfo->begin(); PUI != pileupInfo->end(); ++PUI) {
-	if (PUI->getBunchCrossing() == 0)
+	if (PUI->getBunchCrossing() == 0){
 	  puINT_ += PUI->getPU_NumInteractions();     
-	else
+      	  puTrueINT_+=PUI->getTrueNumInteractions();
+	  }
+	else{
 	  puOOT_ += PUI->getPU_NumInteractions();
+      	  puTrueOOT_+=PUI->getTrueNumInteractions();
+	  }
+
       }// PUI loop
       mcPU_->Fill(puINT_);
     }
@@ -2465,6 +2472,8 @@ void PATZJetsExpress::buildTree()
   // ---- gen variables ----------------------------------------------
   myTree_->Branch("puINT"            ,&puINT_             ,"puINT/I");
   myTree_->Branch("puOOT"            ,&puOOT_             ,"puOOT/I");
+  myTree_->Branch("puTrueINT"        ,&puTrueINT_         ,"puTrueINT/I");
+  myTree_->Branch("puTrueOOT"        ,&puTrueOOT_         ,"puTrueOOT/I");
   myTree_->Branch("nLeptonsGEN"      ,&nLeptonsGEN_       ,"nLeptonsGEN/I");
   myTree_->Branch("nJetsGEN"         ,&nJetsGEN_          ,"nJetsGEN/I");
   myTree_->Branch("llMGEN"           ,&llMGEN_            ,"llMGEN/F");
@@ -2613,6 +2622,8 @@ void PATZJetsExpress::clearTree()
   vtxNdof_           ->clear();
   puINT_             = -999;
   puOOT_             = -999;
+  puTrueINT_             = -999;
+  puTrueOOT_             = -999;
   isRealData_        = -999;
   nLeptonsGEN_       = -999;
   nJetsGEN_          = -999;
