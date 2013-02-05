@@ -56,12 +56,20 @@ protected:
 	TTree *t_mc;
 	void PrintCount();
 	int iPrint;
+	int PrintedVars;
 
 };
 
 ComputeSystMap::ComputeSystMap() 
 	{
+
+	gROOT->SetStyle("Plain");
+        gStyle->SetPalette(1);
+        gStyle->SetOptStat(0);
+        gStyle->SetOptTitle(0);	
+
 	iPrint=0;
+	PrintedVars=0;
 	h_data=NULL;
 	h_mc=NULL;
 	overflow=0;
@@ -80,8 +88,8 @@ void ComputeSystMap::InitHisto(int nBins,float xmin, float xmax){
 	xmax_=xmax;
 	if(h_data!=NULL) delete h_data;
 	if(h_mc!=NULL) delete h_mc;
-	h_data=new TH1F("h_data","Data;L;events",nBins,xmin,xmax);
-	h_mc=new TH1F("h_mc","MC;L;events",nBins,xmin,xmax);
+	h_data=new TH1F("h_data","Data;L;events",nBins_,xmin_,xmax_);
+	h_mc=new TH1F("h_mc","MC;L;events",nBins_,xmin_,xmax_);
 	
 	h_data->Sumw2();
 	h_mc->Sumw2();
@@ -114,18 +122,35 @@ int ComputeSystMap::FillHisto(int type,const char *varName)//0 data; 1 mc
 	string var;
 	if(type==0) target="h_data";
 	if(type>0) target="h_mc";
+	
+	target+=Form("(%d,%f,%f)",nBins_,xmin_,xmax_);
 
 
 	if(type==0) var=varName;
 	if(type>0){var=varName;
 		if(nPar>0 && active[0]) { var += Form("+( %f )",pars[0]);}
 		if(nPar>1 && active[1]) { var += Form("+( %f*(%s-0.5) )",pars[1],varName);} //Not TMath -> Speed
-		for(int i=2;i<nPar;i++) if(active[i]) { var += Form("+( %f*TMath::Power( %s-0.5,%d) )",pars[i],varName,i);}
+		if(nPar>2 && active[2]) { var += Form("+( %f*TMath::Power((%s-0.5),2) )",pars[2],varName);} //Not TMath -> Speed
+		if(nPar>3 && active[3]) { if(!PrintedVars)printf("PAR 3 MODIFIED\n"); var += Form("+( %f*(TMath::Power((%s-0.5),3) - (%s-0.5)/4.) )",pars[3],varName,varName);} //0 in 0,1. Indepentednt from 1)
+		if(nPar>4 && active[4]) { if(!PrintedVars)printf("PAR 4-5 MODIFIED\n");
+				active[5]=1; 
+				//NOT +
+				var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",pars[4],varName,pars[5]
+				);
+		}
+		//for(int i=4;i<nPar;i++) if(active[i]) { var += Form("+( %f*TMath::Power( %s-0.5,%d) )",pars[i],varName,i);}
 		}
 
+	string sel;
+	if(type==0) sel=Sel;
+	if(type>0){sel=string("PUReWeight*eventWeight*(")+Sel+")";}
 	//no need of selection: EVENT LIST
-	//fprintf(stderr,"DEBUG: Going to Draw: ---%s--- with selection ---%s---\n",Form("%s>>%s",var.c_str(),target.c_str()),Sel.c_str() );
-	int R=t->Draw(   Form("%s>>%s",var.c_str(),target.c_str()),Sel.c_str() ,"E");
+	if(PrintedVars==0 && type>0)
+		{
+		fprintf(stderr,"DEBUG: Going to Draw: ---%s--- with selection ---%s---\n",Form("%s>>%s",var.c_str(),target.c_str()),Sel.c_str() );
+		PrintedVars=1;
+		}
+	int R=t->Draw(   Form("%s>>%s",var.c_str(),target.c_str()),sel.c_str() ,"E");
 	if(type==0)h_data=(TH1F*)gDirectory->Get("h_data");
 	if(type>0)h_mc=(TH1F*)gDirectory->Get("h_mc");
 //	fprintf(stderr,"DEBUG: %d entries\n",R);
@@ -141,7 +166,7 @@ void ComputeSystMap::ScaleMCtoData(){
 void ComputeSystMap::MinimizePars(int nCycle/*4*/,int depth/*8*/,float delta/*=0.2*/,const char *varName/*="QGL2012"*/){
 for(int c=0;c<nCycle;c++){
 	
-	const char opt[]="CHI2 WW";
+	const char opt[]="CHI2 WU";
 	FillHisto(0,varName);	
 	FillHisto(1,varName);	
 	ScaleMCtoData();
@@ -190,6 +215,11 @@ for(int i=0;i<nPar;i++){if(!active[i])continue;printf("par %d: %f\n",i,pars[i]);
 return;
 }
 void ComputeSystMap::DrawHist(){
+	gROOT->SetStyle("Plain");
+        gStyle->SetPalette(1);
+        gStyle->SetOptStat(0);
+        gStyle->SetOptTitle(0);	
+
 	h_mc->SetLineColor(kRed);
 	h_data->SetMarkerStyle(20);
 
