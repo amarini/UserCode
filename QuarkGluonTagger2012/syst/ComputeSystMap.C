@@ -166,7 +166,7 @@ void ComputeSystMap::ScaleMCtoData(){
 void ComputeSystMap::MinimizePars(int nCycle/*4*/,int depth/*8*/,float delta/*=0.2*/,const char *varName/*="QGL2012"*/){
 for(int c=0;c<nCycle;c++){
 	
-	const char opt[]="CHI2 WU";
+	const char opt[]="CHI2 WW";
 	FillHisto(0,varName);	
 	FillHisto(1,varName);	
 	ScaleMCtoData();
