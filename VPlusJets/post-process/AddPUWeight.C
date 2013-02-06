@@ -12,7 +12,8 @@ int AddPUWeight(	const char * FileName="ntuple.root", //File name
 			const char * HistoName="",//histo PU
 			const char* Directory="accepted", //Directory name in the root file 
 			const char* TreeName="events", // Tree Name in the directory Chosen
-			int DeltaPU=0
+			int DeltaPU=0,
+			int TrueDistr=1 // 1 for true 0 for false (observed)
 		   	)
 {
 	//declare a temporary string variable
@@ -37,7 +38,8 @@ int AddPUWeight(	const char * FileName="ntuple.root", //File name
 	double eventWeight;
 	t->SetBranchAddress("eventWeight",&eventWeight);
 	int puINT;
-	t->SetBranchAddress("puINT",&puINT);
+	if(TrueDistr)t->SetBranchAddress("puTrueINT",&puINT);
+	else t->SetBranchAddress("puINT",&puINT);
 	//Getting PU Profile
 	TH1F *PU;
 	if(HistoName[0]=='\0'){
