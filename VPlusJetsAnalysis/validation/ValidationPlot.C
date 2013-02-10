@@ -156,6 +156,14 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	int nJetsVeto=0;
 	for(int iJ=0;iJ<jetVeto->size() && (*jetPt)[iJ]>=JetPtCut;iJ++)if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ) nJetsVeto++;
 	if(debug>1)cout<<"nJetsVeto "<<nJetsVeto<<endl;
+	if(debug>1)cout<<"jetSize Pt "<<jetPt->size()<<" Veto "<<jetVeto->size()<<endl;
+	int jet0=-1,jet1=-1,jet2=-1;
+		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ){jet0=iJ; break;}
+		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet1=iJ; break;}
+		if(nJetsVeto>2)for(int iJ=jet1+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet2=iJ; break;}
+	if( (jet0>=0) && (*jetPt)[jet0]< JetPtCut) jet0=-1;
+	if( (jet1>=0) && (*jetPt)[jet1]< JetPtCut) jet1=-1;
+	if( (jet2>=0) && (*jetPt)[jet2]< JetPtCut) jet2=-1;
 
 	double weight=1;
 	if(type>0)weight=PUWeight;
@@ -181,11 +189,6 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	histos["lep0Phi"]	->Fill((*lepPhi)[0],weight);
 	histos["lep1Phi"]	->Fill((*lepPhi)[1],weight);
 
-	if(debug>1)cout<<"jetSize Pt "<<jetPt->size()<<" Veto "<<jetVeto->size()<<endl;
-	int jet0=-1,jet1=-1,jet2=-1;
-		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ){jet0=iJ; break;}
-		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet1=iJ; break;}
-		if(nJetsVeto>2)for(int iJ=jet1+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet2=iJ; break;}
 	if(debug>1)cout<<"Jet 0 Idx "<<jet0<<"Jet 1 Idx "<<jet1<<endl;
 
 	if(jet0>=0)histos["jet0Pt"]	->Fill((*jetPt)[jet0],weight);
@@ -205,8 +208,8 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if(jet1>=0) j1.SetPtEtaPhiE((*jetPt)[jet1],(*jetEta)[jet1],(*jetPhi)[jet1],(*jetE)[jet1]);
 	if(jet2>=0) j2.SetPtEtaPhiE((*jetPt)[jet2],(*jetEta)[jet2],(*jetPhi)[jet2],(*jetE)[jet2]);
 
-	if(jet0>=0){histos["jetLLDPhi0"]->Fill(j0.DeltaPhi(ll),weight);}
-	if(jet2>=0){histos["Sum3j"]->Fill(j0.DeltaPhi(j1)+j1.DeltaPhi(j2)+j0.DeltaPhi(j2),weight);}
+	if(jet0>=0){histos["jetLLDPhi0"]->Fill(fabs(j0.DeltaPhi(ll)),weight);}
+	if(jet2>=0){histos["Sum3j"]->Fill( fabs(j0.DeltaPhi(j1))+fabs(j1.DeltaPhi(j2))+fabs(j0.DeltaPhi(j2)),weight);}
 
 	}
 	jetVeto->clear();
