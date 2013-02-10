@@ -119,6 +119,8 @@ vector<string> histoName;
 	histoName.push_back("jet1Phi");
 	histoName.push_back("jet1QGL");
 	histoName.push_back("jet1Btag");
+	histoName.push_back("jetLLDPhi0");
+	histoName.push_back("Sum3j");
 
 for(int i=0;i<histoName.size();i++)
 	{
