@@ -269,7 +269,7 @@ map<string,TH1F*> histos;
 
 if(debug>0)cout<<"Validation Plot MC"<<endl;
 TFile *fOut=TFile::Open(  Form("%s%s",dirOut,fileOut),"RECREATE");
-TFile *fIn=TFile::Open(fileIn); //TTree *t=(TTree*)fIn->Get("accepted/events");
+//TFile *fIn=TFile::Open(fileIn); //TTree *t=(TTree*)fIn->Get("accepted/events");
 TChain *tIn=new TChain("accepted/events");
 Int_t nFiles=tIn->Add(fileIn);
 cout<<"Added "<< nFiles <<" files to the chain"<<endl;
