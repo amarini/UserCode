@@ -147,9 +147,9 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 			j.SetPtEtaPhiE( (*jetPt)[k],(*jetEta)[k],(*jetPhi)[k],(*jetE)[k]);
 		float R1=l1.DeltaR(j);
 		float R2=l2.DeltaR(j);
+		(*jetVeto)[k]=0;
 		if(R1<JetDRCut) (*jetVeto)[k]=1;
 		if(R2<JetDRCut) (*jetVeto)[k]|=2;
-		else (*jetVeto)[k]=0;
 
 		}
 		
