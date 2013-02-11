@@ -1,14 +1,15 @@
 #include "TMath.h"
 #include <string>
 
-inline float function(int x, int a ,int b)
+inline float function(float x, float a ,float b)
 {
 //TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 
 using namespace TMath;
-return ATan( a*Tan(Pi()*x-Pi()/2.0) + b)/Pi() +0.5;
+//return ATan( a*Tan(Pi()*x-Pi()/2.0) + b)/Pi() +0.5;
+return (ATan( a*Tan( (Pi()*x)-(Pi()/2.0)) + b)/Pi()) + 0.5;
 }
 
-float Syst(const char *tagger,float pt, float rho, float eta )//"QGL","MLP"
+float Syst(const char *tagger,float pt, float rho, float eta,float value )//"QGL","MLP"
 {
 using namespace std;
 int PtBin=-999;
@@ -70,4 +71,6 @@ case 2213: a= 1.00; b= 0.04;  break;
 case 2223: a= 1.06; b= 0.1;  break;
 default: return -1;
 }
+
+return function(value, a ,b);
 }
