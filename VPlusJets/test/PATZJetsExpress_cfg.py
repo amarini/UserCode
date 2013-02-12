@@ -66,16 +66,21 @@ process.source = cms.Source("PoolSource",
 #'/store/data/Run2012C/DoubleMu/AOD/24Aug2012-v1/00000/FE2746F7-5AEF-E111-8B40-E0CB4E29C4E5.root'
     )
 )
-## 
-process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger",
-          # jets    = cms.InputTag("ak5PFJets"),
-          # jets    = cms.InputTag('extendedPatJets'),
-          jets     = cms.InputTag('jetExtender','extendedPatJets'),
-          rho      = cms.InputTag('kt6PFJets','rho'),
-          jec      = cms.string('ak5PFL1FastL2L3'),
-          isPatJet = cms.bool(True),
-          # jec     = cms.string('ak5PFL1FastL2L3Residual'),
-)
+###########################QGL TAGGER 2012
+process.kt6PFJetsForIso = process.kt6PFJets.clone( rParam = 0.6, doRhoFastjet = True )
+process.kt6PFJetsForIso.Rho_EtaMax = cms.double(2.5)
+  process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger2012",
+            jets     = cms.InputTag("ak5PFJets"),
+            rho      = cms.InputTag('kt6PFJetsForIso','rho'),
+            jec      = cms.string('ak5PFL1FastL2L3'),
+  )
+##########################QGL TAGGER 2011
+#process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger",
+#          jets     = cms.InputTag('jetExtender','extendedPatJets'),
+#          rho      = cms.InputTag('kt6PFJets','rho'),
+#          jec      = cms.string('ak5PFL1FastL2L3'),
+#          isPatJet = cms.bool(True),
+#)
 
 
 ##--------- remove MC matching -----------------
