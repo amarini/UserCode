@@ -8,8 +8,9 @@ cmsenv
 cvs co -r V00-02d -d PFIsolation/SuperClusterFootprintRemoval UserCode/peruzzi/PFIsolation/SuperClusterFootprintRemoval
 	#cvs co -d pandolf/QuarkGluonTagger UserCode/pandolf/QuarkGluonTagger
 	#2012 TAGGER
-cvs co -r am2013-02-12 -d QuarkGluonAnalysis/QuarkGluonTagger2012 UserCode/amarini/QuarkGluonTagger2012
-cvs up -r 1.1 QuarkGluonAnalysis/QuarkGluonTagger2012/BuildFile.xml
+	#cvs co -r am2013-02-12 -d QuarkGluonAnalysis/QuarkGluonTagger2012 UserCode/amarini/QuarkGluonTagger2012
+	 cvs co -r v1-1-2 -d QuarkGluonTagger/EightTeV UserCode/tomc/QuarkGluonTagger/EightTeV
+
 cvs co -d amarini/VPlusJets UserCode/amarini/VPlusJets
 cvs co -r V00-00-21 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
 

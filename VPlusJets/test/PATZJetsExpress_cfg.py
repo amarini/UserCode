@@ -68,22 +68,29 @@ process.source = cms.Source("PoolSource",
     )
 )
 ###########################QGL TAGGER 2012
-process.kt6PFJetsForIso = process.kt6PFJets.clone( rParam = 0.6, doRhoFastjet = True )
-process.kt6PFJetsForIso.Rho_EtaMax = cms.double(2.5)
-process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger2012",
-            jets     = cms.InputTag('jetExtender','extendedPatJets'),
-            rho      = cms.InputTag('kt6PFJetsForIso','rho'),
-            jec      = cms.string('ak5PFL1FastL2L3'),
-	    isPatJet = cms.bool(True)
-  )
-##########################QGL TAGGER 2011
-#process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger",
-#          jets     = cms.InputTag('jetExtender','extendedPatJets'),
-#          rho      = cms.InputTag('kt6PFJets','rho'),
-#          jec      = cms.string('ak5PFL1FastL2L3'),
-#          isPatJet = cms.bool(True),
-#)
+#process.kt6PFJetsForIso = process.kt6PFJets.clone( rParam = 0.6, doRhoFastjet = True )
+#process.kt6PFJetsForIso.Rho_EtaMax = cms.double(2.5)
+#process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger2012",
+#            jets     = cms.InputTag('jetExtender','extendedPatJets'),
+#            rho      = cms.InputTag('kt6PFJetsForIso','rho'),
+#            jec      = cms.string('ak5PFL1FastL2L3'),
+#	    isPatJet = cms.bool(True)
+#  )
 
+process.load('QuarkGluonTagger.EightTeV.QGTagger_RecoJets_cff') 
+process.QGTagger.srcJets = cms.InputTag('jetExtender','extendedPatJets')
+#process.QGTagger.jecService     = cms.string('') #useless for pat or corrected jets
+process.QGTagger.dataDir        = cms.untracked.string("QuarkGluonTagger/EightTeV/data/")
+process.QGTagger.isPatJet	= cms.untracked.bool(True)
+#process.qglAK5PF = cms.EDProducer("QuarkGluonTagger",
+#  jets           = cms.InputTag('jetExtender','extendedPatJets'),
+#  srcRho         = cms.InputTag('kt6PFJets','rho'),
+#  srcRhoIso      = cms.InputTag('kt6PFJetsForIso','rho'),
+#  jecService     = cms.string(""), #useless for pat
+#  dataDir        = cms.string("QuarkGluonTagger/EightTeV/data/"),
+#  useCHS         = cms.bool(False),
+#  isPatJet       = cms.bool(True)
+#)
 
 ##--------- remove MC matching -----------------
 if not isMC:
@@ -480,7 +487,7 @@ process.p = cms.Path(process.pfParticleSelectionSequence
 
 if(isMC):
 	process.p += process.genParticlesForJets
-process.tail = cms.Sequence(process.patDefaultSequence + process.jetExtender +process.kt6PFJetsForIso  +process.qglAK5PF + process.accepted)
+process.tail = cms.Sequence(process.patDefaultSequence + process.jetExtender + process.QuarkGluonTagger + process.accepted)
 
 process.p += process.tail
 

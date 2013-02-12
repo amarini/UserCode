@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.35 2013/01/31 17:43:52 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.36 2013/02/04 15:02:52 amarini Exp $
 //
 //
 
@@ -2245,7 +2245,9 @@ for(int i=0; i<jet->nConstituents();i++){
 	}
 
 Handle<ValueMap<float> > qglMap;
-   iEvent.getByLabel("qglAK5PF",qglMap);
+Handle<ValueMap<float> > qglMapMLP;
+   iEvent.getByLabel("QGTagger","qgLikelihood",qglMap);
+   iEvent.getByLabel("QGTagger","qgMLP",qglMapMLP);
 
    Handle<edm::View<pat::Jet> > pfjetsakt5;
    iEvent.getByLabel(mJetsName, pfjetsakt5);
@@ -2255,12 +2257,13 @@ if(jet->genParton() != NULL)Vars->push_back(  jet->genParton()->pdgId() ); 	//0 
 else Vars->push_back( 0 );
 //Vars->push_back( jet->partonFlavour () );
 Vars->push_back(  (*qglMap)[jetRef]  ); 		//1 QGL
+Vars->push_back(  (*qglMapMLP)[jetRef]);
 Vars->push_back(	jet->userFloat("ptD_QC") ); 	//6
 Vars->push_back(	jet->userFloat("axis1_QC") ); 	//7
 Vars->push_back(	jet->userFloat("axis2_QC") ); 	//8
 Vars->push_back(	jet->userFloat("nNeutral_ptCut") ) ; 	//9
 Vars->push_back(	jet->userFloat("nChg_QC") ) ; 	//9
-Vars->push_back( -99);
+Vars->push_back(-99);
 return Vars;
 }
 
