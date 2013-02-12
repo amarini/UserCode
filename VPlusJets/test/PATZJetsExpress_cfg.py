@@ -1,6 +1,6 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 
-isMC=True
+isMC=False
 
 process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('RecoJets.Configuration.RecoPFJets_cff')
@@ -58,7 +58,8 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-'file:/afs/cern.ch/userw/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+#'file:/afs/cern.ch/userw/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+'file:pickevents.root'
 #'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
@@ -69,10 +70,11 @@ process.source = cms.Source("PoolSource",
 ###########################QGL TAGGER 2012
 process.kt6PFJetsForIso = process.kt6PFJets.clone( rParam = 0.6, doRhoFastjet = True )
 process.kt6PFJetsForIso.Rho_EtaMax = cms.double(2.5)
-  process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger2012",
-            jets     = cms.InputTag("ak5PFJets"),
+process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger2012",
+            jets     = cms.InputTag('jetExtender','extendedPatJets'),
             rho      = cms.InputTag('kt6PFJetsForIso','rho'),
             jec      = cms.string('ak5PFL1FastL2L3'),
+	    isPatJet = cms.bool(True)
   )
 ##########################QGL TAGGER 2011
 #process.qglAK5PF   = cms.EDProducer("QuarkGluonTagger",
@@ -478,7 +480,7 @@ process.p = cms.Path(process.pfParticleSelectionSequence
 
 if(isMC):
 	process.p += process.genParticlesForJets
-process.tail = cms.Sequence(process.patDefaultSequence + process.jetExtender + process.qglAK5PF + process.accepted)
+process.tail = cms.Sequence(process.patDefaultSequence + process.jetExtender +process.kt6PFJetsForIso  +process.qglAK5PF + process.accepted)
 
 process.p += process.tail
 
