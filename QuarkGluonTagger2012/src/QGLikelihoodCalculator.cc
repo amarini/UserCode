@@ -27,6 +27,7 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName, bool
 		string path= dirName+ (*iStr)+"Jet0";
             if( chs ) path += "_CHS";
             path += ".txt";
+	    path=edm::FileInPath(path).fullPath();
 		JCP[(*iStr)+".quark"] = new JetCorrectorParameters(path,"quark");
 		JCP[(*iStr)+".gluon"] = new JetCorrectorParameters(path,"gluon");
 		
@@ -34,6 +35,7 @@ QGLikelihoodCalculator::QGLikelihoodCalculator( const std::string& dirName, bool
 		path=dirName+ (*iStr)+"Jet0";
             if( chs ) path += "_CHS";
             path += "_F.txt";
+	    path=edm::FileInPath(path).fullPath();
 		JCP[(*iStr)+".F.quark"] = new JetCorrectorParameters(path,"quark");
 		JCP[(*iStr)+".F.gluon"] = new JetCorrectorParameters(path,"gluon");
 	}

@@ -34,7 +34,7 @@ QuarkGluonTagger2012::QuarkGluonTagger2012(const edm::ParameterSet& iConfig)
         bool isCHS = (src_.label())=="ak5PFNoPUJets";
        
         produces<edm::ValueMap<float> >().setBranchAlias("qg");
-        qglikeli_ = new QGLikelihoodCalculator("", isCHS);
+        qglikeli_ = new QGLikelihoodCalculator("QuarkGluonAnalysis/QuarkGluonTagger2012/data/", isCHS);
 	debug=0;
 }
 
