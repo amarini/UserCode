@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.36 2013/02/04 15:02:52 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.37 2013/02/12 14:37:02 amarini Exp $
 //
 //
 
@@ -2553,6 +2553,7 @@ void PATZJetsExpress::clearTree()
   photonPt_          ->clear();
   photonEta_         ->clear();
   photonPhi_         ->clear();
+  photonBit_         ->clear();
   photonPassConversionVeto_ ->clear();
   photonPfIsoChargedHad_   ->clear();
   photonPfIsoNeutralHad_   ->clear();
@@ -2576,9 +2577,18 @@ void PATZJetsExpress::clearTree()
   photonid_e25_               ->clear();
   photonid_sceta_                 ->clear();
   photonid_ESEffSigmaRR_          ->clear();
-  // chiara
-  //  photonID_          ->clear();
-  photonBit_         ->clear();
+  photonid_hadronicOverEm_        ->clear();
+  photonid_hadronicOverEm2012_    ->clear();
+  photonhcalTowerSumEtConeDR04_   ->clear();
+  photonecalRecHitSumEtConeDR04_  ->clear();
+  photonnTrkSolidConeDR04_        ->clear();
+  photontrkSumPtSolidConeDR04_    ->clear();
+  photonnTrkHollowConeDR04_       ->clear();
+  photontrkSumPtHollowConeDR04_   ->clear();
+  photonIsoFPRCharged_            ->clear();
+  photonIsoFPRNeutral_            ->clear();
+  photonIsoFPRPhoton_             ->clear();
+
 
   isTriggered_       =    0; // please keep this 0
   isTriggerMatchedFamily1_      =    0;
