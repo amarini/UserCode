@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.37 2013/02/12 14:37:02 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.38 2013/02/15 15:57:54 webermat Exp $
 //
 //
 
@@ -249,9 +249,11 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       class GENJET : public TLorentzVector {
          public:
             GENJET(float x=0., float y=0., float z=0., float t=0.) : TLorentzVector( x, y, z, t ){veto=0;}
-            GENJET(TLorentzVector &v):TLorentzVector(v){veto=0;}
+            GENJET(TLorentzVector &v):TLorentzVector(v){veto=0;id=0;nparton=0;}
             virtual ~GENJET(){}
             int veto;
+	    int id;
+	    int nparton;
       };
 
       vector<float> *ComputeQGVariables(edm::View<pat::Jet>::const_iterator & jet,const Event& iEvent,int index);
@@ -418,6 +420,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       int VBPartonDM_; // decay mode
       // ---- jet kinematics --------------------------------------------
       vector<float> *jetPt_,*jetEta_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetPhiGEN_,*jetEGEN_;
+      vector<int> *jetIdGEN_,*jetNpartonsGEN_;
       vector<int> *jetVetoGEN_;
       // ---- other jet properties --------------------------------------
       vector<float> *jetBeta_,*jetBtag_,*jetTagInfoNVtx_,*jetTagInfoNTracks_,*jetTagInfoVtxMass_,*jetArea_,*jetJEC_,*jetUNC_,*jetQGL_,*jetRMS_;
@@ -1052,6 +1055,23 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       if ((i_genjet->pt() < mMinJetPt) || (fabs(i_genjet->eta()) > mMaxJetEta)) continue;
       GENJET aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
 	aGenJet.veto=isVETO;
+		//---- gen jet matching
+		float DR_parton=0.5;
+		float pt_parton=0;
+		for(i_gen = gen->begin(); i_gen != gen->end(); i_gen++) {
+		if(i_gen->status()==3){
+				TLorentzVector i_gen_lv(i_gen->p4().Px(),i_gen->p4().Py(),i_gen->p4().Pz(),i_gen->p4().E());
+				if(aGenJet.DeltaR(i_gen_lv) <DR_parton) 
+					{
+					if(pt_parton< i_gen->pt()) //keep the leading object inside the cone
+						{aGenJet.id=i_gen->pdgId(); 
+						pt_parton=i_gen->pt();
+						DR_parton=aGenJet.DeltaR(i_gen_lv) ;
+						}
+					aGenJet.nparton++; //count how many partons are inside the cone
+					}
+			}
+		}
       myGenJets.push_back(aGenJet);  
     }// genjet loop
   }// if MC
@@ -2225,6 +2245,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetPhiGEN_      ->push_back(myGenJets[j].Phi()); 
         jetEGEN_        ->push_back(myGenJets[j].Energy()); 
         jetVetoGEN_     ->push_back(myGenJets[j].veto); 
+	jetIdGEN_	->push_back(myGenJets[j].id);
+	jetNpartonsGEN_->push_back(myGenJets[j].nparton);
       }
       sort(allP4GEN.begin(),allP4GEN.end(),p4SortingRule);
     }// if selection GEN 
@@ -2319,6 +2341,8 @@ void PATZJetsExpress::buildTree()
   jetPhiGEN_         = new std::vector<float>();
   jetEGEN_           = new std::vector<float>();
   jetVetoGEN_          = new std::vector<int>(); 
+  jetIdGEN_          = new std::vector<int>(); 
+  jetNpartonsGEN_    = new std::vector<int>(); 
   jetllDPhiGEN_      = new std::vector<float>();
   jetllDPhi_         = new std::vector<float>();
   jetPhotonDPhi_     = new std::vector<float>();
@@ -2498,6 +2522,8 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetEGEN"          ,"vector<float>"     ,&jetEGEN_);
   myTree_->Branch("jetVetoGEN"         ,"vector<int>"     ,&jetVetoGEN_);
   myTree_->Branch("jetllDPhiGEN"     ,"vector<float>"     ,&jetllDPhiGEN_);
+  myTree_->Branch("jetIdGEN"         ,"vector<int>"     ,&jetIdGEN_);
+  myTree_->Branch("jetNpartonsGEN"   ,"vector<int>"     ,&jetNpartonsGEN_);
   myTree_->Branch("HTParSum"         ,&HTParSum_          ,"HTParSum/F");  
   myTree_->Branch("mcWeight"         ,&mcWeight_          ,"mcWeight/F");
   myTree_->Branch("nPhotonsGEN"      ,&nPhotonsGEN_       ,"nPhotonsGEN/I");
@@ -2657,6 +2683,8 @@ void PATZJetsExpress::clearTree()
   jetEGEN_           ->clear();
   jetVetoGEN_          ->clear();
   jetllDPhiGEN_      ->clear();
+  jetIdGEN_          ->clear();
+  jetNpartonsGEN_          ->clear();
   photonEGEN_        = -999;
   photonPtGEN_       = -999;
   photonEtaGEN_      = -999;
