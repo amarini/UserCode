@@ -9,7 +9,10 @@ cvs co -r V00-02d -d PFIsolation/SuperClusterFootprintRemoval UserCode/peruzzi/P
 	#cvs co -d pandolf/QuarkGluonTagger UserCode/pandolf/QuarkGluonTagger
 	#2012 TAGGER
 	#cvs co -r am2013-02-12 -d QuarkGluonAnalysis/QuarkGluonTagger2012 UserCode/amarini/QuarkGluonTagger2012
-cvs co -r v1-1-3 -d QuarkGluonTagger/EightTeV UserCode/tomc/QuarkGluonTagger/EightTeV
+#FIT BASED
+#cvs co -r v1-1-3 -d QuarkGluonTagger/EightTeV UserCode/tomc/QuarkGluonTagger/EightTeV
+#HISTO BASED
+cvs co -r v1-2-0 -d QuarkGluonTagger/EightTeV UserCode/tomc/QuarkGluonTagger/EightTeV
 
 cvs co -d amarini/VPlusJets UserCode/amarini/VPlusJets
 cvs co -r V00-00-21 -d EGamma/EGammaAnalysisTools UserCode/EGamma/EGammaAnalysisTools
