@@ -190,10 +190,10 @@ TH1F* h_zz=(TH1F*)ZZ_mu->Get(histoName[i].c_str())->Clone("ZZ");h_zz->Add( (TH1F
 	TH1F* data=(TH1F*)data0->Clone("data");	
 	data->Add(data1);
 	//data2->Scale(2); //SF: e+e- mu+mu- OF e+mu- mu+e-
-	Plot(data,data2,mc,histoName[i].c_str(),plotDir,lumi,"e^{+}e^{-}+#mu^{+}#mu{-} vs 2e^{#pm}#mu^{#pm}");
+	Plot(data,data2,mc,histoName[i].c_str(),plotDir,lumi,"e^{+}e^{-}+#mu^{+}#mu{-} vs e^{#pm}#mu^{#pm}");
 
 	data2->Scale(.5);
-	Plot(data0,data2,mc,(histoName[i]+"_mu").c_str(),plotDir,lumi,"#mu^{+}#mu{-} vs e^{#pm}#mu^{#pm}");
+	Plot(data0,data2,mc,(histoName[i]+"_mu").c_str(),plotDir,lumi,"#mu^{+}#mu{-} vs .5 e^{#pm}#mu^{#pm}");
 	Plot(data1,data2,mc,(histoName[i]+"_e").c_str(),plotDir,lumi,"e^{+}e^{-} vs .5 e^{#pm}#mu^{#pm}");
 	}
 
