@@ -46,17 +46,45 @@ TCanvas *c=new TCanvas("c1","c1",800,1000);
         lowerPad->Draw();
         upperPad->cd();
         if(LogScale)upperPad->SetLogy();
-	
-	h->Draw();
-	data->Draw("P SAME");
+
+	//printf("going to draw\n");	
+	h->Draw("HIST");
+	data->Draw("P E0 SAME");
+	h->Draw("AXIS X+ Y+ SAME");
+	h->Draw("AXIS SAME");
 	
 	//After it is drawn
 	h->SetTitle(mc[0]->GetTitle());
 	h->GetXaxis()->SetTitle(mc[0]->GetXaxis()->GetTitle());
 	h->GetYaxis()->SetTitle(mc[0]->GetYaxis()->GetTitle());
+
+	//printf("going to draw legend\n");	
+	TLegend *L=new TLegend(0.15,0.150,0.45,.40,"");
+		if(chid2==-1)L->AddEntry(data,"data (e^{+}e^{-}","PF");
+		if(chid2==-2)L->AddEntry(data,"data (e^{#pm}#mu^{#pm}","PF");
+		if(chid2==-4)L->AddEntry(data,"data (#mu^{+}#mu^{-}","PF");
+		if(mc.size()>0) L->AddEntry(mc[0],"DY","F");
+		if(mc.size()>1) L->AddEntry(mc[1],"TT","F");
+		if(mc.size()>2) L->AddEntry(mc[2],"WJ","F");
+		if(mc.size()>3) L->AddEntry(mc[3],"WW","F");
+		if(mc.size()>4) L->AddEntry(mc[4],"WZ","F");
+		if(mc.size()>5) L->AddEntry(mc[5],"ZZ","F");
+		L->SetBorderSize(0);
+		L->SetFillColor(0);
+		L->SetFillStyle(0);
+	L->Draw();
+	//printf("going to draw latex\n");	
+	TLatex *latex=new TLatex();
+		latex->SetNDC();
+		latex->SetTextFont(63);
+		latex->SetTextSize(28);
+		latex->SetTextAlign(21);
+		latex->DrawLatex(0.5,.91,"CMS, Work in Progress, #sqrt{s}=8 TeV,L=18.7fb^{-1}");
 		
 	lowerPad->cd();
-	TH1F * R=(TH1F*)data->Clone("ratio");R->Divide(varall);
+	TH1F * R=(TH1F*)data->Clone("ratio");
+	R->Sumw2();
+	R->Divide(varall);
   	R->GetXaxis()->SetTitle("");
         R->GetYaxis()->SetTitle("Ratio (Data/MC RECO)");
         R->GetYaxis()->SetTitleSize(0.08);
@@ -68,7 +96,7 @@ TCanvas *c=new TCanvas("c1","c1",800,1000);
         R->SetMarkerColor(kBlack);
         R->SetMarkerSize(0.7);
         R->SetLineColor(kBlack);
-	R->Draw("P");
+	R->Draw("P E0");
 	lowerPad->SetGridy(2);
 
 c->SaveAs(Form("%s%s_%d.pdf",plotDir,varName,-chid2));

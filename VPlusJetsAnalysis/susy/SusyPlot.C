@@ -23,14 +23,15 @@
 using namespace std;
 const int debug=1;//0 NO DEBUG 1 MINIMAL 2 MAX
 
-void ValidationPlotData(const char *fileIn,const char *fileOut, const char *dirOut);
+void SusyPlotData(const char *fileIn,const char *fileOut, const char *dirOut);
 int CreateHisto(map<string,TH1F*> &histos);
-void ValidationPlot();
+void SusyPlot(){}
 void Loop(map<string,TH1F*> &histos, TChain *t,int type=0); //0 data 1 mc
 
 float JetPtCut=50;
 float JetDRCut=0.4;
 float llMCut=20;
+float pfMetCut=100;
 int CHID2=-4;
 
 
@@ -43,49 +44,14 @@ for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++)
 	}
 histos.clear();
 //DEBUG LEVEL 2
-//--- counting
-histos["nVtx"] 		= new TH1F("nVtx","nVtx;N_{Vtx};events",50,0,50);
-histos["nLeptons"] 	= new TH1F("nLeptons","nLeptons;N_{lep};events",10,0,10);
-histos["nPhotons"] 	= new TH1F("nPhotons","nPhotons;N_{#gamma};events",10,0,10);
-histos["nJets"] 	= new TH1F("nJets","nJets;N_{jets};events",10,0,10);
-
-//rho
-histos["rho"]		= new TH1F("rho","rho;#rho;events",50,0,50);
-histos["rho25"]		= new TH1F("rho25","rho25;#rho(2.5); events",50,0,50);
 
 //DiBoson
-histos["llM"]		= new TH1F("llM","llM;M^{ll};events",50,40,150);
-histos["llPt"]		= new TH1F("llPt","llPt;P_{T}^{ll};events",100,0,450);
-histos["llY"]		= new TH1F("llY","llY;Y^{ll};events",50,-5,5);
-histos["llPhi"]		= new TH1F("llPhi","llPhi;#phi^{ll};events",50,-3.1416,3.1416);
+histos["llM"]		= new TH1F("llM","llM;M^{ll};events",80,20,220);
+histos["llM_beforeCut"]	= new TH1F("llM_beforeCut","llM;M^{ll};events",80,20,220);
 
 //photons?
 
 //lepton
-histos["lep0Pt"]	= new TH1F("lep0Pt","lep0Pt;P_{T}^{1st lep};events",50,20,150);
-histos["lep0Eta"]	= new TH1F("lep0Eta","lep0Eta;#eta^{1st lep};events",50,-5,5);
-histos["lep0Phi"]	= new TH1F("lep0Phi","lep0Phi;#phi^{1st lep};events",50,-3.1416,3.1416);
-
-histos["lep1Pt"]	= new TH1F("lep1Pt","lep1Pt;#P_{T}^{2nd lep};events",50,20,150);
-histos["lep1Eta"]	= new TH1F("lep1Eta","lep1Eta;#eta^{2nd lep};events",50,-5,5);
-histos["lep1Phi"]	= new TH1F("lep1Phi","lep1Phi;#phi^{2nd lep};events",50,-3.1416,3.1416);
-
-//jets
-histos["jet0Pt"]	= new TH1F("jet0Pt","jet0Pt;P_{T}^{1st jet};events",50,50,150);
-histos["jet0Eta"]	= new TH1F("jet0Eta","jet0Eta;#eta^{1st jet};events",50,-5,5);
-histos["jet0Phi"]	= new TH1F("jet0Phi","jet0Phi;#phi^{1st jet};events",50,-3.1416,3.1416);
-histos["jet0QGL"]	= new TH1F("jet0QGL","jet0QGL;QGL^{1st jet};events",50,-1.001,1.001);
-histos["jet0Btag"]	= new TH1F("jet0Btag","jet0Btag;Btag^{1st jet};events",50,-1.001,1.001);
-
-histos["jet1Pt"]	= new TH1F("jet1Pt","jet1Pt;P_{T}^{2nd jet};events",50,50,150);
-histos["jet1Eta"]	= new TH1F("jet1Eta","jet1Eta;#eta^{2nd jet};events",50,-5,5);
-histos["jet1Phi"]	= new TH1F("jet1Phi","jet1Phi;#phi^{2nd jet};events",50,-3.1416,3.1416);
-histos["jet1QGL"]	= new TH1F("jet1QGL","jet1QGL;QGL^{1st jet};events",50,-1.001,1.001);
-histos["jet1Btag"]	= new TH1F("jet1Btag","jet1Btag;Btag^{2nd jet};events",50,-1.001,1.001);
-
-// a bit of variables
-histos["jetLLDPhi0"]	= new TH1F("JetLLDPhi0","JetLLDPhi0;#Delta#phi(Z,j_{1});events",50,0,3.1416);
-histos["Sum3j"]	= new TH1F("Sum3j","Sum3j;#sum_{ij#elem 1..3}d#phi_{ij};events",50,0,3.1416*2);
 
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
 
@@ -100,6 +66,7 @@ int nVtx;		t->SetBranchAddress("nVtx",&nVtx);
 int nLeptons;		t->SetBranchAddress("nLeptons",&nLeptons);
 int nPhotons;		t->SetBranchAddress("nPhotons",&nPhotons);
 int nJets;		t->SetBranchAddress("nJets",&nJets);
+float pfmet;		t->SetBranchAddress("pfmet",&pfmet);
 float rho;		t->SetBranchAddress("rho",&rho);
 float rho25;		t->SetBranchAddress("rho25",&rho25);
 float llM;		t->SetBranchAddress("llM",&llM);
@@ -135,7 +102,7 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if(lepPt->size()<2)continue; //2 leptons
 	if( (*lepChId)[0]*(*lepChId)[1]!=CHID2)continue; //two muons
 	//llM selection
-	if(!(fabs(llM-91)<llMCut))continue;
+	if(llM<20)continue;//minimum requirements
 	//Triggers??
 	if(debug>1)cout<<"Passed Selection"<<endl;
 		//redo vetos
@@ -172,66 +139,25 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if(type>0)weight=PUWeight;
 
 	if( jet0 < 0 )continue; //cut on the first jet
+
+	histos["llM_beforeCut"]->Fill(llM,weight);
+
+	if( jet2 < 0 )continue; //cut on the third jet
+	if( pfmet < pfMetCut ) continue;
 	
-	histos["nVtx"]->Fill(nVtx,weight);
-	histos["nLeptons"]->Fill(nLeptons,weight);
-	histos["nPhotons"]->Fill(nPhotons,weight);
-	histos["nJets"]->Fill(nJetsVeto,weight);
-
-	histos["rho"]->Fill(rho,weight);
-	histos["rho25"]->Fill(rho25,weight);
-
 	histos["llM"]->Fill(llM,weight);
-	histos["llPt"]->Fill(llPt,weight);
-	histos["llY"]->Fill(llY,weight);
-	histos["llPhi"]->Fill(llPhi,weight);
-	
-	if(debug>1)cout<<"lepSize Pt "<<lepPt->size()<<" Eta "<<lepEta->size()<<" Phi "<<lepPhi->size()<<endl;
-	histos["lep0Pt"]	->Fill((*lepPt)[0],weight);
-	histos["lep1Pt"]	->Fill((*lepPt)[1],weight);
-	histos["lep0Eta"]	->Fill((*lepEta)[0],weight);
-	histos["lep1Eta"]	->Fill((*lepEta)[1],weight);
-	histos["lep0Phi"]	->Fill((*lepPhi)[0],weight);
-	histos["lep1Phi"]	->Fill((*lepPhi)[1],weight);
-
-	if(debug>1)cout<<"Jet 0 Idx "<<jet0<<"Jet 1 Idx "<<jet1<<endl;
-
-	if(jet0>=0)histos["jet0Pt"]	->Fill((*jetPt)[jet0],weight);
-	if(jet1>=0)histos["jet1Pt"]	->Fill((*jetPt)[jet1],weight);
-	if(jet0>=0)histos["jet0Eta"]	->Fill((*jetEta)[jet0],weight);
-	if(jet1>=0)histos["jet1Eta"]	->Fill((*jetEta)[jet1],weight);
-	if(jet0>=0)histos["jet0Phi"]	->Fill((*jetPhi)[jet0],weight);
-	if(jet1>=0)histos["jet1Phi"]	->Fill((*jetPhi)[jet1],weight);
-	if(jet0>=0)histos["jet0QGL"]	->Fill((*jetQGL)[jet0],weight);
-	if(jet1>=0)histos["jet1QGL"]	->Fill((*jetQGL)[jet1],weight);
-	if(jet0>=0)histos["jet0Btag"]	->Fill((*jetBtag)[jet0],weight);
-	if(jet1>=0)histos["jet1Btag"]	->Fill((*jetBtag)[jet1],weight);
 	
 	
 	TLorentzVector ll=l1+l2,j0,j1,j2;
-	bool isZlead=false;
-		if( (jet1>=0) &&(llPt>(*jetPt)[jet1]))isZlead=true;
-	if(jet0>=0) j0.SetPtEtaPhiE((*jetPt)[jet0],(*jetEta)[jet0],(*jetPhi)[jet0],(*jetE)[jet0]);
-	if(jet1>=0) j1.SetPtEtaPhiE((*jetPt)[jet1],(*jetEta)[jet1],(*jetPhi)[jet1],(*jetE)[jet1]);
-	if(jet2>=0) j2.SetPtEtaPhiE((*jetPt)[jet2],(*jetEta)[jet2],(*jetPhi)[jet2],(*jetE)[jet2]);
-
-	if(jet0>=0){histos["jetLLDPhi0"]->Fill(fabs(j0.DeltaPhi(ll)),weight);}
-	if(jet2>=0 && isZlead){histos["Sum3j"]->Fill( fabs(j0.DeltaPhi(j1))+fabs(j1.DeltaPhi(j2))+fabs(j0.DeltaPhi(j2)),weight);}
 
 	}
 	jetVeto->clear();
 	delete jetVeto;
 }
 
-//------------------- MAIN PROCEDURE ---------------------------------
-void ValidationPlot(){
-//DEBUG LEVEL 1
-ValidationPlotData("/tmp/amarini/DoubleMu_Run2012A-13Jul2012-v1_AOD.root","Plot/validationHistosData.root","Plot/");
-return; 
-}
 
 //------------------- Produce Plots DATA ---------------------------------
-void ValidationPlotData(const char *fileIn,const char *fileOut, const char *dirOut){
+void SusyPlotData(const char *fileIn,const char *fileOut, const char *dirOut){
 //DEBUG LEVEL 1
 map<string,TH1F*> histos;
 
@@ -251,26 +177,19 @@ if(debug>0)cout<<"Begin Loop"<<endl;
 Loop(histos,tIn,0);
 
 if(debug>0)cout<<"Saving results"<<endl;
-//for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++){
-//	TCanvas *c=new TCanvas("c","c",800,800);
-//	iM->second->SetMarkerStyle(24);
-//	iM->second->Draw("P");
-//	c->SaveAs(Form("%s/%s.pdf",dirOut,iM->first.c_str()));
-//	}
 
 fOut->cd();
 for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)
 	iM->second->Write();
 
 fOut->Close();
-//for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)iM->second->Delete();
 histos.clear();
 tIn->Delete();
 	
 }
 
 //------------------- Produce Plots MC ---------------------------------
-void ValidationPlotMC(const char *fileIn,const char *fileOut, const char *dirOut){
+void SusyPlotMC(const char *fileIn,const char *fileOut, const char *dirOut){
 //DEBUG LEVEL 1
 map<string,TH1F*> histos;
 
@@ -288,12 +207,6 @@ if(debug>0)cout<<"Begin Loop"<<endl;
 Loop(histos,tIn,1);
 
 if(debug>0)cout<<"Saving results"<<endl;
-//for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++){
-//	TCanvas *c=new TCanvas("c","c",800,800);
-//	iM->second->SetMarkerStyle(24);
-//	iM->second->Draw("P");
-//	c->SaveAs(Form("%s/%s.pdf",dirOut,iM->first.c_str()));
-//	}
 
 fOut->cd();
 for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)
@@ -317,14 +230,15 @@ Read A(configFile.c_str());
 
 sscanf(A.ReadParameter("JETPT"),"%f",&JetPtCut );
 sscanf(A.ReadParameter("JETDR"),"%f",&JetDRCut);
-sscanf(A.ReadParameter("LLM"),"%f",&llMCut );
+//sscanf(A.ReadParameter("LLM"),"%f",&llMCut ); //Met Cut is minimal
 sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
+sscanf(A.ReadParameter("METCUT"),"%f",&pfMetCut );
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
 printf("* JetDR=%4.2f      *\n",JetDRCut);
-printf("* llM  =%4.1f      *\n",llMCut);
 printf("* ChID^2=%3d      *\n",CHID2);
+printf("* MET  =%4.1f      *\n",pfMetCut);
 printf("*******************\n");
 
 string DirMC=A.ReadParameter("MCDIR"); DirMC+="/";
@@ -344,39 +258,17 @@ string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
 
 int useFork=0;
 if( useFork){
-
-	int who=fork(); //pid son, 0 parent
-	if(who==0)ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	
-	if(CHID2==-4){who=fork();if(who==0)ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu", DirOut.c_str());}
-	if(who==0)return 0;
-	if(CHID2==-1){who=fork();if(who==0)ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE", DirOut.c_str());}
-	if(who==0)return 0;
-	if(CHID2==-2){who=fork();if(who==0)ValidationPlotData( (DirData+MuEG).c_str(),"MuEG", DirOut.c_str());}
-	if(who==0)return 0;
-
 } else { //!FORK
-	ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
+	SusyPlotMC( (DirMC+DY).c_str(),Form("Susy_DY_%d.root",-CHID2), DirOut.c_str());
+	SusyPlotMC( (DirMC+TT).c_str(),Form("Susy_TT_%d.root",-CHID2), DirOut.c_str());
+	SusyPlotMC( (DirMC+WJ).c_str(),Form("Susy_WJ_%d.root",-CHID2), DirOut.c_str());
+	SusyPlotMC( (DirMC+WW).c_str(),Form("Susy_WW_%d.root",-CHID2), DirOut.c_str());
+	SusyPlotMC( (DirMC+WZ).c_str(),Form("Susy_WZ_%d.root",-CHID2), DirOut.c_str());
+	SusyPlotMC( (DirMC+ZZ).c_str(),Form("Susy_ZZ_%d.root",-CHID2), DirOut.c_str());
 	
-	if(CHID2==-4){ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu_4.root", DirOut.c_str());}
-	if(CHID2==-1){ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE_1.root", DirOut.c_str());}
-	if(CHID2==-2){ValidationPlotData( (DirData+MuEG).c_str(),"MuEG_2.root", DirOut.c_str());}
+	if(CHID2==-4){SusyPlotData( (DirData+DoubleMu).c_str(),"Susy_DoubleMu_4.root", DirOut.c_str());}
+	if(CHID2==-1){SusyPlotData( (DirData+DoubleE).c_str(),"Susy_DoubleE_1.root", DirOut.c_str());}
+	if(CHID2==-2){SusyPlotData( (DirData+MuEG).c_str(),"Susy_MuEG_2.root", DirOut.c_str());}
 
 }
 }
