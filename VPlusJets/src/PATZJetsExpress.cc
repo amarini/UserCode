@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.38 2013/02/15 15:57:54 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.39 2013/02/15 15:59:54 amarini Exp $
 //
 //
 
@@ -190,6 +190,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         // --- sigma IetaIeta
         float sigmaIEtaIEta;
         float hadronicOverEm;
+	// --- for electrons r9, for muons chi2/ndof for global track
+	float r9_or_chi2ndof;
         
         // --- triggerObjectMatches
         pat::TriggerObjectStandAloneCollection triObjMatchF1;
@@ -207,6 +209,20 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         int pdgId; 
         // ---- motherid ---------------------------------------------------
         int motherId; 
+      };
+      struct GENPARTICLEPHO {
+        // ---- momentum 4-vector ---------------------------------------
+        TLorentzVector p4;  
+        // ---- pdgid ---------------------------------------------------
+        int pdgId; 
+        // ---- motherid ---------------------------------------------------
+        int motherId; 
+	float isoPtDR03;
+	float isoEDR03;
+	float isoPtDR04;
+	float isoEDR04;
+	float isoPtDR05;
+	float isoEDR05;
       };
       struct JET {
         // ---- momentum 4-vector ---------------------------------------
@@ -260,7 +276,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- sorting rules ---------------------------------------------
       static bool lepSortingRule(PARTICLE x, PARTICLE y)                {return x.p4.Pt() > y.p4.Pt();}
       static bool lepSortingRuleGEN(GENPARTICLE x, GENPARTICLE y)       {return x.p4.Pt() > y.p4.Pt();}
-      static bool phoSortingRuleGEN(GENPARTICLE x, GENPARTICLE y)       {return x.p4.Pt() > y.p4.Pt();}
+      static bool phoSortingRuleGEN(GENPARTICLEPHO x, GENPARTICLEPHO y)       {return x.p4.Pt() > y.p4.Pt();}
       //static bool jetSortingRule(JET x, JET y)                      {return x.p4.Pt() > y.p4.Pt();}
       static bool p4SortingRule(TLorentzVector x, TLorentzVector y) {return x.Pt() > y.Pt();}
       // ---------- member data -----------------------------------------
@@ -354,6 +370,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---- lepton kinematics -----------------------------------------
       vector<float> *lepPt_,*lepEta_,*lepPhi_,*lepE_,*lepPtGEN_,*lepEtaGEN_,*lepPhiGEN_,*lepEGEN_;
       vector<float> *lepSigmaIEtaIEta_,*lepHadronicOverEm_;
+      vector<float> *lepR9orChi2ndof_;
       // ---- lepton properties ----------------------------------------- 
       vector<int>   *lepChId_,*lepId_,*lepChIdGEN_,*lepMatchedGEN_;
       vector<float> *lepPFIsoUnc_,*lepPFIsoDBCor_,*lepPFIsoRhoCor_,*lepMatchedDRGEN_;
@@ -397,10 +414,10 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       vector<float>* photonnTrkHollowConeDR04_;
       vector<float>* photontrkSumPtHollowConeDR04_;
 	
-	    //PhotonIso
-	    vector<float>* photonIsoFPRCharged_; //with FOOT PRINT REMOVAL FROM MP
-	    vector<float>* photonIsoFPRNeutral_;
-	    vector<float>* photonIsoFPRPhoton_;
+      //PhotonIso
+      vector<float>* photonIsoFPRCharged_; //with FOOT PRINT REMOVAL FROM MP
+      vector<float>* photonIsoFPRNeutral_;
+      vector<float>* photonIsoFPRPhoton_;
   
       vector<float> *jetPhotonDPhi_;
 //       vector<float> *photonPar_;
@@ -409,6 +426,12 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float photonPtGEN_;
       float photonEtaGEN_;
       float photonPhiGEN_;
+      float photonIsoPtDR03GEN_;
+      float photonIsoEDR03GEN_;
+      float photonIsoPtDR04GEN_;
+      float photonIsoEDR04GEN_;
+      float photonIsoPtDR05GEN_;
+      float photonIsoEDR05GEN_;
       int photonMotherIdGEN_;
       float photonRECODRGEN_;
       // ---- VBParton variables
@@ -420,6 +443,9 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       int VBPartonDM_; // decay mode
       // ---- jet kinematics --------------------------------------------
       vector<float> *jetPt_,*jetEta_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetPhiGEN_,*jetEGEN_;
+      //---- forward jets------  save two leading jets
+      vector<float> *fwjetPt_,*fwjetEta_,*fwjetPhi_,*fwjetE_;
+      int fwnJets_;
       vector<int> *jetIdGEN_,*jetNpartonsGEN_;
       vector<int> *jetVetoGEN_;
       // ---- other jet properties --------------------------------------
@@ -601,7 +627,7 @@ std::vector<float> PATZJetsExpress::getESHits(double X, double Y, double Z, std:
         it = rechits_map.find(next);
         if (it->second.energy() > 1.0e-10 && it != rechits_map.end()) esHits.push_back(it->second.energy());
         else esHits.push_back(0);
-        //cout<<"east "<<i<<" : "<<next<<" "<<it->second.energy()<<endl;
+        //cout<<"est "<<i<<" : "<<next<<" "<<it->second.energy()<<endl;
       } else {
         for (int j=i; j<15; j++) esHits.push_back(0);
         break;
@@ -871,7 +897,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   vector<GENPARTICLE>      myGenLeptons;
   //vector<TLorentzVector> myGenJets;  
   vector<GENJET> myGenJets;  
-  vector<GENPARTICLE> myGenPhotons;  
+  vector<GENPARTICLEPHO> myGenPhotons;  
   TLorentzVector VBParton(0,0,0,0);
   if (!isRealData_) {
     // ---- PU ----------------------------------------------------------
@@ -918,7 +944,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     int VBPartonDM=0;
     // ---- loop over the gen particles ---------------------------------
     for(i_gen = gen->begin(); i_gen != gen->end(); i_gen++) {
-     
     // save MC Vector Boson partons momenta and their decay mode, when applicable
     if( (i_gen->pdgId() ==23 || i_gen->pdgId()==22) && i_gen->status()==3) {
       float Px = i_gen->p4().Px();
@@ -946,7 +971,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     }
  
       // ---- consider only final state particles -----------------------
-      if (i_gen->status() == ((mGENType==2)?3:1)) {   
+      if (i_gen->status() == ((mGENType==2)?3:1)) { 
         // ---- consider only electron and muon flavors -----------------
         if (abs(i_gen->pdgId()) == 11 || abs(i_gen->pdgId()) == 13) {
             GENPARTICLE aGenLepton;
@@ -958,11 +983,11 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		case 1:
 			//--- search for status 1 photons in DR=0.1 cone around the bare lepton
 			for(j_gen=gen->begin();j_gen !=gen->end();j_gen++){
-			if(j_gen->status() == 1 && abs(j_gen->pdgId()) ==22){
+			  if(j_gen->status() == 1 && abs(j_gen->pdgId()) ==22){
 			    TLorentzVector phoP4GEN(j_gen->p4().Px(),j_gen->p4().Py(),j_gen->p4().Pz(),j_gen->p4().E());
 			    float DR = phoP4GEN.DeltaR(lepP4BARE);
 			    if(DR<mDressedRadius) lepP4GEN+=phoP4GEN;
-			}//if: st=1, pdgid=22
+			  }//if: st=1, pdgid=22
 			}//for: gen particle (2nd loop)
 			break;
 		case 2: 
@@ -981,19 +1006,62 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         if (abs(i_gen->pdgId()) == 22) {
            // ---- apply geometric and kinematic acceptance -------------
           if ((i_gen->pt() > mMinPhoPtId) && (fabs(i_gen->eta())) < mMaxPhoEta) {
-            GENPARTICLE aGenPhoton;
+            GENPARTICLEPHO aGenPhoton;
             TLorentzVector phoP4GEN(i_gen->p4().Px(),i_gen->p4().Py(),i_gen->p4().Pz(),i_gen->p4().E());
+	    //cout<<"evt "<<iEvent.id().event()<<" ph pt/eta "<<i_gen->pt() <<"/"<<i_gen->eta()<<endl;
+	    //--- search for stable particles around photon in DR=0.3,0.4 and 0.5 cone around the photon
+	    //--- for particle isolation, don't check for invisible particles
+	    //correct for the fact that also the photon itself IS among the list of particles looped over
+	    //subtract the momentum vector and the energy
+	    float isoPxDR03=-i_gen->p4().Px();
+	    float isoPxDR04=-i_gen->p4().Px();
+	    float isoPxDR05=-i_gen->p4().Px();
+	    float isoPyDR03=-i_gen->p4().Py();
+	    float isoPyDR04=-i_gen->p4().Py();
+	    float isoPyDR05=-i_gen->p4().Py();
+	    float isoEDR03=-i_gen->p4().E();
+	    float isoEDR04=-i_gen->p4().E();
+	    float isoEDR05=-i_gen->p4().E();
+	    for(j_gen=gen->begin();j_gen !=gen->end();j_gen++){
+	      //don't use neutrinos
+	      if(j_gen->status() == 1 && abs(j_gen->pdgId()) !=12 && abs(j_gen->pdgId()) !=14 &&  abs(j_gen->pdgId()) !=16){
+		TLorentzVector partP4GEN(j_gen->p4().Px(),j_gen->p4().Py(),j_gen->p4().Pz(),j_gen->p4().E());
+		float DR = partP4GEN.DeltaR(phoP4GEN);
+		if(DR<0.5){
+		  isoPxDR05+=j_gen->p4().Px();
+		  isoPyDR05+=j_gen->p4().Py();
+		  isoEDR05+=j_gen->p4().E();
+		  if(DR<0.4){
+		    isoPxDR04+=j_gen->p4().Px();
+		    isoPyDR04+=j_gen->p4().Py();
+		    isoEDR04+=j_gen->p4().E();
+		    if(DR<0.3){
+		      isoPxDR03+=j_gen->p4().Px();
+		      isoPyDR03+=j_gen->p4().Py();
+		      isoEDR03+=j_gen->p4().E();
+		    }
+		  }
+		}
+	      }
+	    }
+
             aGenPhoton.pdgId = i_gen->pdgId();
             aGenPhoton.p4    = phoP4GEN;
-
+	    aGenPhoton.isoEDR03=isoEDR03;
+	    aGenPhoton.isoEDR04=isoEDR04;
+	    aGenPhoton.isoEDR05=isoEDR05;
+	    aGenPhoton.isoPtDR03=sqrt(isoPxDR03*isoPxDR03+isoPyDR03*isoPyDR03);
+	    aGenPhoton.isoPtDR04=sqrt(isoPxDR04*isoPxDR04+isoPyDR04*isoPyDR04);
+	    aGenPhoton.isoPtDR05=sqrt(isoPxDR05*isoPxDR05+isoPyDR05*isoPyDR05);
 	    // find mother id
 	    for(int kk = 0; kk < int(i_gen-> numberOfMothers()); ++kk) {
 	      const GenParticle * gen_Moth = static_cast<const GenParticle*>(i_gen->mother(kk)); // find mother
 	      aGenPhoton.motherId = gen_Moth->pdgId();
 	    }
-
-            myGenPhotons.push_back(aGenPhoton);
-          }
+	    if(aGenPhoton.isoPtDR03/phoP4GEN.Pt()<0.25){
+	      myGenPhotons.push_back(aGenPhoton);
+	    }
+          }//eta and pt cutoff
         }
       }//gen status IF
 	//HTParSum
@@ -1038,40 +1106,49 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       }
       //if(mGENCrossCleaning&2)
       {
-      // ---- genjet vs leading leading photon cleaning ------------------
-      if (myGenPhotons.size()>0) {
-       if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenPhotons[0].p4.Eta(),myGenPhotons[0].p4.Phi()) < mJetPhoIsoR) { 
-	  isVETO|= (1<<2);
-	  if (i_genjet->pt()>=mMinJetPt && (fabs(i_genjet->eta()) <= mMaxJetEta)){
-	    nJets_phoVetoGEN+=1;
+	// ---- genjet vs leading leading photon cleaning ------------------
+	//if(myGenPhotons.size()>0){
+	for(unsigned l=0;l<myGenPhotons.size();l++) { 
+	  if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenPhotons[0].p4.Eta(),myGenPhotons[0].p4.Phi()) < mJetPhoIsoR) { 
+	    isVETO|= (1<<2);
+	    if (i_genjet->pt()>=mMinJetPt && (fabs(i_genjet->eta()) <= mMaxJetEta)){
+	      nJets_phoVetoGEN+=1;
+	    }
+	    continue;
 	  }
-          continue;
-        }
+	}
       }
-      }
-
       //if (!isISO) continue;
       // ---- preselection on genjets -----------------------------------
       if ((i_genjet->pt() < mMinJetPt) || (fabs(i_genjet->eta()) > mMaxJetEta)) continue;
+      //for(unsigned int i=0;i<i_genjet->getGenConstituents().size();i++){
+	    //cout<<"particle "<<i<<" ID/pt "<<i_genjet->getGenConstituents()[i]->pdgId()<<"/"<<i_genjet->getGenConstituents()[i]->pt()<<endl;
+	    //}
+      //}
       GENJET aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
-	aGenJet.veto=isVETO;
-		//---- gen jet matching
-		float DR_parton=0.5;
-		float pt_parton=0;
-		for(i_gen = gen->begin(); i_gen != gen->end(); i_gen++) {
-		if(i_gen->status()==3){
-				TLorentzVector i_gen_lv(i_gen->p4().Px(),i_gen->p4().Py(),i_gen->p4().Pz(),i_gen->p4().E());
-				if(aGenJet.DeltaR(i_gen_lv) <DR_parton) 
-					{
-					if(pt_parton< i_gen->pt()) //keep the leading object inside the cone
-						{aGenJet.id=i_gen->pdgId(); 
-						pt_parton=i_gen->pt();
-						DR_parton=aGenJet.DeltaR(i_gen_lv) ;
-						}
-					aGenJet.nparton++; //count how many partons are inside the cone
-					}
-			}
-		}
+      aGenJet.veto=isVETO;  
+      //---- try first B hadron code
+
+      //---- gen jet matching
+      float DR_parton=0.5;
+      float pt_parton=0;
+      for(i_gen = gen->begin(); i_gen != gen->end(); i_gen++) {
+	if(i_gen->status()==3){
+	  TLorentzVector i_gen_lv(i_gen->p4().Px(),i_gen->p4().Py(),i_gen->p4().Pz(),i_gen->p4().E());
+	  //take out the incoming protons before the collision - otherwise code crashes
+	  if(i_gen_lv.Pt()!=0){
+	    if(aGenJet.DeltaR(i_gen_lv) <DR_parton) 
+	      {
+		if(pt_parton< i_gen->pt()) //keep the leading object inside the cone
+		  {aGenJet.id=i_gen->pdgId(); 
+		    pt_parton=i_gen->pt();
+		    DR_parton=aGenJet.DeltaR(i_gen_lv) ;
+		  }
+		aGenJet.nparton++; //count how many partons are inside the cone
+	      }
+	  }
+	}
+      }
       myGenJets.push_back(aGenJet);  
     }// genjet loop
   }// if MC
@@ -1082,6 +1159,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   vector<PARTICLE> myPhotons;
   //vector<PARTICLE> myFSRphotons;
   vector<JET> myJets;
+  vector<JET> myFwJets;
   //vector<JET> myRJets;
 
   TLorentzVector mypfmetP4(0,0,0,0);
@@ -1231,6 +1309,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aLepton.triObjMatchF1   = PAT_muonF1.triggerObjectMatches();
       aLepton.triObjMatchF3mu = PAT_muonF3.triggerObjectMatches();
       aLepton.triObjMatchF5   = PAT_muonF5.triggerObjectMatches();
+      aLepton.r9_or_chi2ndof  = i_mu->globalTrack()->normalizedChi2();
       myLeptons.push_back(aLepton);
     }// muon loop
     // ---- loop over electrons -------------------------------------------
@@ -1242,6 +1321,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       float hadronicOverEm                 = i_el->hadronicOverEm();
       float deltaPhiSuperClusterTrackAtVtx = i_el->deltaPhiSuperClusterTrackAtVtx();
       float deltaEtaSuperClusterTrackAtVtx = i_el->deltaEtaSuperClusterTrackAtVtx();
+      float r9=i_el->r9();
       bool  isMedium(false);
 
       float epDifference 			 = fabs( 1./i_el->ecalEnergy() - i_el->eSuperClusterOverP()/i_el->ecalEnergy()  );
@@ -1331,6 +1411,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aLepton.isoPFUnc = electronIsoPFUnc;
       aLepton.isoPFDb  = -1;
       aLepton.isoPFRho = electronIsoPFRho;
+      aLepton.r9_or_chi2ndof=r9;
       aLepton.sigmaIEtaIEta = sigmaIetaIeta;
       aLepton.hadronicOverEm = hadronicOverEm;
       aLepton.triObjMatchF2 = PAT_electronF2.triggerObjectMatches();
@@ -1433,6 +1514,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  float hcalDepth1 = hcalHelper->hcalESumDepth1BehindClusters(hcalTowersBehindClusters);
 	  float hcalDepth2 = hcalHelper->hcalESumDepth2BehindClusters(hcalTowersBehindClusters);
 	  hadronicOverEm2012 = (hcalDepth1 + hcalDepth2)/it->superCluster()->energy();
+	  //in principle in CMSSW_5_2_X and later we could use the direct accessor, not available in 4_X
+	  //hadronicOverEm2012 = it->hadTowOverEm();
 	  
 	  
 	  // --- get iphi-iphi
@@ -1716,6 +1799,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       int jetIsDuplicate(0);
       bool jetIsInAcceptance(true);
       bool jetIsIDed(true);
+      bool jetIsInFWAcceptance(true);
       
       //----- remove the leptons ------------------------------------------
       for(unsigned int i_lep = 0; i_lep < myLeptons.size(); i_lep++) {
@@ -1735,10 +1819,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       // paolo: Keeping the overlap between photon andn jets will be removed later after the photonID requirements are applied
       //----- remove the leading photon ------------------------------------ (reminder nPhotons>0 only IF nLeptons==0)
 	     bool leadPhotIdedFound=false;
-             for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) { //rejection only wrt the leading photon (ided)
+             for(unsigned int i_pho = 0; i_pho < myPhotons.size(); i_pho++) { 
+	       //rejection only wrt the leading photon (ided) in the longrun
+	       //so far save more photon candidates - check with all those
 		if(leadPhotIdedFound)continue;
        		float DR = myPhotons[i_pho].p4.DeltaR(jetP4);
-		if(myPhotons[i_pho].id)leadPhotIdedFound=true;
+		//if(myPhotons[i_pho].id)leadPhotIdedFound=true;
        		if (DR < mJetPhoIsoR /*&& (myPhotons[i_pho].id & (1<<3) )*/) {
        		  jetIsDuplicate |= 1<<2;
 		  //set veto counter on jets which would survive the final selection
@@ -1753,8 +1839,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       //edm::RefToBase<reco::Jet> jetRef(edm::Ref<PFJetCollection>(jets_,index));
       //double jec = mJEC->correction(*i_jet,jetRef,iEvent,iSetup);
       // ---- only keep jets within the kinematic acceptance --------------
-      if ((i_jet->pt() < 15) || (fabs(i_jet->eta()) > 3.0)) continue; // apply first a hardcode preselection
+      if ((i_jet->pt() < 15) || (fabs(i_jet->eta()) > 5.0)) continue; // apply first a hardcode preselection
       if ((i_jet->pt() < mMinJetPt) || (fabs(i_jet->eta()) > mMaxJetEta)) jetIsInAcceptance = false;
+      if ((i_jet->pt() < mMinJetPt) || (fabs(i_jet->eta()) < mMaxJetEta)) jetIsInFWAcceptance = false;
+      if(jetIsInFWAcceptance && jetIsInAcceptance){
+	cout<<"jet is FW and not FW, obviously a contradiction"<<endl;
+      }
       //mJECunc->setJetEta(i_jet->eta());
       // ---- the unc is a function of the corrected pt -------------------
       //mJECunc->setJetPt(jec * i_jet->pt());
@@ -1786,7 +1876,6 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       int chm   = i_jet->chargedHadronMultiplicity();
       int npr   = i_jet->chargedMultiplicity() + i_jet->neutralMultiplicity();
       bool id = (npr>1 && phf<0.99 && nhf<0.99 && ((fabs(i_jet->eta())<=2.4 && nhf<0.9 && phf<0.9 && elf<0.99 && chf>0 && chm>0) || fabs(i_jet->eta())>2.4));
-
       float rms=TMath::Sqrt( TMath::Power(i_jet->userFloat("axis1"),2) + TMath::Power(i_jet->userFloat("axis2"),2) );
       if (!id) jetIsIDed = false;
       // ---- jet vertex association --------------------------------------
@@ -1860,6 +1949,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       }
       aJet.rms=rms;
     if( jetIsInAcceptance && jetIsIDed)myJets.push_back(aJet);
+    if( jetIsInFWAcceptance && jetIsIDed)myFwJets.push_back(aJet);
     }// jet loop
       
 
@@ -1889,6 +1979,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   nPhotons_    = int(myPhotons.size());
   nPhotonsGEN_ = int(myGenPhotons.size());
   nJets_       = int(myJets.size());
+  fwnJets_       = int(myFwJets.size());
  // nRJets_      = int(myRJets.size());
   nLeptonsGEN_ = int(myGenLeptons.size()); 
   nJetsGEN_    = int(myGenJets.size()); 
@@ -1966,6 +2057,10 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
     nJets_phoVeto=1;
   }
 
+  if(nJets_phoVetoGEN>1){
+    nJets_phoVetoGEN=1;
+  }
+
   // ---- keep only selected events -------------------------------------
   bool selectionRECO = false;
   if(!mOnlyMC){
@@ -1977,7 +2072,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   bool selectionGEN(false);
   if (!isRealData_) {
     selectionGEN = ((nLeptonsGEN_ > 1) && ((nJetsGEN_ - nJets_lepVetoGEN) >= mMinNjets) && llP4GEN.M()>mMinLLMass); 
-    selectionGEN = selectionGEN || (((nPhotonsGEN_ -nJets_phoVetoGEN)> 0) && (nJetsGEN_ >= mMinNjets));      // add photon logic for GEN 
+    selectionGEN = (selectionGEN || ((nPhotonsGEN_ > 0) && (nJetsGEN_ - nJets_phoVetoGEN)>= mMinNjets));      // add photon logic for GEN 
     selection +=  selectionGEN;
   }
   if (selection) {
@@ -2010,6 +2105,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         lepPFIsoRhoCor_ ->push_back(myLeptons[l].isoPFRho);
         lepId_          ->push_back(myLeptons[l].id);
         lepChId_        ->push_back(myLeptons[l].chid);
+	lepR9orChi2ndof_->push_back(myLeptons[l].r9_or_chi2ndof);
 
         lepHadronicOverEm_     ->push_back(myLeptons[l].hadronicOverEm);
         lepSigmaIEtaIEta_      ->push_back(myLeptons[l].sigmaIEtaIEta);
@@ -2089,7 +2185,16 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetRMS_     ->push_back(myJets[j].rms);
         jetVeto_     ->push_back(myJets[j].veto);
       }
-
+      for(unsigned j = 0; j < myFwJets.size(); j++) {
+	//fill only leading fw jets
+	if(j<2){
+	  fwjetPt_       ->push_back(myFwJets[j].p4.Pt()); 
+	  fwjetEta_      ->push_back(myFwJets[j].p4.Eta()); 
+	  fwjetPhi_      ->push_back(myFwJets[j].p4.Phi()); 
+	  fwjetE_        ->push_back(myFwJets[j].p4.Energy());
+	} 
+      }
+      
 
       sort(allP4.begin(),allP4.end(),p4SortingRule);
 
@@ -2227,6 +2332,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         photonEtaGEN_    = myGenPhotons[0].p4.Eta();
         photonPhiGEN_    = myGenPhotons[0].p4.Phi();
         photonEGEN_      = myGenPhotons[0].p4.Energy();
+	photonIsoPtDR03GEN_= myGenPhotons[0].isoPtDR03;
+	photonIsoEDR03GEN_= myGenPhotons[0].isoEDR03;
+	photonIsoPtDR04GEN_= myGenPhotons[0].isoPtDR04;
+	photonIsoEDR04GEN_= myGenPhotons[0].isoEDR05;
+	photonIsoPtDR05GEN_= myGenPhotons[0].isoPtDR05;
+	photonIsoEDR05GEN_= myGenPhotons[0].isoEDR05;
 	photonMotherIdGEN_ = myGenPhotons[0].motherId;
         if(myPhotons.size()>0)photonRECODRGEN_ = myPhotons[0].p4.DeltaR(myGenPhotons[0].p4); // GEN TO RECO matching
 
@@ -2273,7 +2384,7 @@ Handle<ValueMap<float> > qglMapMLP;
 
    Handle<edm::View<pat::Jet> > pfjetsakt5;
    iEvent.getByLabel(mJetsName, pfjetsakt5);
-
+   
   edm::RefToBase<reco::Jet> jetRef(edm::Ref<edm::View<pat::Jet> >(pfjetsakt5,index)); 
 if(jet->genParton() != NULL)Vars->push_back(  jet->genParton()->pdgId() ); 	//0 PART INFO
 else Vars->push_back( 0 );
@@ -2296,7 +2407,7 @@ void PATZJetsExpress::endJob()
 // ---- method for tree building ----------------------------------------
 void PATZJetsExpress::buildTree()
 {
-  QGVars_	     =new std::vector<float>();
+  QGVars_	     = new std::vector<float>();
   fired_             = new std::vector<int>();
   prescaleL1_        = new std::vector<int>();
   prescaleHLT_       = new std::vector<int>();
@@ -2311,6 +2422,11 @@ void PATZJetsExpress::buildTree()
   lepId_             = new std::vector<int>();
   lepSigmaIEtaIEta_  = new std::vector<float>();
   lepHadronicOverEm_ = new std::vector<float>();
+  lepR9orChi2ndof_   = new std::vector<float>();
+  fwjetPt_           = new std::vector<float>(); 
+  fwjetEta_          = new std::vector<float>();
+  fwjetPhi_          = new std::vector<float>();
+  fwjetE_            = new std::vector<float>();
   jetPt_             = new std::vector<float>(); 
   jetEta_            = new std::vector<float>();
   jetPhi_            = new std::vector<float>();
@@ -2397,6 +2513,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("nLeptons"         ,&nLeptons_          ,"nLeptons/I");
   myTree_->Branch("nPhotons"         ,&nPhotons_          ,"nPhotons/I");
   myTree_->Branch("nJets"            ,&nJets_             ,"nJets/I"); 
+  myTree_->Branch("fwnJets"          ,&fwnJets_           ,"fwnJets/I"); 
   myTree_->Branch("rho"              ,&rho_               ,"rho/F");
   myTree_->Branch("rho25"            ,&rho25_             ,"rho25/F");
   // ---- met variables -------------------------------------------------
@@ -2474,9 +2591,10 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("lepPFIsoDBCor"    ,"vector<float>"     ,&lepPFIsoDBCor_);
   myTree_->Branch("lepPFIsoRhoCor"   ,"vector<float>"     ,&lepPFIsoRhoCor_);
   myTree_->Branch("lepChId"          ,"vector<int>"       ,&lepChId_);
+  myTree_->Branch("lepR9orChi2ndof" ,"vector<float>"     ,&lepR9orChi2ndof_);
   myTree_->Branch("lepId"            ,"vector<int>"       ,&lepId_);
   // ---- jet variables -------------------------------------------------
-  myTree_->Branch("jetVeto"          ,"vector<int>"     ,&jetVeto_);
+  myTree_->Branch("jetVeto"          ,"vector<int>"       ,&jetVeto_);
   myTree_->Branch("jetPt"            ,"vector<float>"     ,&jetPt_);
   myTree_->Branch("jetEta"           ,"vector<float>"     ,&jetEta_);
   myTree_->Branch("jetPhi"           ,"vector<float>"     ,&jetPhi_);
@@ -2493,6 +2611,11 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetJEC"           ,"vector<float>"     ,&jetJEC_);
   myTree_->Branch("jetUNC"           ,"vector<float>"     ,&jetUNC_);
   myTree_->Branch("jetllDPhi"        ,"vector<float>"     ,&jetllDPhi_);
+  //-----forward jets - two leading forward jets
+  myTree_->Branch("fwjetPt"          ,"vector<float>"     ,&fwjetPt_);
+  myTree_->Branch("fwjetEta"         ,"vector<float>"     ,&fwjetEta_);
+  myTree_->Branch("fwjetPhi"         ,"vector<float>"     ,&fwjetPhi_);
+  myTree_->Branch("fwjetE"           ,"vector<float>"     ,&fwjetE_);
   // ---- vertex variables ----------------------------------------------
   myTree_->Branch("vtxZ"             ,"vector<float>"     ,&vtxZ_);
   myTree_->Branch("vtxNdof"          ,"vector<float>"     ,&vtxNdof_);
@@ -2531,6 +2654,12 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonEGEN"       ,&photonEGEN_        ,"photonEGEN/F");
   myTree_->Branch("photonEtaGEN"     ,&photonEtaGEN_      ,"photonEtaGEN/F");
   myTree_->Branch("photonPhiGEN"     ,&photonPhiGEN_      ,"photonPhiGEN/F");
+  myTree_->Branch("photonIsoPtDR03GEN"    ,&photonIsoPtDR03GEN_     ,"photonIsoPtDR03GEN/F");
+  myTree_->Branch("photonIsoEDR03GEN"     ,&photonIsoEDR03GEN_     ,"photonIsoEDR03GEN/F");
+  myTree_->Branch("photonIsoPtDR04GEN"    ,&photonIsoPtDR04GEN_     ,"photonIsoPtDR04GEN/F");
+  myTree_->Branch("photonIsoEDR04GEN"     ,&photonIsoEDR04GEN_     ,"photonIsoEDR04GEN/F");
+  myTree_->Branch("photonIsoPtDR05GEN"    ,&photonIsoPtDR05GEN_     ,"photonIsoPtDR05GEN/F");
+  myTree_->Branch("photonIsoEDR05GEN"     ,&photonIsoEDR05GEN_     ,"photonIsoEDR05GEN/F");
   myTree_->Branch("photonMotherIdGEN",&photonMotherIdGEN_ ,"photonMotherIdGEN/I");
   myTree_->Branch("photonRECODRGEN"  ,&photonRECODRGEN_   ,"photonRECODRGEN/F");
   myTree_->Branch("VBPartonDM"       ,&VBPartonDM_        ,"VBPartonDM/I");
@@ -2559,6 +2688,7 @@ void PATZJetsExpress::clearTree()
   nPhotonsGEN_       = -999;
   nPhotons_          = -999;
   nJets_             = -999;
+  fwnJets_           = -999;
  // nRJets_            = -999;
   rho_               = -999;
   rho25_             = -999;
@@ -2600,7 +2730,7 @@ void PATZJetsExpress::clearTree()
   photonid_r9_                    ->clear();
   photonid_lambdaRatio_           ->clear();
   photonid_s4Ratio_               ->clear();
-  photonid_e25_               ->clear();
+  photonid_e25_                   ->clear();
   photonid_sceta_                 ->clear();
   photonid_ESEffSigmaRR_          ->clear();
   photonid_hadronicOverEm_        ->clear();
@@ -2637,6 +2767,7 @@ void PATZJetsExpress::clearTree()
   lepPFIsoDBCor_     ->clear();
   lepPFIsoRhoCor_    ->clear();
   lepChId_           ->clear();
+  lepR9orChi2ndof_   ->clear();
   lepMatchedDRGEN_   ->clear();
   lepMatchedGEN_     ->clear();
   lepId_             ->clear();
@@ -2656,13 +2787,17 @@ void PATZJetsExpress::clearTree()
   jetJEC_            ->clear();
   jetUNC_            ->clear();
   jetllDPhi_         ->clear();
-  jetVeto_          ->clear();
+  jetVeto_           ->clear();
+  fwjetPt_           ->clear();
+  fwjetEta_          ->clear();
+  fwjetPhi_          ->clear();
+  fwjetE_            ->clear();
   vtxZ_              ->clear();
   vtxNdof_           ->clear();
   puINT_             = -999;
   puOOT_             = -999;
-  puTrueINT_             = -999;
-  puTrueOOT_             = -999;
+  puTrueINT_         = -999;
+  puTrueOOT_         = -999;
   isRealData_        = -999;
   nLeptonsGEN_       = -999;
   nJetsGEN_          = -999;
@@ -2681,15 +2816,21 @@ void PATZJetsExpress::clearTree()
   jetEtaGEN_         ->clear();
   jetPhiGEN_         ->clear();
   jetEGEN_           ->clear();
-  jetVetoGEN_          ->clear();
+  jetVetoGEN_        ->clear();
   jetllDPhiGEN_      ->clear();
   jetIdGEN_          ->clear();
-  jetNpartonsGEN_          ->clear();
+  jetNpartonsGEN_    ->clear();
   photonEGEN_        = -999;
   photonPtGEN_       = -999;
   photonEtaGEN_      = -999;
   photonPhiGEN_      = -999;
   photonMotherIdGEN_ = -999;
+  photonIsoEDR03GEN_ = -999; 
+  photonIsoPtDR03GEN_= -999;
+  photonIsoEDR04GEN_ = -999; 
+  photonIsoPtDR04GEN_= -999; 
+  photonIsoEDR05GEN_ = -999; 
+  photonIsoPtDR05GEN_= -999; 
   photonRECODRGEN_   = +999; // please keep this positive (will cut offline to <0.2 for matched)
   VBPartonDM_        = -999;
   VBPartonM_         = -999;
