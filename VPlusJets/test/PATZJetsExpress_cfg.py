@@ -1,6 +1,6 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 
-isMC=False
+isMC=True
 
 process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('RecoJets.Configuration.RecoPFJets_cff')
@@ -48,19 +48,19 @@ process.patJets.addTagInfos = True
 
 # ---- format the message service ---------------------------------------
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 # ---- load geometry package --------------------------------------------
 #process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
-#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 #process.maxLuminosityBlocks = cms.untracked.PSet(input = cms.untracked.int32(1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-#'file:/afs/cern.ch/userw/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
-'file:pickevents.root'
-#'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
+#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+#'file:pickevents.root'
+'file:/scratch0/webermat/GJets_HT_200To400_8TeV_madgraph.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
@@ -219,6 +219,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
                                   'HLT_Photon125_v',
                                   'HLT_Photon135_v',
+		                  'HLT_Photon150_v',
                                   'HLT_Mu15_v',
                                   'HLT_Mu24_v',
                                   'HLT_Mu30_v',
@@ -264,7 +265,8 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon90_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
                                   'HLT_Photon125_v',
-                                  'HLT_Photon135_v'),
+                                  'HLT_Photon135_v',
+				  'HLT_Photon150_v'),
     triggerFamily5  = cms.vstring('HLT_Mu15_v',
                                   'HLT_Mu24_v',
                                   'HLT_Mu30_v',
@@ -336,7 +338,8 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
                                      'HLT_Photon90_CaloIdVL_v*',
                                      'HLT_Photon90_CaloIdVL_IsoL_v*',
                                      'HLT_Photon125_v*',
-                                     'HLT_Photon135_v*'                                    
+                                     'HLT_Photon135_v*',
+				     'HLT_Photon150_v*', 
                                      'HLT_Mu15_v2*',
                                      'HLT_Mu24_v*',
                                      'HLT_Mu30_v*',
@@ -370,7 +373,7 @@ pathTriggerElectronsFamily2 = '(path("HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_C
 
 pathTriggerMuonElectronFamily3 = '(path("HLT_Mu17_Ele8_CaloIdL_v*", 1, 1) || path("HLT_Mu8_Ele17_CaloIdL_v*", 1, 1) || path("HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v*", 1, 1) || path("HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v*", 1, 1) || path("HLT_DoubleMu5_Ele8_CaloIdT_TrkIdVL_v*", 1, 1) || path("HLT_DoubleMu8_Ele8_CaloIdT_TrkIdVL_v*", 1, 1) || path("HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*", 1, 1) || path("HLT_Mu30_Ele30_CaloIdL_v*", 1, 1) || path("HLT_Mu7_Ele7_CaloIdT_CaloIsoVL_v*", 1, 1) || path("HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v*", 1, 1) || path("HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*", 1, 1) || path("HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v*", 1, 1))' 
 
-pathTriggerPhotonsFamily4 = '(path("HLT_Photon20_CaloIdVL_v*", 1, 1) || path("HLT_Photon20_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon30_v*", 1, 1) || path("HLT_Photon30_CaloIdVL_v*", 1, 1) || path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon125_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1))'
+pathTriggerPhotonsFamily4 = '(path("HLT_Photon20_CaloIdVL_v*", 1, 1) || path("HLT_Photon20_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon30_v*", 1, 1) || path("HLT_Photon30_CaloIdVL_v*", 1, 1) || path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon125_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1)|| path("HLT_Photon150_v*", 1, 1))'
 
 pathTriggerMuonsFamily5 = '(path("HLT_Mu15_v2*", 1, 1) || path("HLT_Mu24_v*", 1, 1) || path("HLT_Mu30_v*", 1, 1) || path("HLT_Mu40_v*", 1, 1) || path("HLT_Mu40_eta2p1_v*", 1, 1) || path("HLT_IsoMu17_v*", 1, 1) || path("HLT_IsoMu20_v*", 1, 1) || path("HLT_IsoMu24_v*", 1, 1) || path("HLT_IsoMu24_eta2p1_v*", 1, 1))' # selecting the trigger objects
 
