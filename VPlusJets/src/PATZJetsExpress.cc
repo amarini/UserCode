@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.40 2013/02/20 14:25:17 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.41 2013/02/20 14:32:50 amarini Exp $
 //
 //
 
@@ -329,7 +329,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       edm::InputTag pfIsoValEleCH03Name,pfIsoValEleNH03Name,pfIsoValEleG03Name;
       //int      mGENCrossCleaning;
       //string        mJECserviceMC, mJECserviceDATA, mPayloadName;
-      edm::InputTag mJetsName,mSrcRho,mSrcRho25;
+      edm::InputTag mJetsName,mSrcRho,mSrcRho25,mSrcRhoQG;
       // ---- tree variables --------------------------------------------
       // ---- event number ----------------------------------------------
       ULong64_t eventNum_;
@@ -477,7 +477,12 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       int   puINT_,puOOT_,puTrueINT_,puTrueOOT_;
       // ---- MC weight
       float mcWeight_;
-
+      float qScale_;
+      float alphaQED_;
+      float alphaQCD_;
+      float x1_;
+      float x2_;
+      float scalePDF_;
       // PF isolation calculator for photon
       PFIsolationEstimator isolator;
 
@@ -516,6 +521,7 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   mJetsName          = iConfig.getParameter<edm::InputTag>             ("jets");
   mSrcRho            = iConfig.getParameter<edm::InputTag>             ("srcRho");
   mSrcRho25          = iConfig.getParameter<edm::InputTag>             ("srcRho25");
+  mSrcRhoQG          = iConfig.getParameter<edm::InputTag>             ("srcRhoQG");
   //mJECserviceDATA    = iConfig.getParameter<std::string>               ("jecServiceDATA");
   //mJECserviceMC      = iConfig.getParameter<std::string>               ("jecServiceMC");
   //mPayloadName       = iConfig.getParameter<std::string>               ("payload");
@@ -928,6 +934,12 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	{
     	iEvent.getByLabel("generator",geninfo);
     	mcWeight_ = geninfo->weight();
+	qScale_   = geninfo->qScale();
+	alphaQED_ = geninfo->alphaQED();
+	alphaQCD_ = geninfo->alphaQCD();
+	x1_       = geninfo->pdf()->x.first;
+	x2_       = geninfo->pdf()->x.second;
+	scalePDF_ = geninfo->pdf()->scalePDF;
     	hWEvents_->Fill(0.5,mcWeight_);
 	}
     // --- Gen Jets
@@ -1934,7 +1946,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aJet.mcflavour      = mcflavour;
       //if(jetIsDuplicate){aJet.p4       = jetP4; myRJets.push_back(aJet);}  // store the uncorrected jet (this is virtually the matched lepton in DR) 
     Handle<double> rhoQG;
-    iEvent.getByLabel("kt6PFJetsIsoQG",rhoQG);
+    iEvent.getByLabel(mSrcRhoQG,rhoQG);
+    //kt6PFJetsIsoQG
 //
       if( jetIsInAcceptance && jetIsIDed){ //store QG Variable for myJets
 	vector<float> *QGvars=ComputeQGVariables(i_jet,iEvent,index);
@@ -1942,7 +1955,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  int i;
 	  for( i=0;i<int(QGvars->size());i++)
 	    QGVars_->push_back(QGvars->at(i));
-	  if(QGVars_->size()<10) QGVars_->push_back(rhoQG);i++;
+	  if(QGVars_->size()<10) QGVars_->push_back(*rhoQG);i++;
 	  for(;i<9;i++)
 	    QGVars_->push_back(-1.0);
 	  QGVars_->push_back(-99.);
@@ -2653,6 +2666,12 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetNpartonsGEN"   ,"vector<int>"     ,&jetNpartonsGEN_);
   myTree_->Branch("HTParSum"         ,&HTParSum_          ,"HTParSum/F");  
   myTree_->Branch("mcWeight"         ,&mcWeight_          ,"mcWeight/F");
+  myTree_->Branch("qScale"           ,&qScale_            ,"qScale/F");
+  myTree_->Branch("alphaQED"         ,&alphaQED_          ,"alphaQED/F");
+  myTree_->Branch("alphaQCD"         ,&alphaQCD_          ,"alphaQCD/F");
+  myTree_->Branch("x1"               ,&x1_                ,"x1/F");
+  myTree_->Branch("x2"               ,&x2_                ,"x2/F");
+  myTree_->Branch("scalePDF"         ,&scalePDF_          ,"scalePDF/F");
   myTree_->Branch("nPhotonsGEN"      ,&nPhotonsGEN_       ,"nPhotonsGEN/I");
   myTree_->Branch("photonPtGEN"      ,&photonPtGEN_       ,"photonPtGEN/F");
   myTree_->Branch("photonEGEN"       ,&photonEGEN_        ,"photonEGEN/F");
@@ -2843,6 +2862,12 @@ void PATZJetsExpress::clearTree()
   VBPartonEta_       = -999;
   VBPartonPhi_       = -999;
   mcWeight_          = -999;
+  qScale_            = -999;
+  alphaQED_          = -999;
+  alphaQCD_          = -999;
+  x1_                = -999;
+  x2_                = -999;
+  scalePDF_          = -999;
 }
 
 double PATZJetsExpress::getEffectiveAreaForMuons(const double& eta) const {
