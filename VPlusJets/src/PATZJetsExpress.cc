@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.41 2013/02/20 14:32:50 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.42 2013/02/20 16:56:53 webermat Exp $
 //
 //
 
@@ -1139,6 +1139,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       //}
       GENJET aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
       aGenJet.veto=isVETO;  
+      aGenJet.nparton=0;
       //---- try first B hadron code
 
       //---- gen jet matching
@@ -2352,7 +2353,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	photonIsoPtDR03GEN_= myGenPhotons[0].isoPtDR03;
 	photonIsoEDR03GEN_= myGenPhotons[0].isoEDR03;
 	photonIsoPtDR04GEN_= myGenPhotons[0].isoPtDR04;
-	photonIsoEDR04GEN_= myGenPhotons[0].isoEDR05;
+	photonIsoEDR04GEN_= myGenPhotons[0].isoEDR04;
 	photonIsoPtDR05GEN_= myGenPhotons[0].isoPtDR05;
 	photonIsoEDR05GEN_= myGenPhotons[0].isoEDR05;
 	photonMotherIdGEN_ = myGenPhotons[0].motherId;
