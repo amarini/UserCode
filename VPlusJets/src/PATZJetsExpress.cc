@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.39 2013/02/15 15:59:54 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.40 2013/02/20 14:25:17 webermat Exp $
 //
 //
 
@@ -1933,12 +1933,16 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aJet.taginfoVtxMass = taginfoVtxMass;
       aJet.mcflavour      = mcflavour;
       //if(jetIsDuplicate){aJet.p4       = jetP4; myRJets.push_back(aJet);}  // store the uncorrected jet (this is virtually the matched lepton in DR) 
+    Handle<double> rhoQG;
+    iEvent.getByLabel("kt6PFJetsIsoQG",rhoQG);
+//
       if( jetIsInAcceptance && jetIsIDed){ //store QG Variable for myJets
 	vector<float> *QGvars=ComputeQGVariables(i_jet,iEvent,index);
 	{
 	  int i;
 	  for( i=0;i<int(QGvars->size());i++)
 	    QGVars_->push_back(QGvars->at(i));
+	  if(QGVars_->size()<10) QGVars_->push_back(rhoQG);i++;
 	  for(;i<9;i++)
 	    QGVars_->push_back(-1.0);
 	  QGVars_->push_back(-99.);
