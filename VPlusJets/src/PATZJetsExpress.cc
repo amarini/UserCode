@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.42 2013/02/20 16:56:53 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.43 2013/02/20 20:56:24 webermat Exp $
 //
 //
 
@@ -452,7 +452,15 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       vector<float> *jetBeta_,*jetBtag_,*jetTagInfoNVtx_,*jetTagInfoNTracks_,*jetTagInfoVtxMass_,*jetArea_,*jetJEC_,*jetUNC_,*jetQGL_,*jetRMS_;
       vector<int> *jetVeto_, *jetMCFlavour_;
       // ---- QG ----
-      vector<float> *QGVars_;
+      //vector<float> *QGVars_;
+	float rhoQG_;
+	vector<int> *jetPdgId_;
+	vector<int> *jetChgQC_;
+	vector<int> *jetNeutralPtCut_;
+	vector<float>*jetPtDQC_;
+	vector<float>*jetAxis1QC_;
+	vector<float>*jetAxis2QC_;
+	vector<float>*jetQGMLP_;
       // ---- number of jets --------------------------------------------
       int nJets_,nJetsGEN_;
       // int nRJets_;
@@ -1952,15 +1960,25 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 //
       if( jetIsInAcceptance && jetIsIDed){ //store QG Variable for myJets
 	vector<float> *QGvars=ComputeQGVariables(i_jet,iEvent,index);
-	{
-	  int i;
-	  for( i=0;i<int(QGvars->size());i++)
-	    QGVars_->push_back(QGvars->at(i));
-	  if(QGVars_->size()<10) QGVars_->push_back(*rhoQG);i++;
-	  for(;i<9;i++)
-	    QGVars_->push_back(-1.0);
-	  QGVars_->push_back(-99.);
-	}
+//	{
+//	  int i;
+//	  for( i=0;i<int(QGvars->size());i++)
+//	    QGVars_->push_back(QGvars->at(i));
+//	  if(QGVars_->size()<10) QGVars_->push_back(*rhoQG);i++;
+//	  for(;i<9;i++)
+//	    QGVars_->push_back(-1.0);
+//	  QGVars_->push_back(-99.);
+//	}
+
+	rhoQG_=*rhoQG;
+	jetPdgId_->push_back(QGvars->at(0));
+	jetChgQC_->push_back(QGvars->at(7));
+	jetNeutralPtCut_->push_back(QGvars->at(6));;
+	jetPtDQC_->push_back(QGvars->at(3));;
+	jetAxis1QC_->push_back(QGvars->at(4));;
+	jetAxis2QC_->push_back(QGvars->at(5));;
+	jetQGMLP_->push_back(QGvars->at(2));
+
 	aJet.qgl=QGvars->at(1);
 	QGvars->clear();
 	delete QGvars;
@@ -2202,6 +2220,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetQGL_     ->push_back(myJets[j].qgl);
         jetRMS_     ->push_back(myJets[j].rms);
         jetVeto_     ->push_back(myJets[j].veto);
+
       }
       for(unsigned j = 0; j < myFwJets.size(); j++) {
 	//fill only leading fw jets
@@ -2425,7 +2444,7 @@ void PATZJetsExpress::endJob()
 // ---- method for tree building ----------------------------------------
 void PATZJetsExpress::buildTree()
 {
-  QGVars_	     = new std::vector<float>();
+  //QGVars_	     = new std::vector<float>();
   fired_             = new std::vector<int>();
   prescaleL1_        = new std::vector<int>();
   prescaleHLT_       = new std::vector<int>();
@@ -2452,6 +2471,13 @@ void PATZJetsExpress::buildTree()
   jetArea_           = new std::vector<float>();
   jetBeta_           = new std::vector<float>();
   jetQGL_            = new std::vector<float>();
+   jetPdgId_	     = new std::vector<int>();
+   jetChgQC_         = new std::vector<int>();
+   jetNeutralPtCut_  = new std::vector<int>();
+   jetPtDQC_         = new std::vector<float>();
+   jetAxis1QC_       = new std::vector<float>();
+   jetAxis2QC_       = new std::vector<float>();
+   jetQGMLP_ 	     = new std::vector<float>();
   jetRMS_            = new std::vector<float>();
   jetBtag_           = new std::vector<float>();
   jetTagInfoVtxMass_ = new std::vector<float>();
@@ -2534,6 +2560,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("fwnJets"          ,&fwnJets_           ,"fwnJets/I"); 
   myTree_->Branch("rho"              ,&rho_               ,"rho/F");
   myTree_->Branch("rho25"            ,&rho25_             ,"rho25/F");
+  myTree_->Branch("rhoQG"            ,&rhoQG_             ,"rhoQG/F");
   // ---- met variables -------------------------------------------------
   myTree_->Branch("pfmet"            ,&pfmet_             ,"pfmet/F");
   myTree_->Branch("pfmetPhi"         ,&pfmetPhi_          ,"pfmetPhi/F");
@@ -2620,6 +2647,13 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetArea"          ,"vector<float>"     ,&jetArea_);
   myTree_->Branch("jetBeta"          ,"vector<float>"     ,&jetBeta_);
   myTree_->Branch("jetQGL"           ,"vector<float>"     ,&jetQGL_);
+   myTree_->Branch("jetPdgId" 	     ,"vector<int>"       ,&jetPdgId_ 	   ); 
+   myTree_->Branch("jetChgQC"         ,"vector<int>"       ,&jetChgQC_       );  
+   myTree_->Branch("jetNeutralPtCut"  ,"vector<int>"       ,&jetNeutralPtCut_);
+   myTree_->Branch("jetPtDQC" 	     ,"vector<float>"     ,&jetPtDQC_ 	   );
+   myTree_->Branch("jetAxis1QC"       ,"vector<float>"     ,&jetAxis1QC_     );
+   myTree_->Branch("jetAxis2QC"       ,"vector<float>"     ,&jetAxis2QC_     );
+   myTree_->Branch("jetQGMLP"	     ,"vector<float>"     ,&jetQGMLP_	   );
   myTree_->Branch("jetRMS"           ,"vector<float>"     ,&jetRMS_);
   myTree_->Branch("jetBtag"          ,"vector<float>"     ,&jetBtag_);
   myTree_->Branch("jetTagInfoNVtx"   ,"vector<float>"     ,&jetTagInfoNVtx_);
@@ -2692,7 +2726,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("VBPartonPt"       ,&VBPartonPt_        ,"VBPartonPt/F");
   myTree_->Branch("VBPartonEta"      ,&VBPartonEta_       ,"VBPartonEta/F");
   myTree_->Branch("VBPartonPhi"      ,&VBPartonPhi_       ,"VBPartonPhi/F");
-  myTree_->Branch("QGVars"	     ,"vector<float>"	  ,&QGVars_);
+  //myTree_->Branch("QGVars"	     ,"vector<float>"	  ,&QGVars_);
   myTree_->Branch("lepSigmaIEtaIEta" ,"vector<float>"	  ,&lepSigmaIEtaIEta_);
   myTree_->Branch("lepHadronicOverEm","vector<float>"	  ,&lepHadronicOverEm_);
 }
@@ -2702,7 +2736,7 @@ void PATZJetsExpress::clearTree()
    lepSigmaIEtaIEta_->clear();
    lepHadronicOverEm_->clear();
 
-  QGVars_->clear();
+  //QGVars_->clear();
   isRealData_        = -999;
   eventNum_          = 0; //ULong64_t can't be negative
   runNum_            = -999;
@@ -2802,6 +2836,13 @@ void PATZJetsExpress::clearTree()
   jetArea_           ->clear();
   jetBeta_           ->clear();
   jetQGL_            ->clear();
+   jetPdgId_ 	     ->clear();
+   jetChgQC_         ->clear();
+   jetNeutralPtCut_  ->clear();
+   jetPtDQC_ 	     ->clear();
+   jetAxis1QC_       ->clear();
+   jetAxis2QC_       ->clear();
+   jetQGMLP_	     ->clear();
   jetRMS_            ->clear();
   jetBtag_           ->clear();
   jetTagInfoVtxMass_ ->clear();
