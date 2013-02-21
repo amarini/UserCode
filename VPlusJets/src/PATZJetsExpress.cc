@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.43 2013/02/20 20:56:24 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.44 2013/02/21 05:43:30 amarini Exp $
 //
 //
 
@@ -490,6 +490,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float alphaQCD_;
       float x1_;
       float x2_;
+      int pdf1Id_;
+      int pdf2Id_;
       float scalePDF_;
       // PF isolation calculator for photon
       PFIsolationEstimator isolator;
@@ -947,6 +949,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	alphaQCD_ = geninfo->alphaQCD();
 	x1_       = geninfo->pdf()->x.first;
 	x2_       = geninfo->pdf()->x.second;
+	pdf1Id_   = geninfo->pdf()->id.first;
+	pdf2Id_   = geninfo->pdf()->id.second;
 	scalePDF_ = geninfo->pdf()->scalePDF;
     	hWEvents_->Fill(0.5,mcWeight_);
 	}
@@ -1079,6 +1083,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	      aGenPhoton.motherId = gen_Moth->pdgId();
 	    }
 	    if(aGenPhoton.isoPtDR03/phoP4GEN.Pt()<0.25){
+	      //cout<<"photon pt/eta/iso03/iso04/iso05 "<<phoP4GEN.Pt()<<"/"<<phoP4GEN.Eta()<<"/"<<aGenPhoton.isoPtDR03/phoP4GEN.Pt()<<"/"<<aGenPhoton.isoPtDR04/phoP4GEN.Pt()<<"/"<<aGenPhoton.isoPtDR05/phoP4GEN.Pt()<<endl;
 	      myGenPhotons.push_back(aGenPhoton);
 	    }
           }//eta and pt cutoff
@@ -1093,6 +1098,15 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		default: break;
 		}
 		}
+    }
+    if(geninfo->hasBinningValues()){
+      cout<<"HT par/gen bin from info "<<HTParSum_<<"/"<<geninfo->binningValues()[0]<<endl;
+    }else{
+      if(HTParSum_>200 && HTParSum_<400){
+	cout<<"no binning values available "<<HTParSum_<<endl;
+      }else{
+	cout<<"no binning values, HT OUT OF RANGE MAYBE "<<HTParSum_<<endl;
+      }
     }
     hGenLeptons_->Fill(int(myGenLeptons.size()));
     // ---- sort the genLeptons -----------------------------------------
@@ -2706,6 +2720,8 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("alphaQCD"         ,&alphaQCD_          ,"alphaQCD/F");
   myTree_->Branch("x1"               ,&x1_                ,"x1/F");
   myTree_->Branch("x2"               ,&x2_                ,"x2/F");
+  myTree_->Branch("pdf1Id"           ,&pdf1Id_            ,"pdf1Id/I");
+  myTree_->Branch("pdf2Id"           ,&pdf2Id_            ,"pdf2Id/I");
   myTree_->Branch("scalePDF"         ,&scalePDF_          ,"scalePDF/F");
   myTree_->Branch("nPhotonsGEN"      ,&nPhotonsGEN_       ,"nPhotonsGEN/I");
   myTree_->Branch("photonPtGEN"      ,&photonPtGEN_       ,"photonPtGEN/F");
@@ -2754,7 +2770,7 @@ void PATZJetsExpress::clearTree()
   pfmetPhi_          = -999;
   pfhadPt_           = -999;
   pfSumEt_           = -999;
-  HTParSum_          = -999;
+  HTParSum_          = 0;
   llM_               = -999;
   llPt_              = -999; 
   llPhi_             = -999;
@@ -2909,6 +2925,8 @@ void PATZJetsExpress::clearTree()
   alphaQCD_          = -999;
   x1_                = -999;
   x2_                = -999;
+  pdf1Id_            = -999;
+  pdf2Id_            = -999;
   scalePDF_          = -999;
 }
 
