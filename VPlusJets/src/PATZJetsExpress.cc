@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.45 2013/02/21 15:33:54 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.46 2013/02/21 16:49:29 webermat Exp $
 //
 //
 
@@ -261,6 +261,14 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         float rms;
         // ---- veto ---------------------------------------------------
         int veto;
+	// ---- QG
+	int nChgQC;
+	int nNeutralPtCut;
+	int pdgId;
+	float PtD;
+	float axis1QC;
+	float axis2QC;
+	float qgMLP;
       };
       class GENJET : public TLorentzVector {
          public:
@@ -1977,13 +1985,21 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 //	}
 
 	rhoQG_=*rhoQG;
-	jetPdgId_->push_back(QGvars->at(0));
-	jetChgQC_->push_back(QGvars->at(7));
-	jetNeutralPtCut_->push_back(QGvars->at(6));;
-	jetPtDQC_->push_back(QGvars->at(3));;
-	jetAxis1QC_->push_back(QGvars->at(4));;
-	jetAxis2QC_->push_back(QGvars->at(5));;
-	jetQGMLP_->push_back(QGvars->at(2));
+	//jetPdgId_->push_back(QGvars->at(0));
+	//jetChgQC_->push_back(QGvars->at(7));
+	//jetNeutralPtCut_->push_back(QGvars->at(6));;
+	//jetPtDQC_->push_back(QGvars->at(3));;
+	//jetAxis1QC_->push_back(QGvars->at(4));;
+	//jetAxis2QC_->push_back(QGvars->at(5));;
+	//jetQGMLP_->push_back(QGvars->at(2));
+
+	aJet.pdgId=QGvars->at(0);
+	aJet.nChgQC=QGvars->at(7);
+	aJet.nNeutralPtCut=QGvars->at(6);
+	aJet.PtD=QGvars->at(3);
+	aJet.axis1QC=QGvars->at(4);
+	aJet.axis2QC=QGvars->at(5);
+	aJet.qgMLP=QGvars->at(2);
 
 	aJet.qgl=QGvars->at(1);
 	QGvars->clear();
@@ -2226,6 +2242,13 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         jetQGL_     ->push_back(myJets[j].qgl);
         jetRMS_     ->push_back(myJets[j].rms);
         jetVeto_     ->push_back(myJets[j].veto);
+	jetPdgId_->push_back(myJets[j].pdgId);
+	jetChgQC_->push_back(myJets[j].nChgQC);
+	jetNeutralPtCut_->push_back(myJets[j].nNeutralPtCut);
+	jetPtDQC_->push_back(myJets[j].PtD);
+	jetAxis1QC_->push_back(myJets[j].axis1QC);
+	jetAxis2QC_->push_back(myJets[j].axis2QC);
+	jetQGMLP_->push_back(myJets[j].qgMLP);
 
       }
       for(unsigned j = 0; j < myFwJets.size(); j++) {
