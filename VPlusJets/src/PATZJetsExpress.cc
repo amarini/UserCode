@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.44 2013/02/21 05:43:30 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.45 2013/02/21 15:33:54 webermat Exp $
 //
 //
 
@@ -1099,15 +1099,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		}
 		}
     }
-    if(geninfo->hasBinningValues()){
-      cout<<"HT par/gen bin from info "<<HTParSum_<<"/"<<geninfo->binningValues()[0]<<endl;
-    }else{
-      if(HTParSum_>200 && HTParSum_<400){
-	cout<<"no binning values available "<<HTParSum_<<endl;
-      }else{
-	cout<<"no binning values, HT OUT OF RANGE MAYBE "<<HTParSum_<<endl;
-      }
-    }
+ 
     hGenLeptons_->Fill(int(myGenLeptons.size()));
     // ---- sort the genLeptons -----------------------------------------
     sort(myGenLeptons.begin(),myGenLeptons.end(),lepSortingRuleGEN);
