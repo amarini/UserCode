@@ -24,12 +24,15 @@ from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 if(isMC):
-	process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
+	process.GlobalTag.globaltag = 'START53_V18::All'    # MC 53Y release
 else:
-	process.GlobalTag.globaltag = 'FT_R_53_V18::All' 	# For 2012A+B+C data reprocessing in 53X.
-	                                              #(Snapshot not valid for runs > 210041 [= 2013-01-15])[2]
-	#process.GlobalTag.globaltag = 'GR_P_V41_AN3::All' #	>=533X 	To be used for analysis of 2012C v2 prompt reco data. 
-	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All' #	>=533X 	To be used for analysis of 2012D prompt reco data
+	process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All'  # 2012AB - July13 2012 - re-reco of 2012AB in 53X
+	#process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All' # 2012A - Aug06 2012 - re-reco of run-range 190782-190949 
+	#process.GlobalTag.globaltag = 'FT53_V10A_AN3::All' # 2012C-v1 - Aug24 2012 - re-reco of 2012C (v1)
+	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All'  # 2012C-v2 - prompt reco for 2012C_v2 - prompt reco
+	#process.GlobalTag.globaltag = 'FT_P_V42C_AN3::All' # 2012C (only 201191) - 11Dec 2012 - ecal recovery of run 201191
+	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All'  # 2012D - prompt reco for 2012D - prompt reco	
+	#process.GlobalTag.globaltag = 'FT_P_V43E_AN3::All' # 2012D (only range: 207883-208307) - 16Jan 2013 - recovery of 2012D run range 207883-208307
 
 ##--------- good primary vertices ---------------
 process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
