@@ -60,6 +60,9 @@ histos["llY"]		= new TH1F("llY","llY;Y^{ll};events",50,-5,5);
 histos["llPhi"]		= new TH1F("llPhi","llPhi;#phi^{ll};events",50,-3.1416,3.1416);
 
 //photons?
+histos["llgM"]		= new TH1F("llgM","llgM;M^{ll#gamma};events/10GeV",200,0,2000);
+histos["l1gM"]		= new TH1F("l1gM","l1gM;M^{l1#gamma};events/10GeV",200,0,2000);
+histos["l2gM"]		= new TH1F("l2gM","l2gM;M^{l2#gamma};events/10GeV",200,0,2000);
 
 //lepton
 histos["lep0Pt"]	= new TH1F("lep0Pt","lep0Pt;P_{T}^{1st lep};events",50,20,150);
@@ -121,6 +124,15 @@ vector<float> *jetQGL=NULL	;t->SetBranchAddress("jetQGL",&jetQGL);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
 	jetVeto=new vector<int>;
+vector<float> *photonPt=NULL; t->SetBranchAddress("photonPt",&photonPt);
+vector<float> *photonEta=NULL; t->SetBranchAddress("photonEta",&photonEta);
+vector<float> *photonPhi=NULL; t->SetBranchAddress("photonPhi",&photonPhi);
+vector<float> *photonE=NULL; t->SetBranchAddress("photonE",&photonE);
+
+//vector<float> *photonIsoFPRNeutral=NULL;if(type==0) t->SetBranchAddress("photonIsoFPRNeutral",&photonIsoFPRNeutral);
+//vector<float> *photonIsoFPRCharged=NULL;if(type==0) t->SetBranchAddress("photonIsoFPRCharged",&photonIsoFPRCharged);
+//vector<float> *photonIsoFPRPhoton=NULL; if(type==0) t->SetBranchAddress("photonIsoFPRPhoton",&photonIsoFPRPhoton);
+
 
 double PUWeight; if(type>0)t->SetBranchAddress("PUWeight",&PUWeight);
 
@@ -134,8 +146,6 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	//if(lepPt->size()<nLeptons)cout<<"WARNING nLeps"<<endl;
 	if(lepPt->size()<2)continue; //2 leptons
 	if( (*lepChId)[0]*(*lepChId)[1]!=CHID2)continue; //two muons
-	//llM selection
-	if(!(fabs(llM-91)<llMCut))continue;
 	//Triggers??
 	if(debug>1)cout<<"Passed Selection"<<endl;
 		//redo vetos
@@ -171,7 +181,22 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	double weight=1;
 	if(type>0)weight=PUWeight;
 
+
 	if( jet0 < 0 )continue; //cut on the first jet
+	if((photonPt->size()>0)&&((*photonPt)[0]>130 )){
+		//find the first isolated photon
+		int pho0=0;
+		//if(type==0){for(pho0=0;pho0<photonPt->size();pho0++) if( ((*photonIsoFPRNeutral)[pho0]+(*photonIsoFPRCharged)[pho0]+(*photonIsoFPRPhoton)[pho0])/(*photonPt)[pho0] < .5) {break;} }
+		TLorentzVector g;
+		if( (pho0<photonPt->size()) && ((*photonPt)[pho0]>130)){
+		g.SetPtEtaPhiE( (*photonPt)[pho0],(*photonEta)[pho0],(*photonPhi)[pho0],(*photonE)[pho0]);
+		histos["llgM"]->Fill((l1+l2+g).M(),weight);
+		histos["l1gM"]->Fill((l1+g).M(),weight);
+		histos["l2gM"]->Fill((l2+g).M(),weight);
+		}
+	}
+	//llM selection
+	if(!(fabs(llM-91)<llMCut))continue;
 	
 	histos["nVtx"]->Fill(nVtx,weight);
 	histos["nLeptons"]->Fill(nLeptons,weight);

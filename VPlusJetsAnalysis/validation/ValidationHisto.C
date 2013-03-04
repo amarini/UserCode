@@ -150,6 +150,10 @@ vector<string> histoName;
 	histoName.push_back("JetLLDPhi0");
 	histoName.push_back("Sum3j");
 
+	histoName.push_back("llgM");
+	histoName.push_back("l1gM");
+	histoName.push_back("l2gM");
+
 for(int i=0;i<histoName.size();i++)
 	{
 	vector<TH1F*> mc;
@@ -166,6 +170,12 @@ for(int i=0;i<histoName.size();i++)
 	mc.push_back( (TH1F*)WW->Get(histoName[i].c_str())->Clone("WW")  );
 	mc.push_back( (TH1F*)WZ->Get(histoName[i].c_str())->Clone("WZ")  );
 	mc.push_back( (TH1F*)ZZ->Get(histoName[i].c_str())->Clone("ZZ")  );
+	
+	if(histoName[i].find("gM")!=string::npos)
+		{
+		data->Rebin(2);for(int i=0;i<mc.size();i++) mc[i]->Rebin(2);
+		data->GetYaxis()->SetTitle("events/20GeV");for(int i=0;i<mc.size();i++) mc[i]->GetYaxis()->SetTitle("events/20GeV");
+		}
 
 	Plot(data,mc,histoName[i].c_str(),plotDir,chid2,lumi);
 	}
