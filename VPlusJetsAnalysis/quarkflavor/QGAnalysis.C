@@ -305,8 +305,8 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	RooFitResult* r=simPdf.fitTo(combData,Save(),SumW2Error(kTRUE));
 
 	//Save Results
-	RooPlot* frame1 = l.frame() ;
-	RooPlot* frame2 = b.frame() ;
+	RooPlot* frame1 =l.frame();
+	RooPlot* frame2 =b.frame();
 
 	qgl_data.plotOn (frame1,DataError(RooAbsData::SumW2));
 	modelQGL.plotOn (frame1,DataError(RooAbsData::SumW2));
