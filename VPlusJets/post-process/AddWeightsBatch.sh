@@ -28,10 +28,12 @@ FILE=$FILENAME
 
 [ ${MATCHPARTI} != 0 ] && { ${EOS} cp -a ${ORIGIN}/${FILENAME} ./ ;}
 
-cd $EXECDIR
+
+chmod u+rwx \$FILE
+cd $EXEDIR
 ./PostProcess \$WORKDIR/\$FILE 0
 cd \$WORKDIR
-${EOS} cp -a $FILE ${DEST}/
+${EOS} cp -a \$WORKDIR/\$FILE ${DEST}/
 
 EOF
 
