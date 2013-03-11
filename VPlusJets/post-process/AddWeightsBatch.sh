@@ -23,7 +23,7 @@ eos cp $FILENAME $DEST
 EOF
 
 #---------- This script is executed on the local system ------
-QUEUE=1nh
+QUEUE=1nd
 LOG=/afs/cern.ch/work/a/amarini/VPlusJets_PostProcess/${FILENAME%%.root}.log
 
 chmod a+rx /afs/cern.ch/work/a/amarini/VPlusJets_PostProcess/${FILENAME%%.root}.sh 
