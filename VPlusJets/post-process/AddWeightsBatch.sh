@@ -7,6 +7,11 @@ EOS='/afs/cern.ch/project/eos/installation/0.2.5/bin/eos.select'
 
 mkdir -p /afs/cern.ch/work/a/amarini/VPlusJets_PostProcess/
 
+echo $FILENAME | grep "PartI\.root" >/dev/null 2>/dev/null
+MATCHPARTI=$?
+echo $FILENAME | grep "Part.*\.root" >/dev/null 2>/dev/null
+MATCHPARTX=$?
+
 #---------- This script is executed on the remote system ------
 cat >/afs/cern.ch/work/a/amarini/VPlusJets_PostProcess/${FILENAME%%.root}.sh <<EOF
 #!/bin/bash
@@ -15,15 +20,13 @@ cd /afs/cern.ch/work/a/amarini/CMSSW_5_3_6/src ; eval \`scramv1 runtime -sh\` ; 
 
 cd \$WORKDIR
 
-MATCHPARTI=$(echo $FILENAME | grep "PartI\.root" >/dev/null 2>/dev/null)
-MATCHPARTX=$(echo $FILENAME | grep "Part.*\.root" >/dev/null 2>/dev/null)
 
 FILE=$FILENAME
 
-[ \${MATCHPARTI} == 0 ] && { $EOS cp $ORIGIN/${FILENAME%%Part*}Part* ./ ; FILE=${FILENAME%%Part*}.root; hadd \$FILE ${FILENAME%%Part*}Part*.root; }
-[ \${MATCHPARTI} != 0 ] &&  [ \${MATCHPARTX} == 0 ] && exit 0;
+[ ${MATCHPARTI} == 0 ] && { $EOS cp $ORIGIN/${FILENAME%%Part*}Part* ./ ; FILE=${FILENAME%%_Part*}.root; hadd \$FILE ${FILENAME%%Part*}Part*.root; }
+[ ${MATCHPARTI} != 0 ] &&  [ ${MATCHPARTX} == 0 ] && exit 0;
 
-[ \${MATCHPARTI} !=0 ] && { ${EOS} cp $ORGIN/$FILENAME ./ ;}
+[ ${MATCHPARTI} != 0 ] && { ${EOS} cp $ORGIN/$FILENAME ./ ;}
 
 cd $EXECDIR
 ./PostProcess \$WORKDIR/\$FILE 0
