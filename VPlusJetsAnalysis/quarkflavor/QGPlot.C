@@ -120,8 +120,12 @@ vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
 	jetVeto=new vector<int>;
 
-vector<float> *QGVars=NULL	;if(type>0)t->SetBranchAddress("QGVars",&QGVars); 
 double PUWeight; if(type>0)t->SetBranchAddress("PUWeight",&PUWeight);
+//V00-06
+	//vector<float> *QGVars=NULL	;if(type>0)t->SetBranchAddress("QGVars",&QGVars); 
+//V00-07
+	vector<int> *jetPdgId=NULL	;if(type>0)t->SetBranchAddress("jetPdgId",&jetPdgId); 
+	vector<int> *jetIdGEN=NULL	;if(type>0)t->SetBranchAddress("jetIdGEN",&jetIdGEN); 
 
 
 if(debug>1)cout<<"Beginning loop "<<endl;
@@ -186,14 +190,20 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	int binllPt=histos["llPt"]->FindBin(llPt);
 	{
 	string name=Form("qgl_llPt_bin%d",binllPt);
-	if(debug>1)cout<<"I'm here!QGL "<<name<<endl;
+	if(debug>1)cout<<"I'm here!QGL "<<name<<"trying to access jet0="<<jet0<<"/"<<jetQGL->size()<<"histo"<<histos[name.c_str()]<<endl;
 	histos[name.c_str()] ->Fill(  (*jetQGL)[jet0],weight );
+	if(debug>1)cout<<"I'm here!BTAG"<<endl;
 	name=Form("btag_llPt_bin%d",binllPt);
 	histos[name.c_str()] ->Fill(  (*jetBtag)[jet0],weight );
 	}
 	if(type>0) { //mc
-	int Jet0Flavor=fabs((*QGVars)[10*jet0]);
+	//V00-06
+	//int Jet0Flavor=fabs((*QGVars)[10*jet0]);
+	//V00-07
+	if(debug>1)cout<<"I'm here!PDGID "<<jet0<<"/"<<jetPdgId->size()<<endl;
+	int Jet0Flavor=fabs((*jetPdgId)[jet0]);
 
+	if(debug>1)cout<<"pdgId= "<<jetPdgId->at(jet0)<<endl;
 	//LLP - FLAVOR	
 	{
 	string name=Form("llPt_flavor%d",Jet0Flavor);
