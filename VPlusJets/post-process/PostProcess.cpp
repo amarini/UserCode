@@ -40,6 +40,8 @@ double CrossSection::xSection(string match){
 		if(match.find(it->first) != string::npos){ // I want to match what I put in the database and not the fileName
 			R=it->second;
 			m++;
+			//DEBUG
+			fprintf(stderr,"MATCH=%s\n",it->first.c_str());
 			}	
 		}
 	if(m==1) return R;
