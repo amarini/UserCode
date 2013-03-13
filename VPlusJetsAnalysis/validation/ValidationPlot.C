@@ -387,9 +387,9 @@ if( useFork){
 	if(forkNum==5)ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
 	if(forkNum==6)ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
 	
-	if(CHID2==-4){if(forkNum==7)ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu", DirOut.c_str());}
-	if(CHID2==-1){if(forkNum==7)ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE", DirOut.c_str());}
-	if(CHID2==-2){if(forkNum==7)ValidationPlotData( (DirData+MuEG).c_str(),"MuEG", DirOut.c_str());}
+	if(CHID2==-4){if(forkNum==7)ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu_4.root", DirOut.c_str());}
+	if(CHID2==-1){if(forkNum==7)ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE_1.root", DirOut.c_str());}
+	if(CHID2==-2){if(forkNum==7)ValidationPlotData( (DirData+MuEG).c_str(),"MuEG_2.root", DirOut.c_str());}
 
 } else { //!FORK
 	ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());

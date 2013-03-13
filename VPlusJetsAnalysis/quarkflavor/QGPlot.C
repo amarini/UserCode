@@ -332,7 +332,27 @@ string MuEG=A.ReadParameter("MuEG");
 string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
 
 int useFork=0;
+sscanf(A.ReadParameter("BATCH"),"%d",&useFork)  ;
+//not in the configuration fail
+int forkNum=0;
+if(useFork)
+	{
+	if(argc<3)useFork=0;
+	else sscanf(argv[2],"%d",&forkNum);
+	}
 if( useFork){
+	if(forkNum==1)QGPlotMC( (DirMC+DY).c_str(),Form("QG_DY_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==2)QGPlotMC( (DirMC+TT).c_str(),Form("QG_TT_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==3)QGPlotMC( (DirMC+WJ).c_str(),Form("QG_WJ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==4)QGPlotMC( (DirMC+WW).c_str(),Form("QG_WW_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==5)QGPlotMC( (DirMC+WZ).c_str(),Form("QG_WZ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==6)QGPlotMC( (DirMC+ZZ).c_str(),Form("QG_ZZ_%d.root",-CHID2), DirOut.c_str());
+	
+	if(CHID2==-4){if(forkNum==7)QGPlotData( (DirData+DoubleMu).c_str(),"QG_DoubleMu_4.root", DirOut.c_str());}
+	if(CHID2==-1){if(forkNum==7)QGPlotData( (DirData+DoubleE).c_str(),"QG_DoubleE_1.root", DirOut.c_str());}
+	if(CHID2==-2){if(forkNum==7)QGPlotData( (DirData+MuEG).c_str(),"QG_MuEG_2.root", DirOut.c_str());}
+
+
 } else { //!FORK
 	QGPlotMC( (DirMC+DY).c_str(),Form("QG_DY_%d.root",-CHID2), DirOut.c_str());
 	QGPlotMC( (DirMC+TT).c_str(),Form("QG_TT_%d.root",-CHID2), DirOut.c_str());

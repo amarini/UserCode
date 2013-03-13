@@ -266,16 +266,16 @@ if(useFork)
 	}
 
 if( useFork){
-	if(forkNum==1)SusyPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==2)SusyPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==3)SusyPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==4)SusyPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==5)SusyPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==6)SusyPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==1)SusyPlotMC( (DirMC+DY).c_str(),Form("Susy_DY_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==2)SusyPlotMC( (DirMC+TT).c_str(),Form("Susy_TT_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==3)SusyPlotMC( (DirMC+WJ).c_str(),Form("Susy_WJ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==4)SusyPlotMC( (DirMC+WW).c_str(),Form("Susy_WW_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==5)SusyPlotMC( (DirMC+WZ).c_str(),Form("Susy_WZ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==6)SusyPlotMC( (DirMC+ZZ).c_str(),Form("Susy_ZZ_%d.root",-CHID2), DirOut.c_str());
 	
-	if(CHID2==-4){if(forkNum==7)SusyPlotData( (DirData+DoubleMu).c_str(),"DoubleMu_4.root", DirOut.c_str());}
-	if(CHID2==-1){if(forkNum==7)SusyPlotData( (DirData+DoubleE).c_str(),"DoubleE_1.root", DirOut.c_str());}
-	if(CHID2==-2){if(forkNum==7)SusyPlotData( (DirData+MuEG).c_str(),"MuEG_2.root", DirOut.c_str());}
+	if(CHID2==-4){if(forkNum==7)SusyPlotData( (DirData+DoubleMu).c_str(),"Susy_DoubleMu_4.root", DirOut.c_str());}
+	if(CHID2==-1){if(forkNum==7)SusyPlotData( (DirData+DoubleE).c_str(),"Susy_DoubleE_1.root", DirOut.c_str());}
+	if(CHID2==-2){if(forkNum==7)SusyPlotData( (DirData+MuEG).c_str(),"Susy_MuEG_2.root", DirOut.c_str());}
 
 } else { //!FORK
 	SusyPlotMC( (DirMC+DY).c_str(),Form("Susy_DY_%d.root",-CHID2), DirOut.c_str());

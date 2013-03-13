@@ -28,7 +28,7 @@ LOG=${SCRIPTDIR}/log_$NAME.log
 chmod a+rx ${SCRIPTDIR}/script_$NAME.sh 
 
 [ -f "${LOG}" ] && rm ${LOG}
-echo " bsub -q ${QUEUE} -o ${LOG} -J ${NAME} < ${SCRIPTDIR}/scripti_${NAME}.sh "
+echo " bsub -q ${QUEUE} -o ${LOG} -J ${NAME} < ${SCRIPTDIR}/script_${NAME}.sh "
 
 #-----------------------END------------------------------------
 done
