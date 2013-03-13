@@ -368,28 +368,28 @@ string MuEG=A.ReadParameter("MuEG");
 string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
 
 int useFork=0;
+sscanf(A.ReadParameter("BATCH"),"%d",&useFork)  ;
+//not in the configuration fail
+int forkNum=0;
+if(useFork)
+	{
+	if(argc<3)useFork=0;
+	else sscanf(argv[2],"%d",&forkNum);
+	}
+	
+
 if( useFork){
 
-	int who=fork(); //pid son, 0 parent
-	if(who==0)ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
-	who=fork();if(who==0)ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
-	if(who==0)return 0;
+	if(forkNum==1)ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==2)ValidationPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==3)ValidationPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==4)ValidationPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==5)ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==6)ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
 	
-	if(CHID2==-4){who=fork();if(who==0)ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu", DirOut.c_str());}
-	if(who==0)return 0;
-	if(CHID2==-1){who=fork();if(who==0)ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE", DirOut.c_str());}
-	if(who==0)return 0;
-	if(CHID2==-2){who=fork();if(who==0)ValidationPlotData( (DirData+MuEG).c_str(),"MuEG", DirOut.c_str());}
-	if(who==0)return 0;
+	if(CHID2==-4){if(forkNum==7)ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu", DirOut.c_str());}
+	if(CHID2==-1){if(forkNum==7)ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE", DirOut.c_str());}
+	if(CHID2==-2){if(forkNum==7)ValidationPlotData( (DirData+MuEG).c_str(),"MuEG", DirOut.c_str());}
 
 } else { //!FORK
 	ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
