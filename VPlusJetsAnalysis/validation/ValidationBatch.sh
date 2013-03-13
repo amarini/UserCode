@@ -15,9 +15,14 @@ cat >${SCRIPTDIR}/script_$NAME.sh <<EOF
 export SCRAM_ARCH=slc5_amd64_gcc462;
 cd /afs/cern.ch/work/a/amarini/CMSSW_5_3_6/src ; eval \`scramv1 runtime -sh\` ; cd - ; 
 
+#mount eos
+eosmount \${HOME}/eos
 cd $EXEDIR
 
 ./ValidationPlot ${config} ${i}
+
+#umount eos
+eosumount \${HOME}/eos
 
 EOF
 
