@@ -90,6 +90,11 @@ histos["jet1Btag"]	= new TH1F("jet1Btag","jet1Btag;Btag^{2nd jet};events",50,-1.
 histos["jetLLDPhi0"]	= new TH1F("JetLLDPhi0","JetLLDPhi0;#Delta#phi(Z,j_{1});events",50,0,3.1416);
 histos["Sum3j"]	= new TH1F("Sum3j","Sum3j;#sum_{ij#elem 1..3}d#phi_{ij};events",50,0,3.1416*2);
 
+//Introduce some cuts:
+histos["llPt_betaStar"]		= new TH1F("llPt_betaStar","llPt;P_{T}^{ll} (betaStar on Jets);events",100,0,450);
+histos["jetLLDPhi0_PtZ_50"]	= new TH1F("JetLLDPhi0_PtZ_50","JetLLDPhi0;#Delta#phi(Z,j_{1}) [P_{T}^{ll}>50 GeV];events",50,0,3.1416);
+histos["llPt_nJets_3"]		= new TH1F("llPt_nJets_3","llPt;P_{T}^{ll} (N_{jets} #geq 3);events",100,0,450);
+
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
 
 return 0;
@@ -122,6 +127,7 @@ vector<float> *jetPhi=NULL	;t->SetBranchAddress("jetPhi",&jetPhi);
 vector<float> *jetE=NULL	;t->SetBranchAddress("jetE",&jetE);
 vector<float> *jetQGL=NULL	;t->SetBranchAddress("jetQGL",&jetQGL);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
+vector<float> *jetBeta=NULL	;t->SetBranchAddress("jetBeta",&jetBeta);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
 	jetVeto=new vector<int>;
 vector<float> *photonPt=NULL; t->SetBranchAddress("photonPt",&photonPt);
@@ -183,6 +189,7 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 
 
 	if( jet0 < 0 )continue; //cut on the first jet
+
 	if((photonPt->size()>0)&&((*photonPt)[0]>130 )){
 		//find the first isolated photon
 		int pho0=0;
@@ -243,7 +250,31 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if(jet0>=0){histos["jetLLDPhi0"]->Fill(fabs(j0.DeltaPhi(ll)),weight);}
 	if(jet2>=0 && isZlead){histos["Sum3j"]->Fill( fabs(j0.DeltaPhi(j1))+fabs(j1.DeltaPhi(j2))+fabs(j0.DeltaPhi(j2)),weight);}
 
-	}
+	//----------------------Jets with BStar: requirements already applied  E jet0 + veto
+	for(int k=0;k<jetPt->size();k++)
+		{
+		if( (*jetPt)[k] <JetPtCut) continue;
+		if( ( 1. - (*jetBeta)[k] >= 0.2 * TMath::Log( nVtx - 0.67))) //betaStar=1-beta
+		 	(*jetVeto)[k]|=8; //1= lept1, 2=lept2, 4= gamma, 8=betaStar
+		}
+	 nJetsVeto=0;
+	for(int iJ=0;iJ<jetVeto->size() && (*jetPt)[iJ]>=JetPtCut;iJ++)if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ) nJetsVeto++;
+
+	int jet0_BS=-1,jet1_BS=-1,jet2_BS=-1;
+		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2) || ((*jetVeto)[iJ]&8)) ) {jet0_BS=iJ; break;}
+		if(nJetsVeto>1)for(int iJ=jet0_BS+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)|| ((*jetVeto)[iJ]&8) ) ){jet1_BS=iJ; break;}
+		if(nJetsVeto>2)for(int iJ=jet1_BS+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)|| ((*jetVeto)[iJ]&8)) ){jet2_BS=iJ; break;}
+
+	if( (jet0_BS>=0) && (*jetPt)[jet0_BS]< JetPtCut) jet0_BS=-1;
+	if( (jet1_BS>=0) && (*jetPt)[jet1_BS]< JetPtCut) jet1_BS=-1;
+	if( (jet2_BS>=0) && (*jetPt)[jet2_BS]< JetPtCut) jet2_BS=-1;
+
+	if(jet0_BS>=0)histos["llPt_betaStar"]->Fill(llPt,weight);
+        if( (jet0>=0) && (llPt>50) )   histos["jetLLDPhi0_PtZ_50"]->Fill(fabs(j0.DeltaPhi(ll)),weight);
+	if( (jet2>=0) )histos["llPt_nJets_3"]->Fill(llPt,weight);	
+
+	} //END LOOP OVER ENTRIES
+	
 	jetVeto->clear();
 	delete jetVeto;
 }

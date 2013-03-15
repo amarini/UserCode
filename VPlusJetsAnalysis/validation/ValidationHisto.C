@@ -154,6 +154,10 @@ vector<string> histoName;
 	histoName.push_back("l1gM");
 	histoName.push_back("l2gM");
 
+	histoName.push_back("llPt_betaStar");
+	histoName.push_back("llPt_nJets_3");
+	histoName.push_back("JetLLDPhi0_PtZ_50");
+
 for(int i=0;i<histoName.size();i++)
 	{
 	vector<TH1F*> mc;
