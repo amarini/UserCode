@@ -20,13 +20,16 @@
 	#include "src/ReadParameters.C"
 #endif
 
+#define V00_06
+//#define V00_07
+
 using namespace std;
 const int debug=1;//0 NO DEBUG 1 MINIMAL 2 MAX
 
 void QGPlotData(const char *fileIn,const char *fileOut, const char *dirOut);
-int CreateHisto(map<string,TH1F*> &histos);
+int CreateHisto(map<string,TH1F*> &histos,map<string,TH2F*> &histos2);
 void QGPlot(){}
-void Loop(map<string,TH1F*> &histos, TChain *t,int type=0); //0 data 1 mc
+void Loop(map<string,TH1F*> &histos,map<string,TH2F*> &histos2, TChain *t,int type=0); //0 data 1 mc
 
 float JetPtCut=50;
 float JetDRCut=0.4;
@@ -35,7 +38,7 @@ int CHID2=-4;
 
 
 // ------------------ Varibales plots -------------------------
-int CreateHisto(map<string,TH1F*> &histos)
+int CreateHisto(map<string,TH1F*> &histos,map<string,TH2F*> &histos2)
 {
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++)
 	{
@@ -83,13 +86,33 @@ for(int j=0;j<7;j++)
 //lepton
 
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
+for(map<string,TH2F*>::iterator it=histos2.begin();it!=histos2.end();it++) it->second->Sumw2(); 
+
 if(debug>1) cout<<"Histos created"<<endl;
 if(debug>1)for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) cout<<"Created histo"<<it->first<<endl;; 
+
+// ----------- TH2F ---------------------------------------
+for(map<string,TH2F*>::iterator it=histos2.begin();it!=histos2.end();it++)
+	{
+	delete it->second;
+	}
+histos2.clear();
+
+for(int i=0;i<=histos["llPt"]->GetNbinsX()+1;i++)
+	{
+	string name(Form("Scatter_qgl_btag_llPt_bin%d",i));
+	histos2[name] = new TH2F(name.c_str(),Form("Scatter Plot %d;qgl;btag;events",i),100,-1.0,1.000000001,100,-1.0,1.000000001);
+		for(int j=0;j<7;j++)	
+			{
+			string name=Form("Scatter_qgl_btag_llPt_bin%d_flavor%d",i,(j==6)?21:j);
+			histos2[name] = new TH2F(name.c_str(),Form("Scatter Plot %d;qgl;btag;events",i),100,-1.0,1.000000001,100,-1.0,1.000000001);
+			}
+	}
 
 return 0;
 }
 //------------------- LOOP
-void Loop(map<string,TH1F*> &histos, TChain *t,int type)
+void Loop(map<string,TH1F*> &histos,map<string,TH2F*> &histos2, TChain *t,int type)
 {
 //DEBUG LEVEL 2
 //int selRECO;		t->SetBranchAddress("selRECO",&selRECO);
@@ -185,16 +208,20 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 
 	histos["llM"]->Fill(llM,weight);
 	histos["llPt"] ->Fill(llPt,weight);
-//for(int i=1;i<=histos["llPt"]->GetNbinsX();i++)
-//	{
+
+
 	int binllPt=histos["llPt"]->FindBin(llPt);
 	{
 	string name=Form("qgl_llPt_bin%d",binllPt);
 	if(debug>1)cout<<"I'm here!QGL "<<name<<"trying to access jet0="<<jet0<<"/"<<jetQGL->size()<<"histo"<<histos[name.c_str()]<<endl;
 	histos[name.c_str()] ->Fill(  (*jetQGL)[jet0],weight );
+
 	if(debug>1)cout<<"I'm here!BTAG"<<endl;
 	name=Form("btag_llPt_bin%d",binllPt);
 	histos[name.c_str()] ->Fill(  (*jetBtag)[jet0],weight );
+
+	name=Form("Scatter_qgl_btag_llPt_bin%d",binllPt);
+	histos2[name.c_str()] ->Fill((*jetQGL)[jet0] ,(*jetBtag)[jet0],weight);
 	}
 	if(type>0) { //mc
 	//V00-06
@@ -222,12 +249,19 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 		string name=Form("btag_llPt_bin%d_flavor%d",binllPt,Jet0Flavor) ; 
 		histos[name.c_str()] ->Fill( (*jetBtag)[jet0],weight);
 		}
-	}
+	//SCATTER
+		{	
+		string name=Form("Scatter_qgl_btag_llPt_bin%d_flavor%d",binllPt,Jet0Flavor);
+		histos2[name.c_str()] ->Fill((*jetQGL)[jet0] ,(*jetBtag)[jet0],weight);
+		}
+	} //end mc
 	
 	if(debug>1)cout<<"I'm here!"<<endl;
 	TLorentzVector ll=l1+l2,j0,j1,j2;
-
-	}
+	
+	//fill TH2F
+	
+	}//end LOOP
 	jetVeto->clear();
 	delete jetVeto;
 }
@@ -237,6 +271,7 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 void QGPlotData(const char *fileIn,const char *fileOut, const char *dirOut){
 //DEBUG LEVEL 1
 map<string,TH1F*> histos;
+map<string,TH2F*> histos2;
 
 if(debug>0)cout<<"Validation Plot Data"<<endl;
 //TFile *fOut=TFile::Open(fileOut,"UPDATE");
@@ -249,18 +284,21 @@ if(debug>0) for(int i=0;i<nFiles;i++) cout<<"   -->File "<<i<<" is " <<tIn->GetL
 //TTree *tIn=(TTree*)fIn->Get("accepted/events");
 
 if(debug>0)cout<<"Create Histos"<<endl;
-CreateHisto(histos);
+CreateHisto(histos,histos2);
 if(debug>0)cout<<"Begin Loop"<<endl;
-Loop(histos,tIn,0);
+Loop(histos,histos2,tIn,0);
 
 if(debug>0)cout<<"Saving results"<<endl;
 
 fOut->cd();
 for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)
 	iM->second->Write();
+for(map<string,TH2F*>::iterator iM=histos2.begin();iM!=histos2.end();iM++)
+	iM->second->Write();
 
 fOut->Close();
 histos.clear();
+histos2.clear();
 tIn->Delete();
 	
 }
@@ -269,6 +307,7 @@ tIn->Delete();
 void QGPlotMC(const char *fileIn,const char *fileOut, const char *dirOut){
 //DEBUG LEVEL 1
 map<string,TH1F*> histos;
+map<string,TH2F*> histos2;
 
 if(debug>0)cout<<"Validation Plot MC"<<endl;
 TFile *fOut=TFile::Open(  Form("%s%s",dirOut,fileOut),"RECREATE");
@@ -279,18 +318,21 @@ cout<<"Added "<< nFiles <<" files to the chain"<<endl;
 if(debug>0) for(int i=0;i<nFiles;i++) cout<<"   -->File "<<i<<" is " <<tIn->GetListOfFiles()->At(i)->GetTitle()<<endl;
 
 if(debug>0)cout<<"Create Histos"<<endl;
-CreateHisto(histos);
+CreateHisto(histos,histos2);
 if(debug>0)cout<<"Begin Loop"<<endl;
-Loop(histos,tIn,1);
+Loop(histos,histos2,tIn,1);
 
 if(debug>0)cout<<"Saving results"<<endl;
 
 fOut->cd();
 for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)
 	iM->second->Write();
+for(map<string,TH2F*>::iterator iM=histos2.begin();iM!=histos2.end();iM++)
+	iM->second->Write();
 fOut->Close();
 //for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)iM->second->Delete();
 histos.clear();
+histos2.clear();
 tIn->Delete();
 }
 

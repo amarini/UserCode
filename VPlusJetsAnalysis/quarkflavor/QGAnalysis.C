@@ -1,4 +1,3 @@
-
 #include "TFile.h"
 #include "TH1F.h"
 #include "TH1D.h"
@@ -62,13 +61,17 @@ TFile *fWW_2;
 TFile *fWZ_2;
 TFile *fZZ_2;
 //----
+TFile *fout;
+
 const bool DataBKG=true;
+
+map<string,TH1F*> histos;
 
 
 
 int QGAnalysis(float lumi=18.7,const char *OutFile="")
 {
-TFile *fout=TFile::Open( OutFile ,"RECREATE");
+fout=TFile::Open( OutFile ,"RECREATE");
 //Take llPt
 TH1F* llPt_data=(TH1F*)fdata_4->Get("llPt")->Clone("llPt_data");
 	llPt_data->Add((TH1F*)fdata_1->Get("llPt"));
@@ -112,20 +115,13 @@ TH1F* llPt_data_2=(TH1F*)fdata_2->Get("llPt")->Clone("llPt_data_2");
  llPt_data->Add(llPt_ZZ,-1.0);
 }
 
-vector<float> q_frac;q_frac.resize(llPt_data->GetNbinsX()+1);
-vector<float> g_frac;g_frac.resize(llPt_data->GetNbinsX()+1);
-vector<float> c_frac;c_frac.resize(llPt_data->GetNbinsX()+1);
-vector<float> b_frac;b_frac.resize(llPt_data->GetNbinsX()+1);
-
-vector<float> q_err;q_err.resize(llPt_data->GetNbinsX()+1);
-vector<float> g_err;g_err.resize(llPt_data->GetNbinsX()+1);
-vector<float> c_err;c_err.resize(llPt_data->GetNbinsX()+1);
-vector<float> b_err;b_err.resize(llPt_data->GetNbinsX()+1);
-
-//create a variable for the likelihood x
-RooRealVar l("l","l",0,1.00001) ;
-//create a variable for the btag b
-RooRealVar b("b","b",0,1.00001) ;
+histos["llPt_DY"]=llPt_DY;
+histos["llPt_TT"]=llPt_TT;
+histos["llPt_WJ"]=llPt_WJ;
+histos["llPt_WW"]=llPt_WW;
+histos["llPt_WZ"]=llPt_WZ;
+histos["llPt_ZZ"]=llPt_ZZ;
+histos["llPt_data"]=llPt_data;
 
 for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	{
@@ -163,6 +159,9 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	cout << "BIN INTEGRATION="<<nbinsIntegration<<endl;
 	  for(int i=-nbinsIntegration;i<=nbinsIntegration;i++)
 		{
+		if(bin+i<0)continue;
+		if(bin+i>llPt_data->GetNbinsX()+1)continue;
+
 			qgl_llPt_q->Add((TH1F*) fDY_1->Get(  Form("qgl_llPt_bin%d_flavor%d",bin+i,1) ) );
 			qgl_llPt_q->Add((TH1F*) fDY_1->Get(  Form("qgl_llPt_bin%d_flavor%d",bin+i,2) ) );
 	  		qgl_llPt_q->Add((TH1F*) fDY_1->Get(  Form("qgl_llPt_bin%d_flavor%d",bin+i,3) ) );
@@ -177,8 +176,6 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	  		btag_llPt_b->Add((TH1F*) fDY_1->Get(  Form("btag_llPt_bin%d_flavor%d",bin+i,5) ) );
 	  		btag_llPt_g->Add((TH1F*) fDY_1->Get(  Form("btag_llPt_bin%d_flavor%d",bin+i,21) ) );
 
-		if(i<0)continue;
-		if(i>llPt_data->GetNbinsX()+1)continue;
 		if(i==0)continue; //0 already exists -- for muons
 
 			qgl_llPt_q->Add((TH1F*) fDY_4->Get(  Form("qgl_llPt_bin%d_flavor%d",bin+i,1) ) );
@@ -210,8 +207,53 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	
 	qgl_llPt_data->Scale(1./qgl_llPt_data->Integral());
 	btag_llPt_data->Scale(1./btag_llPt_data->Integral());
+	
+	histos[Form("qgl_llPt_bin%d_flavor_q",bin)]=qgl_llPt_q;
+	histos[Form("qgl_llPt_bin%d_flavor_g",bin)]=qgl_llPt_g;
+	histos[Form("qgl_llPt_bin%d_flavor_c",bin)]=qgl_llPt_c;
+	histos[Form("qgl_llPt_bin%d_flavor_b",bin)]=qgl_llPt_b;
+	histos[Form("qgl_llPt_bin%d_data",bin)]=qgl_llPt_data;
+
+	histos[Form("btag_llPt_bin%d_flavor_q",bin)]=btag_llPt_q;
+	histos[Form("btag_llPt_bin%d_flavor_g",bin)]=btag_llPt_g;
+	histos[Form("btag_llPt_bin%d_flavor_c",bin)]=btag_llPt_c;
+	histos[Form("btag_llPt_bin%d_flavor_b",bin)]=btag_llPt_b;
+	histos[Form("btag_llPt_bin%d_data",bin)]=btag_llPt_data;
 
 	cout<<"TODO: BKG Sub in Fit"<<endl;
+	}//loop on llPt_bin
+
+
+return QGFit(histos);
+
+}//end QGAnalysis
+
+
+int QGFit(map<string,TH1F*> &histos,int WriteResults=1)
+{
+TH1F* llPt_DY=histos["llPt_DY"];
+TH1F* llPt_TT=histos["llPt_TT"];
+TH1F* llPt_WJ=histos["llPt_WJ"];
+TH1F* llPt_WW=histos["llPt_WW"];
+TH1F* llPt_WZ=histos["llPt_WZ"];
+TH1F* llPt_ZZ=histos["llPt_ZZ"];
+TH1F* llPt_data=histos["llPt_data"];
+
+vector<float> q_frac;q_frac.resize(llPt_data->GetNbinsX()+1);
+vector<float> g_frac;g_frac.resize(llPt_data->GetNbinsX()+1);
+vector<float> c_frac;c_frac.resize(llPt_data->GetNbinsX()+1);
+vector<float> b_frac;b_frac.resize(llPt_data->GetNbinsX()+1);
+
+vector<float> q_err;q_err.resize(llPt_data->GetNbinsX()+1);
+vector<float> g_err;g_err.resize(llPt_data->GetNbinsX()+1);
+vector<float> c_err;c_err.resize(llPt_data->GetNbinsX()+1);
+vector<float> b_err;b_err.resize(llPt_data->GetNbinsX()+1);
+
+//create a variable for the likelihood x
+RooRealVar l("l","l",0,1.00001) ;
+//create a variable for the btag b
+RooRealVar b("b","b",0,1.00001) ;
+
 		TCanvas *c_comp=new TCanvas(Form("c_comp_%d",bin),"c_comp");
 			qgl_llPt_data->Draw("P");
 			qgl_llPt_q->SetLineColor(kBlue);qgl_llPt_q->Draw("HIST SAME");
@@ -240,6 +282,20 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 		continue;
 		}
 
+
+for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
+{
+	TH1F* qgl_llPt_q=histos[Form("qgl_llPt_bin%d_flavor_q",bin)];
+	TH1F* qgl_llPt_g=histos[Form("qgl_llPt_bin%d_flavor_g",bin)];
+	TH1F* qgl_llPt_c=histos[Form("qgl_llPt_bin%d_flavor_c",bin)];
+	TH1F* qgl_llPt_b=histos[Form("qgl_llPt_bin%d_flavor_b",bin)];
+	TH1F* qgl_llPt_data=histos[Form("qgl_llPt_bin%d_data",bin)];
+
+	TH1F* btag_llPt_q=histos[Form("btag_llPt_bin%d_flavor_q",bin)];
+	TH1F* btag_llPt_g=histos[Form("btag_llPt_bin%d_flavor_g",bin)];
+	TH1F* btag_llPt_c=histos[Form("btag_llPt_bin%d_flavor_c",bin)];
+	TH1F* btag_llPt_b=histos[Form("btag_llPt_bin%d_flavor_b",bin)];
+	TH1F* btag_llPt_data=histos[Form("btag_llPt_bin%d_data",bin)];
 
 	RooDataHist qgl_data (Form("qgl_data_bin%d" ,bin),"qgl_data"   ,l,  qgl_llPt_data   ); 
 		qgl_data.weightError(RooAbsData::SumW2) ;
@@ -313,13 +369,6 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	modelQGL.plotOn (frame1,DataError(RooAbsData::SumW2));
 	btag_data.plotOn(frame2,DataError(RooAbsData::SumW2));
 	modelBTAG.plotOn(frame2,DataError(RooAbsData::SumW2));
-	//Save Histo in OutFile
-	TCanvas *c_frame=new TCanvas(Form("c_bin%d",bin),"c");
-	c_frame->Divide(2);
-	c_frame->cd(1); frame1->Draw();
-	c_frame->cd(2); frame2->Draw();
-	fout->cd();
-	c_frame->Write();
 	
 	//Save Fraction in Vectors
 			//q_frac.push_back( r->floatParsFinal().at( 0 ) );
@@ -342,9 +391,21 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
         g_err[bin]= c1.getError() ;
         c_err[bin]= c2.getError() ;
         b_err[bin]= c2.getError() ; //TODO
-	
+
+	//Save Histo in OutFile
+	if(WriteResults){
+		TCanvas *c_frame=new TCanvas(Form("c_bin%d",bin),"c");
+		c_frame->Divide(2);
+		c_frame->cd(1); frame1->Draw();
+		c_frame->cd(2); frame2->Draw();
+		fout->cd();
+		c_frame->Write();
 	}
 	
+	}
+
+	if(WriteResults)
+	{	
 	TCanvas *c=new TCanvas("llPtComp","Composition",800,800);
 	c->cd();
 	llPt_data->SetMarkerStyle(20);llPt_data->SetMarkerColor(kBlack);llPt_data->SetMarkerSize(1.0);llPt_data->Draw("P");
@@ -427,6 +488,7 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	llPt_DY_g->Scale(lumi);llPt_DY_g->Write();
 	llPt_DY_c->Scale(lumi);llPt_DY_c->Write();
 	llPt_DY_b->Scale(lumi);llPt_DY_b->Write();
+	}
 	
 
 }
