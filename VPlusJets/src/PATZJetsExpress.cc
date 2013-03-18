@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.46 2013/02/21 16:49:29 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.47 2013/02/21 17:46:56 amarini Exp $
 //
 //
 
@@ -478,6 +478,9 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float pfSumEt_;
       // ---- sum of the pt of all status 3 parton: madgraph cut? ---------------------- 
       float HTParSum_;
+      // ---- number of all status 3 parton (q/g): madgraph cut? ---------------------- 
+      int  nParton_;
+	
       // ---- pf met phi ------------------------------------------------
       float pfmetPhi_;
       // ---- pt of the hadronic recoil ---------------------------------
@@ -1102,6 +1105,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		switch(abs(i_gen->pdgId())){
 		case 1:case 2: case 3: case 4: case 5:case 6: case 21: //quark udscbt and gluons?
 			HTParSum_+=i_gen->pt();
+			nParton_++;
 			break;
 		default: break;
 		}
@@ -2729,6 +2733,7 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetIdGEN"         ,"vector<int>"     ,&jetIdGEN_);
   myTree_->Branch("jetNpartonsGEN"   ,"vector<int>"     ,&jetNpartonsGEN_);
   myTree_->Branch("HTParSum"         ,&HTParSum_          ,"HTParSum/F");  
+  myTree_->Branch("nParton"          ,&nParton_          ,"nParton/F");  
   myTree_->Branch("mcWeight"         ,&mcWeight_          ,"mcWeight/F");
   myTree_->Branch("qScale"           ,&qScale_            ,"qScale/F");
   myTree_->Branch("alphaQED"         ,&alphaQED_          ,"alphaQED/F");
@@ -2786,6 +2791,7 @@ void PATZJetsExpress::clearTree()
   pfhadPt_           = -999;
   pfSumEt_           = -999;
   HTParSum_          = 0;
+  nParton_          = 0;
   llM_               = -999;
   llPt_              = -999; 
   llPhi_             = -999;
