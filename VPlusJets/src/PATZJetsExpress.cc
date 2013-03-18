@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.47 2013/02/21 17:46:56 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.48 2013/03/18 08:43:34 amarini Exp $
 //
 //
 
@@ -290,6 +290,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       // ---------- member data -----------------------------------------
       edm::Service<TFileService> fTFileService;
       TTree *myTree_;
+      TTree *processedDataTree_;
       // ---- histogram to record the number of events ------------------
       TH1I  *hRecoLeptons_,*hRecoPhotons_,*hGenLeptons_,*hEvents_,*hWEvents_;
       TH1F  *hMuMuMass_,*hElElMass_,*hElMuMass_;
@@ -829,6 +830,10 @@ void PATZJetsExpress::beginJob()
   myTree_                = fTFileService->make<TTree>("events", "events");
   // ---- build the tree ------------------------------------------------
   buildTree();
+  processedDataTree_     = fTFileService->make<TTree>("processedData", "processedData");
+	processedDataTree_->Branch("runNum",&runNum_,"runNum/I");
+	processedDataTree_->Branch("lumiNum",&lumi_,"lumiNum/I");
+	processedDataTree_->Branch("eventNum",&eventNum_,"eventNum/l");
   // ---- set the jec uncertainty flag ----------------------------------
   //mIsJECuncSet = false; 
 }
@@ -912,6 +917,14 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
   // ---- initialize the tree branches ----------------------------------
   clearTree();
   isRealData_ = iEvent.isRealData() ? 1:0;
+	
+  //if(isRealData_)
+    {//processed samples
+    runNum_     = iEvent.id().run();
+    lumi_       = iEvent.luminosityBlock();
+    eventNum_   = iEvent.id().event();
+    processedDataTree_->Fill();
+    }
 
   int nJets_lepVeto=0;
   int nJets_phoVeto=0;
