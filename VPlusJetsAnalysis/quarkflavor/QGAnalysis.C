@@ -1,5 +1,6 @@
 #include "TFile.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TH1D.h"
 #include "TTree.h"
 #include "TChain.h"
@@ -68,9 +69,10 @@ const bool DataBKG=true;
 map<string,TH1F*> histos;
 
 
+int QGFit(map<string,TH1F*> &histos,map<string,*vector<float> > &frac,float lumi,int WriteResults=1);
 
 int QGAnalysis(float lumi=18.7,const char *OutFile="")
-{
+{ // Main function: open files, call fit, call subfunctions, writes results.
 fout=TFile::Open( OutFile ,"RECREATE");
 //Take llPt
 TH1F* llPt_data=(TH1F*)fdata_4->Get("llPt")->Clone("llPt_data");
@@ -223,13 +225,122 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	cout<<"TODO: BKG Sub in Fit"<<endl;
 	}//loop on llPt_bin
 
+vector<float> *q_frac=new vector<float>;
+vector<float> *g_frac=new vector<float>;
+vector<float> *c_frac=new vector<float>;
+vector<float> *b_frac=new vector<float>;
 
-return QGFit(histos);
+vector<float> *q_err =new vector<float>;
+vector<float> *g_err =new vector<float>;
+vector<float> *c_err =new vector<float>;
+vector<float> *b_err =new vector<float>;
+
+map<string,*vector<float> > frac;
+
+frac["q_frac"]=q_frac;
+frac["g_frac"]=g_frac;
+frac["c_frac"]=c_frac;
+frac["b_frac"]=b_frac;
+err["q_err"]=q_err;
+err["g_err"]=g_err;
+err["c_err"]=c_err;
+err["b_err"]=b_err;
+//----------------------------------------------------------FIT------------------------
+ QGFit(histos,frac,lumi);
+//-------------------------------------------------------------------------------------
+
+
+//	if(WriteResults)
+	{	
+	TCanvas *c=new TCanvas("llPtComp","Composition",800,800);
+	c->cd();
+	llPt_data->SetMarkerStyle(20);llPt_data->SetMarkerColor(kBlack);llPt_data->SetMarkerSize(1.0);llPt_data->Draw("P");
+	TH1F* llPt_q=(TH1F*)llPt_data->Clone("llPt_q");
+	TH1F* llPt_g=(TH1F*)llPt_data->Clone("llPt_g");
+	TH1F* llPt_c=(TH1F*)llPt_data->Clone("llPt_c");
+	TH1F* llPt_b=(TH1F*)llPt_data->Clone("llPt_b");
+	for(int bin=0;bin<=llPt_data->GetNbinsX()+1;bin++)
+		{
+		llPt_q->SetBinContent(bin,llPt_q->GetBinContent(bin)* (*q_frac)[bin]);
+			llPt_q->SetBinError  (bin,llPt_q->GetBinContent(bin)*(*q_err)[bin]);
+		llPt_g->SetBinContent(bin,llPt_g->GetBinContent(bin)*(*g_frac)[bin]);
+			llPt_g->SetBinError  (bin,llPt_g->GetBinContent(bin)*(*g_err)[bin]);
+		llPt_c->SetBinContent(bin,llPt_c->GetBinContent(bin)*(*c_frac)[bin]);
+			llPt_c->SetBinError  (bin,llPt_c->GetBinContent(bin)*(*c_err)[bin]);
+		llPt_b->SetBinContent(bin,llPt_b->GetBinContent(bin)*(*b_frac)[bin]);
+			llPt_q->SetBinError  (bin,llPt_q->GetBinContent(bin)*(*b_err)[bin]);
+		}
+	THStack *S=new THStack("stack","stack");
+		llPt_b->SetMarkerStyle(24);llPt_b->SetMarkerColor(kGreen+2) ;llPt_b->SetMarkerSize(0.8);S->Add(llPt_b);
+		llPt_c->SetMarkerStyle(24);llPt_c->SetMarkerColor(kYellow+2);llPt_c->SetMarkerSize(0.8);S->Add(llPt_c);
+		llPt_g->SetMarkerStyle(24);llPt_g->SetMarkerColor(kRed+2)   ;llPt_g->SetMarkerSize(0.8);S->Add(llPt_g);
+		llPt_q->SetMarkerStyle(24);llPt_q->SetMarkerColor(kBlue+2)  ;llPt_q->SetMarkerSize(0.8);S->Add(llPt_q);
+	S->Draw("SAME");
+	c->Write();
+	TCanvas *c2=new TCanvas("llPtComp_ratio","Composition Ratio",800,800);
+		TH1F* r_q=(TH1F*)llPt_q->Clone("r_q");	
+		TH1F* r_g=(TH1F*)llPt_g->Clone("r_g");	
+		TH1F* r_c=(TH1F*)llPt_g->Clone("r_c");	
+		TH1F* r_b=(TH1F*)llPt_g->Clone("r_b");	
+	for(int bin=0;bin<=llPt_data->GetNbinsX()+1;bin++)
+		{
+		r_q->SetBinContent(bin,(*q_frac)[bin]);
+		r_g->SetBinContent(bin,(*g_frac)[bin]);
+		r_b->SetBinContent(bin,(*b_frac)[bin]);
+		r_c->SetBinContent(bin,(*c_frac)[bin]);
+
+		r_q->SetBinError(bin,(*q_err)[bin]);
+		r_g->SetBinError(bin,(*g_err)[bin]);
+		r_b->SetBinError(bin,(*b_err)[bin]);
+		r_c->SetBinError(bin,(*c_err)[bin]);
+
+		}
+		r_q->Draw("P");
+		r_g->Draw("P SAME");
+		r_c->Draw("P SAME");
+		r_b->Draw("P SAME");
+	c2->Write();
+	//Write Histos in the OutFile
+	llPt_data->Write();
+	llPt_q->Write();
+	llPt_g->Write();
+	llPt_c->Write();
+	llPt_b->Write();
+
+	r_q->Write();
+	r_g->Write();
+	r_c->Write();
+	r_b->Write();
+
+	//Get MC and Write in the Analysis file
+	TH1F* llPt_DY_u =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",0 )) ->Clone( "llPt_DY_u");
+		llPt_DY_u->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",0)));
+
+	TH1F* llPt_DY_q =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",1 ) ) ->Clone( "llPt_DY_q");
+		llPt_DY_q->Add( (TH1F*)fDY_4->Get(Form("llPt_flavor%d",2)));
+		llPt_DY_q->Add( (TH1F*)fDY_4->Get(Form("llPt_flavor%d",3)));
+		llPt_DY_q->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",1)));
+		llPt_DY_q->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",2)));
+		llPt_DY_q->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",3)));
+	TH1F* llPt_DY_g =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",21 )) ->Clone( "llPt_DY_g");
+		llPt_DY_g->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",21)));
+	TH1F* llPt_DY_c =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",4 ) ) ->Clone( "llPt_DY_c");
+		llPt_DY_c->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",4)));
+	TH1F* llPt_DY_b =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",5 ) ) ->Clone( "llPt_DY_b");
+		llPt_DY_b->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",5)));
+	
+	llPt_DY_u->Scale(lumi);llPt_DY_u->Write();
+	llPt_DY_q->Scale(lumi);llPt_DY_q->Write();
+	llPt_DY_g->Scale(lumi);llPt_DY_g->Write();
+	llPt_DY_c->Scale(lumi);llPt_DY_c->Write();
+	llPt_DY_b->Scale(lumi);llPt_DY_b->Write();
+	}
+
 
 }//end QGAnalysis
 
 
-int QGFit(map<string,TH1F*> &histos,int WriteResults=1)
+int QGFit(map<string,TH1F*> &histos,map<string,*vector<float> > &frac,float lumi,int WriteResults)
 {
 TH1F* llPt_DY=histos["llPt_DY"];
 TH1F* llPt_TT=histos["llPt_TT"];
@@ -239,48 +350,30 @@ TH1F* llPt_WZ=histos["llPt_WZ"];
 TH1F* llPt_ZZ=histos["llPt_ZZ"];
 TH1F* llPt_data=histos["llPt_data"];
 
-vector<float> q_frac;q_frac.resize(llPt_data->GetNbinsX()+1);
-vector<float> g_frac;g_frac.resize(llPt_data->GetNbinsX()+1);
-vector<float> c_frac;c_frac.resize(llPt_data->GetNbinsX()+1);
-vector<float> b_frac;b_frac.resize(llPt_data->GetNbinsX()+1);
+vector<float> *q_frac = frac["q_frac"];
+vector<float> *g_frac = frac["g_frac"];
+vector<float> *c_frac = frac["c_frac"];
+vector<float> *b_frac = frac["b_frac"];
+vector<float> *q_err = err["q_err"];
+vector<float> *g_err = err["g_err"];
+vector<float> *c_err = err["c_err"];
+vector<float> *b_err = err["b_err"];
 
-vector<float> q_err;q_err.resize(llPt_data->GetNbinsX()+1);
-vector<float> g_err;g_err.resize(llPt_data->GetNbinsX()+1);
-vector<float> c_err;c_err.resize(llPt_data->GetNbinsX()+1);
-vector<float> b_err;b_err.resize(llPt_data->GetNbinsX()+1);
+q_frac->clear();q_frac->resize(llPt_data->GetNbinsX()+1);
+g_frac->clear();g_frac->resize(llPt_data->GetNbinsX()+1);
+c_frac->clear();c_frac->resize(llPt_data->GetNbinsX()+1);
+b_frac->clear();b_frac->resize(llPt_data->GetNbinsX()+1);
+
+q_err->clear(); q_err->resize(llPt_data->GetNbinsX()+1);
+g_err->clear(); g_err->resize(llPt_data->GetNbinsX()+1);
+c_err->clear(); c_err->resize(llPt_data->GetNbinsX()+1);
+b_err->clear(); b_err->resize(llPt_data->GetNbinsX()+1);
 
 //create a variable for the likelihood x
 RooRealVar l("l","l",0,1.00001) ;
 //create a variable for the btag b
 RooRealVar b("b","b",0,1.00001) ;
 
-		TCanvas *c_comp=new TCanvas(Form("c_comp_%d",bin),"c_comp");
-			qgl_llPt_data->Draw("P");
-			qgl_llPt_q->SetLineColor(kBlue);qgl_llPt_q->Draw("HIST SAME");
-			qgl_llPt_g->SetLineColor(kRed) ;qgl_llPt_g->Draw("HIST SAME");
-			qgl_llPt_q->SetLineColor(kYellow+2);qgl_llPt_c->Draw("HIST SAME");
-			qgl_llPt_q->SetLineColor(kGreen+2);qgl_llPt_b->Draw("HIST SAME");
-		c_comp->Write();
-		TCanvas *c_comp2=new TCanvas(Form("c_comp2_%d",bin),"c_comp2");
-			btag_llPt_data->Draw("P");
-			btag_llPt_q->SetLineColor(kBlue);btag_llPt_q->Draw("HIST SAME");
-			btag_llPt_g->SetLineColor(kRed) ;btag_llPt_g->Draw("HIST SAME");
-			btag_llPt_q->SetLineColor(kYellow+2);btag_llPt_c->Draw("HIST SAME");
-			btag_llPt_q->SetLineColor(kGreen+2);btag_llPt_b->Draw("HIST SAME");
-		c_comp2->Write();
-	if( (qgl_llPt_data->Integral()==0) || (qgl_llPt_q->Integral()==0) || (qgl_llPt_g->Integral()==0) || (qgl_llPt_c->Integral()==0) || (qgl_llPt_b->Integral()==0) )
-		{
-		q_frac[bin]=0 ;
-	        g_frac[bin]=0 ;
-	        c_frac[bin]=0 ;
-	        b_frac[bin]=0 ;
-		
-		q_err[bin]= 0 ;
-	        g_err[bin]= 0 ;
-	        c_err[bin]= 0 ;
-	        b_err[bin]= 0 ;
-		continue;
-		}
 
 
 for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
@@ -296,6 +389,38 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 	TH1F* btag_llPt_c=histos[Form("btag_llPt_bin%d_flavor_c",bin)];
 	TH1F* btag_llPt_b=histos[Form("btag_llPt_bin%d_flavor_b",bin)];
 	TH1F* btag_llPt_data=histos[Form("btag_llPt_bin%d_data",bin)];
+
+	//This is a check that all is working written in the out-file	
+	if(WriteResults){	
+		TCanvas *c_comp=new TCanvas(Form("c_comp_%d",bin),"c_comp");
+			qgl_llPt_data->Draw("P");
+			qgl_llPt_q->SetLineColor(kBlue);qgl_llPt_q->Draw("HIST SAME");
+			qgl_llPt_g->SetLineColor(kRed) ;qgl_llPt_g->Draw("HIST SAME");
+			qgl_llPt_q->SetLineColor(kYellow+2);qgl_llPt_c->Draw("HIST SAME");
+			qgl_llPt_q->SetLineColor(kGreen+2);qgl_llPt_b->Draw("HIST SAME");
+		c_comp->Write();
+		TCanvas *c_comp2=new TCanvas(Form("c_comp2_%d",bin),"c_comp2");
+			btag_llPt_data->Draw("P");
+			btag_llPt_q->SetLineColor(kBlue);btag_llPt_q->Draw("HIST SAME");
+			btag_llPt_g->SetLineColor(kRed) ;btag_llPt_g->Draw("HIST SAME");
+			btag_llPt_q->SetLineColor(kYellow+2);btag_llPt_c->Draw("HIST SAME");
+			btag_llPt_q->SetLineColor(kGreen+2);btag_llPt_b->Draw("HIST SAME");
+		c_comp2->Write();
+	} //end WriteResults
+
+	if( (qgl_llPt_data->Integral()==0) || (qgl_llPt_q->Integral()==0) || (qgl_llPt_g->Integral()==0) || (qgl_llPt_c->Integral()==0) || (qgl_llPt_b->Integral()==0) )
+		{
+		(*q_frac)[bin]=0 ;
+	        (*g_frac)[bin]=0 ;
+	        (*c_frac)[bin]=0 ;
+	        (*b_frac)[bin]=0 ;
+		
+		(*q_err)[bin]= 0 ;
+	        (*g_err)[bin]= 0 ;
+	        (*c_err)[bin]= 0 ;
+	        (*b_err)[bin]= 0 ;
+		continue;
+		}
 
 	RooDataHist qgl_data (Form("qgl_data_bin%d" ,bin),"qgl_data"   ,l,  qgl_llPt_data   ); 
 		qgl_data.weightError(RooAbsData::SumW2) ;
@@ -382,15 +507,15 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
         		//b_err.push_back( TMath::Sqrt(r->reducedCovarianceMatrix( RooArgList("c3","c3") ) ) );
 	cout<<"NOT USING RooFitResults but direct variables"<<endl;
 	
-	q_frac[bin]= c0.getVal() ;
-        g_frac[bin]= c1.getVal() ;
-        c_frac[bin]= c2.getVal() ;
-        b_frac[bin]= 1-c0.getVal()-c1.getVal()-c2.getVal() ;
+	(*q_frac)[bin]= c0.getVal() ;
+        (*g_frac)[bin]= c1.getVal() ;
+        (*c_frac)[bin]= c2.getVal() ;
+        (*b_frac)[bin]= 1-c0.getVal()-c1.getVal()-c2.getVal() ;
 	
-	q_err[bin]= c0.getError() ;
-        g_err[bin]= c1.getError() ;
-        c_err[bin]= c2.getError() ;
-        b_err[bin]= c2.getError() ; //TODO
+	(*q_err)[bin]= c0.getError() ;
+        (*g_err)[bin]= c1.getError() ;
+        (*c_err)[bin]= c2.getError() ;
+        (*b_err)[bin]= c2.getError() ; //TODO
 
 	//Save Histo in OutFile
 	if(WriteResults){
@@ -402,95 +527,7 @@ for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 		c_frame->Write();
 	}
 	
-	}
-
-	if(WriteResults)
-	{	
-	TCanvas *c=new TCanvas("llPtComp","Composition",800,800);
-	c->cd();
-	llPt_data->SetMarkerStyle(20);llPt_data->SetMarkerColor(kBlack);llPt_data->SetMarkerSize(1.0);llPt_data->Draw("P");
-	TH1F* llPt_q=(TH1F*)llPt_data->Clone("llPt_q");
-	TH1F* llPt_g=(TH1F*)llPt_data->Clone("llPt_g");
-	TH1F* llPt_c=(TH1F*)llPt_data->Clone("llPt_c");
-	TH1F* llPt_b=(TH1F*)llPt_data->Clone("llPt_b");
-	for(int bin=0;bin<=llPt_data->GetNbinsX()+1;bin++)
-		{
-		llPt_q->SetBinContent(bin,llPt_q->GetBinContent(bin)*q_frac[bin]);
-			llPt_q->SetBinError  (bin,llPt_q->GetBinContent(bin)*q_err[bin]);
-		llPt_g->SetBinContent(bin,llPt_g->GetBinContent(bin)*g_frac[bin]);
-			llPt_g->SetBinError  (bin,llPt_g->GetBinContent(bin)*g_err[bin]);
-		llPt_c->SetBinContent(bin,llPt_c->GetBinContent(bin)*c_frac[bin]);
-			llPt_c->SetBinError  (bin,llPt_c->GetBinContent(bin)*c_err[bin]);
-		llPt_b->SetBinContent(bin,llPt_b->GetBinContent(bin)*b_frac[bin]);
-			llPt_q->SetBinError  (bin,llPt_q->GetBinContent(bin)*b_err[bin]);
-		}
-	THStack *S=new THStack("stack","stack");
-		llPt_b->SetMarkerStyle(24);llPt_b->SetMarkerColor(kGreen+2) ;llPt_b->SetMarkerSize(0.8);S->Add(llPt_b);
-		llPt_c->SetMarkerStyle(24);llPt_c->SetMarkerColor(kYellow+2);llPt_c->SetMarkerSize(0.8);S->Add(llPt_c);
-		llPt_g->SetMarkerStyle(24);llPt_g->SetMarkerColor(kRed+2)   ;llPt_g->SetMarkerSize(0.8);S->Add(llPt_g);
-		llPt_q->SetMarkerStyle(24);llPt_q->SetMarkerColor(kBlue+2)  ;llPt_q->SetMarkerSize(0.8);S->Add(llPt_q);
-	S->Draw("SAME");
-	c->Write();
-	TCanvas *c2=new TCanvas("llPtComp_ratio","Composition Ratio",800,800);
-		TH1F* r_q=(TH1F*)llPt_q->Clone("r_q");	
-		TH1F* r_g=(TH1F*)llPt_g->Clone("r_g");	
-		TH1F* r_c=(TH1F*)llPt_g->Clone("r_c");	
-		TH1F* r_b=(TH1F*)llPt_g->Clone("r_b");	
-	for(int bin=0;bin<=llPt_data->GetNbinsX()+1;bin++)
-		{
-		r_q->SetBinContent(bin,q_frac[bin]);
-		r_g->SetBinContent(bin,g_frac[bin]);
-		r_b->SetBinContent(bin,b_frac[bin]);
-		r_c->SetBinContent(bin,c_frac[bin]);
-
-		r_q->SetBinError(bin,q_err[bin]);
-		r_g->SetBinError(bin,g_err[bin]);
-		r_b->SetBinError(bin,b_err[bin]);
-		r_c->SetBinError(bin,c_err[bin]);
-
-		}
-		r_q->Draw("P");
-		r_g->Draw("P SAME");
-		r_c->Draw("P SAME");
-		r_b->Draw("P SAME");
-	c2->Write();
-	//Write Histos in the OutFile
-	llPt_data->Write();
-	llPt_q->Write();
-	llPt_g->Write();
-	llPt_c->Write();
-	llPt_b->Write();
-
-	r_q->Write();
-	r_g->Write();
-	r_c->Write();
-	r_b->Write();
-
-	//Get MC and Write in the Analysis file
-	TH1F* llPt_DY_u =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",0 )) ->Clone( "llPt_DY_u");
-		llPt_DY_u->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",0)));
-
-	TH1F* llPt_DY_q =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",1 ) ) ->Clone( "llPt_DY_q");
-		llPt_DY_q->Add( (TH1F*)fDY_4->Get(Form("llPt_flavor%d",2)));
-		llPt_DY_q->Add( (TH1F*)fDY_4->Get(Form("llPt_flavor%d",3)));
-		llPt_DY_q->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",1)));
-		llPt_DY_q->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",2)));
-		llPt_DY_q->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",3)));
-	TH1F* llPt_DY_g =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",21 )) ->Clone( "llPt_DY_g");
-		llPt_DY_g->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",21)));
-	TH1F* llPt_DY_c =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",4 ) ) ->Clone( "llPt_DY_c");
-		llPt_DY_c->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",4)));
-	TH1F* llPt_DY_b =(TH1F*) fDY_4->Get(      Form("llPt_flavor%d",5 ) ) ->Clone( "llPt_DY_b");
-		llPt_DY_b->Add( (TH1F*)fDY_1->Get(Form("llPt_flavor%d",5)));
-	
-	llPt_DY_u->Scale(lumi);llPt_DY_u->Write();
-	llPt_DY_q->Scale(lumi);llPt_DY_q->Write();
-	llPt_DY_g->Scale(lumi);llPt_DY_g->Write();
-	llPt_DY_c->Scale(lumi);llPt_DY_c->Write();
-	llPt_DY_b->Scale(lumi);llPt_DY_b->Write();
-	}
-	
-
+	} //end bin llPt
 }
 
 #ifdef STANDALONE

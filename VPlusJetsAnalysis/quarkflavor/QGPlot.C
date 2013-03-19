@@ -1,6 +1,7 @@
 #include "TROOT.h"
 #include "TFile.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TTree.h"
 #include "TChain.h"
 #include "TCanvas.h"
