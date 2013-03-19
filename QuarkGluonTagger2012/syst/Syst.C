@@ -27,8 +27,8 @@ if( rho <=15 ) RhoBin=1;
 if( rho >15  ) RhoBin=2;
 
 if( eta <=2.5) {EtaBin=1;
-	if( pt <50  ) PtBin=1;
-	if( 50<= pt && pt <120 ) PtBin=2;
+	if( pt <80  ) PtBin=1;
+	if( 80<= pt && pt <120 ) PtBin=2;
 	if( 120<= pt ) PtBin=3;
 	}
 
@@ -76,7 +76,7 @@ case 2223: a= 1.06; b= 0.1;  break;
 //HISTO
 case 3111: a=0.90; b=0.08; break;
 case 3121: a=0.935; b=0.0; break;
-case 3112: a=0.905; b=-0.80; break;
+case 3112: a=0.905; b=-0.080; break;
 case 3122: a=0.785; b=-0.18; break;
 case 3113: a=0.68; b=0.05; break;
 case 3123: a=0.825; b=0.01; break;
