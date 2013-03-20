@@ -32,6 +32,7 @@ float JetPtCut=50;
 float JetDRCut=0.4;
 float llMCut=20;
 float pfMetCut=100;
+float LepEtaCut=1.4;
 int CHID2=-4;
 
 
@@ -103,6 +104,9 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if( (*lepChId)[0]*(*lepChId)[1]!=CHID2)continue; //two muons
 	//llM selection
 	if(llM<20)continue;//minimum requirements
+
+	if( fabs((*lepEta)[0]) >LepEtaCut) continue;
+	if( fabs((*lepEta)[1]) >LepEtaCut) continue;
 	//Triggers??
 	if(debug>1)cout<<"Passed Selection"<<endl;
 		//redo vetos
@@ -233,10 +237,12 @@ sscanf(A.ReadParameter("JETDR"),"%f",&JetDRCut);
 //sscanf(A.ReadParameter("LLM"),"%f",&llMCut ); //Met Cut is minimal
 sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
 sscanf(A.ReadParameter("METCUT"),"%f",&pfMetCut );
+sscanf(A.ReadParameter("LEPETA"),"%f",&LepEtaCut );
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
 printf("* JetDR=%4.2f      *\n",JetDRCut);
+printf("* LepEta=%4.1f      *\n",LepEtaCut);
 printf("* ChID^2=%3d      *\n",CHID2);
 printf("* MET  =%4.1f      *\n",pfMetCut);
 printf("*******************\n");
