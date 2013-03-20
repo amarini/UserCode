@@ -48,7 +48,12 @@ histos.clear();
 
 //DiBoson
 histos["llM"]		= new TH1F("llM","llM;M^{ll};events",80,20,220);
+histos["llM_2j"]	= new TH1F("llM_2j","llM;M^{ll};events",80,20,220);
 histos["llM_beforeCut"]	= new TH1F("llM_beforeCut","llM;M^{ll};events",80,20,220);
+
+histos["llM_BS"]		= new TH1F("llM_BS","llM;M^{ll};events",80,20,220);
+histos["llM_2j_BS"]		= new TH1F("llM_2j_BS","llM;M^{ll};events",80,20,220);
+histos["llM_beforeCut_BS"]	= new TH1F("llM_beforeCut_BS","llM;M^{ll};events",80,20,220);
 
 //photons?
 
@@ -87,6 +92,7 @@ vector<float> *jetPhi=NULL	;t->SetBranchAddress("jetPhi",&jetPhi);
 vector<float> *jetE=NULL	;t->SetBranchAddress("jetE",&jetE);
 vector<float> *jetQGL=NULL	;t->SetBranchAddress("jetQGL",&jetQGL);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
+vector<float> *jetBeta=NULL	;t->SetBranchAddress("jetBeta",&jetBeta);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
 	jetVeto=new vector<int>;
 
@@ -131,6 +137,7 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	for(int iJ=0;iJ<jetVeto->size() && (*jetPt)[iJ]>=JetPtCut;iJ++)if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ) nJetsVeto++;
 	if(debug>1)cout<<"nJetsVeto "<<nJetsVeto<<endl;
 	if(debug>1)cout<<"jetSize Pt "<<jetPt->size()<<" Veto "<<jetVeto->size()<<endl;
+	//compute jets
 	int jet0=-1,jet1=-1,jet2=-1;
 		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ){jet0=iJ; break;}
 		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet1=iJ; break;}
@@ -138,6 +145,17 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if( (jet0>=0) && (*jetPt)[jet0]< JetPtCut) jet0=-1;
 	if( (jet1>=0) && (*jetPt)[jet1]< JetPtCut) jet1=-1;
 	if( (jet2>=0) && (*jetPt)[jet2]< JetPtCut) jet2=-1;
+	
+	//compute jets BetaStar
+	int jet0_BS=-1,jet1_BS=-1,jet2_BS=-1;
+		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2) || ((*jetVeto)[iJ]&8)) ) {jet0_BS=iJ; break;}
+		if(nJetsVeto>1)for(int iJ=jet0_BS+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)|| ((*jetVeto)[iJ]&8) ) ){jet1_BS=iJ; break;}
+		if(nJetsVeto>2)for(int iJ=jet1_BS+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)|| ((*jetVeto)[iJ]&8)) ){jet2_BS=iJ; break;}
+
+	if( (jet0_BS>=0) && (*jetPt)[jet0_BS]< JetPtCut) jet0_BS=-1;
+	if( (jet1_BS>=0) && (*jetPt)[jet1_BS]< JetPtCut) jet1_BS=-1;
+	if( (jet2_BS>=0) && (*jetPt)[jet2_BS]< JetPtCut) jet2_BS=-1;
+
 
 	double weight=1;
 	if(type>0)weight=PUWeight;
@@ -146,10 +164,30 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 
 	histos["llM_beforeCut"]->Fill(llM,weight);
 
-	if( jet2 < 0 )continue; //cut on the third jet
-	if( pfmet < pfMetCut ) continue;
+	if( pfmet >= pfMetCut ){
+		if( jet1 >=0 ) {//2j
 	
-	histos["llM"]->Fill(llM,weight);
+			histos["llM_2j"]->Fill(llM,weight);
+			}// 2j
+	
+		if( jet2 >= 0 ){ //cut on the third jet
+			histos["llM"]->Fill(llM,weight);
+			}//3j
+	} //end MET Cut
+	//--------------------------betaStar jets----------------
+	if( jet0_BS <0 ) continue;
+	histos["llM_beforeCut_BS"]->Fill(llM,weight);
+
+	if( pfmet >= pfMetCut ){
+		if( jet1_BS >=0 ) {//2j
+	
+			histos["llM_2j_BS"]->Fill(llM,weight);
+			}// 2j
+	
+		if( jet2_BS >= 0 ){ //cut on the third jet
+			histos["llM_BS"]->Fill(llM,weight);
+			}//3j
+	} //end MET Cut
 	
 	
 	TLorentzVector ll=l1+l2,j0,j1,j2;

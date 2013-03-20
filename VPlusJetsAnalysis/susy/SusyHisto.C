@@ -145,6 +145,9 @@ TFile *MuEG    =TFile::Open( Form("%sSusy_MuEG_%d.root",outDir,2) );
 
 vector<string> histoName;
 	histoName.push_back("llM");
+	histoName.push_back("llM_BS");
+	histoName.push_back("llM_2j");
+	histoName.push_back("llM_2j_BS");
 
 for(int i=0;i<histoName.size();i++)
 	{
