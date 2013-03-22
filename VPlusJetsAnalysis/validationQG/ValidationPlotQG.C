@@ -28,10 +28,13 @@ int CreateHisto(map<string,TH1F*> &histos);
 void ValidationPlot();
 void Loop(map<string,TH1F*> &histos, TChain *t,int type=0); //0 data 1 mc
 
-float JetPtCut=50;
+float JetPtCut=30;
 float JetDRCut=0.4;
 float llMCut=20;
 int CHID2=-4;
+#define MAXBINS 30
+float PtBins[MAXBINS];
+float RhoBins[MAXBINS];
 
 
 // ------------------ Varibales plots -------------------------
@@ -44,56 +47,21 @@ for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++)
 histos.clear();
 //DEBUG LEVEL 2
 //--- counting
-histos["nVtx"] 		= new TH1F("nVtx","nVtx;N_{Vtx};events",50,0,50);
-histos["nLeptons"] 	= new TH1F("nLeptons","nLeptons;N_{lep};events",10,0,10);
-histos["nPhotons"] 	= new TH1F("nPhotons","nPhotons;N_{#gamma};events",10,0,10);
-histos["nJets"] 	= new TH1F("nJets","nJets;N_{jets};events",10,0,10);
 
 //rho
 histos["rho"]		= new TH1F("rho","rho;#rho;events",50,0,50);
 histos["rho25"]		= new TH1F("rho25","rho25;#rho(2.5); events",50,0,50);
 
-//DiBoson
-histos["llM"]		= new TH1F("llM","llM;M^{ll};events",50,40,150);
-histos["llPt"]		= new TH1F("llPt","llPt;P_{T}^{ll};events",100,0,450);
-histos["llY"]		= new TH1F("llY","llY;Y^{ll};events",50,-5,5);
-histos["llPhi"]		= new TH1F("llPhi","llPhi;#phi^{ll};events",50,-3.1416,3.1416);
-
-//photons?
-histos["llgM"]		= new TH1F("llgM","llgM;M^{ll#gamma};events/10GeV",200,0,2000);
-histos["l1gM"]		= new TH1F("l1gM","l1gM;M^{l1#gamma};events/10GeV",200,0,2000);
-histos["l2gM"]		= new TH1F("l2gM","l2gM;M^{l2#gamma};events/10GeV",200,0,2000);
-
-//lepton
-histos["lep0Pt"]	= new TH1F("lep0Pt","lep0Pt;P_{T}^{1st lep};events",50,20,150);
-histos["lep0Eta"]	= new TH1F("lep0Eta","lep0Eta;#eta^{1st lep};events",50,-5,5);
-histos["lep0Phi"]	= new TH1F("lep0Phi","lep0Phi;#phi^{1st lep};events",50,-3.1416,3.1416);
-
-histos["lep1Pt"]	= new TH1F("lep1Pt","lep1Pt;#P_{T}^{2nd lep};events",50,20,150);
-histos["lep1Eta"]	= new TH1F("lep1Eta","lep1Eta;#eta^{2nd lep};events",50,-5,5);
-histos["lep1Phi"]	= new TH1F("lep1Phi","lep1Phi;#phi^{2nd lep};events",50,-3.1416,3.1416);
-
 //jets
 histos["jet0Pt"]	= new TH1F("jet0Pt","jet0Pt;P_{T}^{1st jet};events",50,50,150);
-histos["jet0Eta"]	= new TH1F("jet0Eta","jet0Eta;#eta^{1st jet};events",50,-5,5);
-histos["jet0Phi"]	= new TH1F("jet0Phi","jet0Phi;#phi^{1st jet};events",50,-3.1416,3.1416);
-histos["jet0QGL"]	= new TH1F("jet0QGL","jet0QGL;QGL^{1st jet};events",50,-1.001,1.001);
-histos["jet0Btag"]	= new TH1F("jet0Btag","jet0Btag;Btag^{1st jet};events",50,-1.001,1.001);
-
-histos["jet1Pt"]	= new TH1F("jet1Pt","jet1Pt;P_{T}^{2nd jet};events",50,50,150);
-histos["jet1Eta"]	= new TH1F("jet1Eta","jet1Eta;#eta^{2nd jet};events",50,-5,5);
-histos["jet1Phi"]	= new TH1F("jet1Phi","jet1Phi;#phi^{2nd jet};events",50,-3.1416,3.1416);
-histos["jet1QGL"]	= new TH1F("jet1QGL","jet1QGL;QGL^{1st jet};events",50,-1.001,1.001);
-histos["jet1Btag"]	= new TH1F("jet1Btag","jet1Btag;Btag^{2nd jet};events",50,-1.001,1.001);
-
-// a bit of variables
-histos["jetLLDPhi0"]	= new TH1F("JetLLDPhi0","JetLLDPhi0;#Delta#phi(Z,j_{1});events",50,0,3.1416);
-histos["Sum3j"]	= new TH1F("Sum3j","Sum3j;#sum_{ij#elem 1..3}d#phi_{ij};events",50,0,3.1416*2);
-
-//Introduce some cuts:
-histos["llPt_betaStar"]		= new TH1F("llPt_betaStar","llPt;P_{T}^{ll} (betaStar on Jets);events",100,0,450);
-histos["jetLLDPhi0_PtZ_50"]	= new TH1F("JetLLDPhi0_PtZ_50","JetLLDPhi0;#Delta#phi(Z,j_{1}) [P_{T}^{ll}>50 GeV];events",50,0,3.1416);
-histos["llPt_nJets_3"]		= new TH1F("llPt_nJets_3","llPt;P_{T}^{ll} (N_{jets} #geq 3);events",100,0,450);
+for(int pt_bin=0;pt_bin+1 <MAXBINS && PtBins[pt_bin+1]>=0;pt_bin++)
+for(int rho_bin=0;rho_bin+1 <MAXBINS && RhoBins[rho_bin+1]>=0;rho_bin++)
+	{
+	string name=Form("QGL_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
+	histos[name.c_str()]	= new TH1F(name.c_str(),"QGL;QGL;events",100,-1.0,1.00001);
+	name=Form("QGLMLP_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
+	histos[name.c_str()]	= new TH1F(name.c_str(),"QGLMLP;QGLMLP;events",100,-1.0,1.00001);
+	}
 
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
 
@@ -126,6 +94,7 @@ vector<float> *jetEta=NULL	;t->SetBranchAddress("jetEta",&jetEta);
 vector<float> *jetPhi=NULL	;t->SetBranchAddress("jetPhi",&jetPhi);
 vector<float> *jetE=NULL	;t->SetBranchAddress("jetE",&jetE);
 vector<float> *jetQGL=NULL	;t->SetBranchAddress("jetQGL",&jetQGL);
+vector<float> *jetQGLMLP=NULL	;t->SetBranchAddress("jetQGLMLP",&jetQGLMLP);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
 vector<float> *jetBeta=NULL	;t->SetBranchAddress("jetBeta",&jetBeta);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
@@ -190,66 +159,9 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 
 	if( jet0 < 0 )continue; //cut on the first jet
 
-	if((photonPt->size()>0)&&((*photonPt)[0]>130 )){
-		//find the first isolated photon
-		int pho0=0;
-		//if(type==0){for(pho0=0;pho0<photonPt->size();pho0++) if( ((*photonIsoFPRNeutral)[pho0]+(*photonIsoFPRCharged)[pho0]+(*photonIsoFPRPhoton)[pho0])/(*photonPt)[pho0] < .5) {break;} }
-		TLorentzVector g;
-		if( (pho0<photonPt->size()) && ((*photonPt)[pho0]>130)){
-		g.SetPtEtaPhiE( (*photonPt)[pho0],(*photonEta)[pho0],(*photonPhi)[pho0],(*photonE)[pho0]);
-		histos["llgM"]->Fill((l1+l2+g).M(),weight);
-		histos["l1gM"]->Fill((l1+g).M(),weight);
-		histos["l2gM"]->Fill((l2+g).M(),weight);
-		}
-	}
 	//llM selection
 	if(!(fabs(llM-91)<llMCut))continue;
 	
-	histos["nVtx"]->Fill(nVtx,weight);
-	histos["nLeptons"]->Fill(nLeptons,weight);
-	histos["nPhotons"]->Fill(nPhotons,weight);
-	histos["nJets"]->Fill(nJetsVeto,weight);
-
-	histos["rho"]->Fill(rho,weight);
-	histos["rho25"]->Fill(rho25,weight);
-
-	histos["llM"]->Fill(llM,weight);
-	histos["llPt"]->Fill(llPt,weight);
-	histos["llY"]->Fill(llY,weight);
-	histos["llPhi"]->Fill(llPhi,weight);
-	
-	if(debug>1)cout<<"lepSize Pt "<<lepPt->size()<<" Eta "<<lepEta->size()<<" Phi "<<lepPhi->size()<<endl;
-	histos["lep0Pt"]	->Fill((*lepPt)[0],weight);
-	histos["lep1Pt"]	->Fill((*lepPt)[1],weight);
-	histos["lep0Eta"]	->Fill((*lepEta)[0],weight);
-	histos["lep1Eta"]	->Fill((*lepEta)[1],weight);
-	histos["lep0Phi"]	->Fill((*lepPhi)[0],weight);
-	histos["lep1Phi"]	->Fill((*lepPhi)[1],weight);
-
-	if(debug>1)cout<<"Jet 0 Idx "<<jet0<<"Jet 1 Idx "<<jet1<<endl;
-
-	if(jet0>=0)histos["jet0Pt"]	->Fill((*jetPt)[jet0],weight);
-	if(jet1>=0)histos["jet1Pt"]	->Fill((*jetPt)[jet1],weight);
-	if(jet0>=0)histos["jet0Eta"]	->Fill((*jetEta)[jet0],weight);
-	if(jet1>=0)histos["jet1Eta"]	->Fill((*jetEta)[jet1],weight);
-	if(jet0>=0)histos["jet0Phi"]	->Fill((*jetPhi)[jet0],weight);
-	if(jet1>=0)histos["jet1Phi"]	->Fill((*jetPhi)[jet1],weight);
-	if(jet0>=0)histos["jet0QGL"]	->Fill((*jetQGL)[jet0],weight);
-	if(jet1>=0)histos["jet1QGL"]	->Fill((*jetQGL)[jet1],weight);
-	if(jet0>=0)histos["jet0Btag"]	->Fill((*jetBtag)[jet0],weight);
-	if(jet1>=0)histos["jet1Btag"]	->Fill((*jetBtag)[jet1],weight);
-	
-	
-	TLorentzVector ll=l1+l2,j0,j1,j2;
-	bool isZlead=false;
-		if( (jet1>=0) &&(llPt>(*jetPt)[jet1]))isZlead=true;
-	if(jet0>=0) j0.SetPtEtaPhiE((*jetPt)[jet0],(*jetEta)[jet0],(*jetPhi)[jet0],(*jetE)[jet0]);
-	if(jet1>=0) j1.SetPtEtaPhiE((*jetPt)[jet1],(*jetEta)[jet1],(*jetPhi)[jet1],(*jetE)[jet1]);
-	if(jet2>=0) j2.SetPtEtaPhiE((*jetPt)[jet2],(*jetEta)[jet2],(*jetPhi)[jet2],(*jetE)[jet2]);
-
-	if(jet0>=0){histos["jetLLDPhi0"]->Fill(fabs(j0.DeltaPhi(ll)),weight);}
-	if(jet2>=0 && isZlead){histos["Sum3j"]->Fill( fabs(j0.DeltaPhi(j1))+fabs(j1.DeltaPhi(j2))+fabs(j0.DeltaPhi(j2)),weight);}
-
 	//----------------------Jets with BStar: requirements already applied  E jet0 + veto
 	for(int k=0;k<jetPt->size();k++)
 		{
@@ -268,10 +180,15 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if( (jet0_BS>=0) && (*jetPt)[jet0_BS]< JetPtCut) jet0_BS=-1;
 	if( (jet1_BS>=0) && (*jetPt)[jet1_BS]< JetPtCut) jet1_BS=-1;
 	if( (jet2_BS>=0) && (*jetPt)[jet2_BS]< JetPtCut) jet2_BS=-1;
-
-	if(jet0_BS>=0)histos["llPt_betaStar"]->Fill(llPt,weight);
-        if( (jet0>=0) && (llPt>50) )   histos["jetLLDPhi0_PtZ_50"]->Fill(fabs(j0.DeltaPhi(ll)),weight);
-	if( (jet2>=0) )histos["llPt_nJets_3"]->Fill(llPt,weight);	
+	
+	//Find Pt/Rho Bin
+	int pt_bin=-1;for(int i=0;i<MAXBINS && PtBins[i+1]>=0;i++){if( PtBins[i]<(*jetPt)[jet0_BS] && (*jetPt)[jet0_BS]<PtBins[i+1]){pt_bin=i;break;}}
+	int rho_bin=-1;for(int i=0;i<MAXBINS && RhoBins[i+1]>=0;i++){if( RhoBins[i]<rho && rho<RhoBins[i+1]){rho_bin=i;break;}}
+	
+	string name=Form("QGL_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
+	if(jet0_BS>=0)histos[name]->Fill( (*jetQGL)[jet0_BS],weight);
+	name=Form("QGLMLP_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
+	if(jet0_BS>=0)histos[name]->Fill( (*jetQGLMLP)[jet0_BS],weight);
 
 	} //END LOOP OVER ENTRIES
 	
@@ -365,27 +282,16 @@ tIn->Delete();
 int main(int argc, char **argv){
 //DEBUG LEVEL 1
 string configFile;
-string configFile2;
 
 if(argc<2) configFile="data/config.ini";
 else configFile=argv[1];
 
-bool secondConfig=false;
-if(argc>=3){configFile2=argv[2];secondConfig=true;}
-
 Read A(configFile.c_str());
 
-if(!secondConfig){
-	sscanf(A.ReadParameter("JETPT"),"%f",&JetPtCut );
-	sscanf(A.ReadParameter("JETDR"),"%f",&JetDRCut);
-	sscanf(A.ReadParameter("LLM"),"%f",&llMCut );
-	sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
-}else{
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETPT"),"%f",&JetPtCut );
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETDR"),"%f",&JetDRCut);
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LLM"),"%f",&llMCut );
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
-}
+sscanf(A.ReadParameter("JETPT"),"%f",&JetPtCut );
+sscanf(A.ReadParameter("JETDR"),"%f",&JetDRCut);
+sscanf(A.ReadParameter("LLM"),"%f",&llMCut );
+sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
@@ -408,6 +314,15 @@ string DoubleE=A.ReadParameter("DoubleE");
 string MuEG=A.ReadParameter("MuEG");
  
 string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
+
+string PtBins_str=A.ReadParameter("PTBINS");
+string RhoBins_str=A.ReadParameter("RHOBINS");
+	const char *ptr=PtBins_str.c_str();int n_str,pt_bin=0;
+	while(sscanf(ptr,"%f%n",&PtBins[pt_bin],&n_str)>=1){ptr+=n_str;pt_bin++;}
+	ptr=RhoBins_str.c_str();int rho_bin=0;
+	while(sscanf(ptr,"%f%n",&RhoBins[rho_bin],&n_str)>=1){ptr+=n_str;rho_bin++;}
+	PtBins[pt_bin]=-1.;
+	RhoBins[rho_bin]=-1.;
 
 int useFork=0;
 sscanf(A.ReadParameter("BATCH"),"%d",&useFork)  ;
