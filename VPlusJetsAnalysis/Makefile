@@ -12,9 +12,9 @@ all: ValidationPlot ValidationHisto symlink
 #different behaviour in mac and linux
 .PHONY: symlink
 symlink: 
-	[ -h validation/src ] || ln -s ${PWD}/src validation/src
-	[ -h susy/src ] || ln -s ${PWD}/src susy/src
-	[ -h quarkflavor/src ] || ln -s ${PWD}/src quarkflavor/src
+	[ -h validation/src ] || ln -s "${PWD}/src" validation/src
+	[ -h susy/src ] || ln -s "${PWD}/src" susy/src
+	[ -h quarkflavor/src ] || ln -s "${PWD}/src" quarkflavor/src
 	[ -h ValidationBatch.sh ] || ln -s validation/ValidationBatch.sh
 	[ -h SusyBatch.sh ] || ln -s susy/SusyBatch.sh
 
@@ -46,7 +46,7 @@ QGAnalysis: src/ReadParameters.C quarkflavor/QGAnalysis.C symlink
 ValidationQG:ValidationQGPlot ValidationQGHisto
 
 symlink_vQG:
-	[ -h validationQG/src ] || ln -s ${PWD}/src validationQG/src
+	[ -h validationQG/src ] || ln -s "${PWD}/src" validationQG/src
 
 ValidationPlotQG: src/ReadParameters.C validationQG/ValidationPlotQG.C symlink_vQG
 	g++ -D STANDALONE `root-config --libs --cflags` validationQG/ValidationPlotQG.C -o ValidationPlotQG
