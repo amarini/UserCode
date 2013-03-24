@@ -69,9 +69,9 @@ float Read::ConvertToFloat(const char*Par)
 }
 
 char* Read::ReadParFromMultFile(const char*fileName2,const char*parName){
-	//char* ReadParameterFromFile(const char*fileName,const char*parName);
-	//char* ReadParameter(const char*parName){return ReadParameterFromFile(fName.c_str(),parName);};
 	char* par1=ReadParameter(parName);
+	if(fileName2[0]=='\0') return par1;
+
 	char* par2=ReadParameterFromFile(fileName2,parName);
 	if(par2!=NULL)return par2;
 	if(par1!=NULL)return par1;

@@ -9,6 +9,18 @@ endif
 .PHONY: all
 all: ValidationPlot ValidationHisto symlink
 
+.PHONY: clean
+clean:
+	[ -f "ValidationPlot" ] && rm ValidationPlot || /bin/true
+	[ -f "ValidationHisto" ] && rm ValidationHisto || /bin/true
+	[ -f "SusyPlot" ] && rm SusyPlot || /bin/true
+	[ -f "SusyHisto" ] && rm SusyHisto || /bin/true
+	[ -f "QGPlot" ] && rm QGPlot || /bin/true
+	[ -f "QGAnalysis" ] && rm QGAnalysis || /bin/true
+	[ -f "QGHisto" ] && rm QGHisto || /bin/true
+	[ -f "ValidationPlotQG" ] && rm ValidationPlotQG || /bin/true
+	[ -f "ValidationHistoQG" ] && rm ValidationHistoQG || /bin/true
+
 #different behaviour in mac and linux
 .PHONY: symlink
 symlink: 

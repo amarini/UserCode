@@ -94,6 +94,7 @@ histos["Sum3j"]	= new TH1F("Sum3j","Sum3j;#sum_{ij#elem 1..3}d#phi_{ij};events",
 histos["llPt_betaStar"]		= new TH1F("llPt_betaStar","llPt;P_{T}^{ll} (betaStar on Jets);events",100,0,450);
 histos["jetLLDPhi0_PtZ_50"]	= new TH1F("JetLLDPhi0_PtZ_50","JetLLDPhi0;#Delta#phi(Z,j_{1}) [P_{T}^{ll}>50 GeV];events",50,0,3.1416);
 histos["llPt_nJets_3"]		= new TH1F("llPt_nJets_3","llPt;P_{T}^{ll} (N_{jets} #geq 3);events",100,0,450);
+histos["llPt_Analysis"]		= new TH1F("llPt_Analysis","llPt;P_{T}^{ll};events/[10GeV]",400,0,4000);
 
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
 
@@ -273,6 +274,7 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
         if( (jet0>=0) && (llPt>50) )   histos["jetLLDPhi0_PtZ_50"]->Fill(fabs(j0.DeltaPhi(ll)),weight);
 	if( (jet2>=0) )histos["llPt_nJets_3"]->Fill(llPt,weight);	
 
+	if((jet0_BS>=0) && (fabs(ll.Rapidity() <1.4)))histos["llPt_Analysis"]->Fill(llPt,weight);
 	} //END LOOP OVER ENTRIES
 	
 	jetVeto->clear();
@@ -372,20 +374,14 @@ else configFile=argv[1];
 
 bool secondConfig=false;
 if(argc>=3){configFile2=argv[2];secondConfig=true;}
+else configFile2="";
 
 Read A(configFile.c_str());
 
-if(!secondConfig){
-	sscanf(A.ReadParameter("JETPT"),"%f",&JetPtCut );
-	sscanf(A.ReadParameter("JETDR"),"%f",&JetDRCut);
-	sscanf(A.ReadParameter("LLM"),"%f",&llMCut );
-	sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
-}else{
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETPT"),"%f",&JetPtCut );
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETDR"),"%f",&JetDRCut);
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LLM"),"%f",&llMCut );
-	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
-}
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETPT"),"%f",&JetPtCut );
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETDR"),"%f",&JetDRCut);
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LLM"),"%f",&llMCut );
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
@@ -394,29 +390,29 @@ printf("* llM  =%4.1f      *\n",llMCut);
 printf("* ChID^2=%3d      *\n",CHID2);
 printf("*******************\n");
 
-string DirMC=A.ReadParameter("MCDIR"); DirMC+="/";
-string DY=A.ReadParameter("DY");
-string TT=A.ReadParameter("TT");
-string WJ=A.ReadParameter("WJ");
-string WW=A.ReadParameter("WW");
-string WZ=A.ReadParameter("WZ");
-string ZZ=A.ReadParameter("ZZ");
+string DirMC=A.ReadParFromMultFile(configFile2.c_str(),"MCDIR"); DirMC+="/";
+string DY=A.ReadParFromMultFile(configFile2.c_str(),"DY");
+string TT=A.ReadParFromMultFile(configFile2.c_str(),"TT");
+string WJ=A.ReadParFromMultFile(configFile2.c_str(),"WJ");
+string WW=A.ReadParFromMultFile(configFile2.c_str(),"WW");
+string WZ=A.ReadParFromMultFile(configFile2.c_str(),"WZ");
+string ZZ=A.ReadParFromMultFile(configFile2.c_str(),"ZZ");
 
-string DirData=A.ReadParameter("DATADIR"); DirData+="/";
-string DoubleMu=A.ReadParameter("DoubleMu");
-string DoubleE=A.ReadParameter("DoubleE");
-string MuEG=A.ReadParameter("MuEG");
+string DirData=A.ReadParFromMultFile(configFile2.c_str(),"DATADIR"); DirData+="/";
+string DoubleMu=A.ReadParFromMultFile(configFile2.c_str(),"DoubleMu");
+string DoubleE=A.ReadParFromMultFile(configFile2.c_str(),"DoubleE");
+string MuEG=A.ReadParFromMultFile(configFile2.c_str(),"MuEG");
  
-string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
+string DirOut=A.ReadParFromMultFile(configFile2.c_str(),"OUTDIR"); DirOut+="/";
 
 int useFork=0;
-sscanf(A.ReadParameter("BATCH"),"%d",&useFork)  ;
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"BATCH"),"%d",&useFork)  ;
 //not in the configuration fail
 int forkNum=0;
 if(useFork)
 	{
-	if(argc<3)useFork=0;
-	else sscanf(argv[2],"%d",&forkNum);
+	if(argc<4)useFork=0;
+	else sscanf(argv[3],"%d",&forkNum);
 	}
 	
 

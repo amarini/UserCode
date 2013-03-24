@@ -17,7 +17,7 @@ cd /afs/cern.ch/work/a/amarini/CMSSW_5_3_6/src ; eval \`scramv1 runtime -sh\` ; 
 
 cd $EXEDIR
 
-./SusyPlot ${config} ${i}
+./SusyPlot data/config.ini ${config} ${i}
 
 EOF
 

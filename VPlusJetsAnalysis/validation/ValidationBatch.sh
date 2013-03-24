@@ -4,6 +4,7 @@ SCRIPTDIR=/afs/cern.ch/work/a/amarini/VPlusJets_V00-07/Batch_scripts
 
 mkdir -p $SCRIPTDIR
 
+
 for i in {1..7} ;do
 for config in data/config_MM.ini data/config_EE.ini data/config_TT.ini; do
 #---------- This script is executed on the remote system ------
@@ -16,7 +17,7 @@ cd /afs/cern.ch/work/a/amarini/CMSSW_5_3_6/src ; eval \`scramv1 runtime -sh\` ; 
 
 cd $EXEDIR
 
-./ValidationPlot ${config} ${i}
+./ValidationPlot data/config.ini ${config} ${i}
 
 EOF
 

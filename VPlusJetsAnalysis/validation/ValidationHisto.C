@@ -199,6 +199,7 @@ else configFile=argv[1];
 
 bool secondConfig=false;
 if(argc>=3){configFile2=argv[2];secondConfig=true;}
+else configFile2="";
 
 Read A(configFile.c_str());
 
@@ -207,17 +208,11 @@ string PlotDir;
 int chid2; 
 float lumi; 
 
-if(!secondConfig){
-	DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
-	PlotDir=A.ReadParameter("PLOTDIR"); PlotDir+="/";
-	sscanf(A.ReadParameter("CHID2"),"%d",&chid2);
-	sscanf(A.ReadParameter("LUMI"),"%f",&lumi);
-}else{
-	DirOut =A.ReadParFromMultFile(configFile2.c_str(),"OUTDIR"); DirOut+="/";
+	DirOut=A.ReadParFromMultFile(configFile2.c_str(),"OUTDIR"); DirOut+="/";
 	PlotDir=A.ReadParFromMultFile(configFile2.c_str(),"PLOTDIR"); PlotDir+="/";
-	sscanf( A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&chid2);
-	sscanf( A.ReadParFromMultFile(configFile2.c_str(),"LUMI"),"%f",&lumi);
-}
+	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&chid2);
+	sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LUMI"),"%f",&lumi);
+
 OpenFiles(DirOut.c_str(),PlotDir.c_str(),chid2,lumi);
 }
 #endif 
