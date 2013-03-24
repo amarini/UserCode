@@ -69,7 +69,7 @@ const bool DataBKG=true;
 map<string,TH1F*> histos;
 
 
-int QGFit(map<string,TH1F*> &histos,map<string,*vector<float> > &frac,float lumi,int WriteResults=1);
+int QGFit(map<string,TH1F*> &histos,map<string,vector<float>* > &frac,float lumi,int WriteResults=1);
 
 int QGAnalysis(float lumi=18.7,const char *OutFile="")
 { // Main function: open files, call fit, call subfunctions, writes results.
@@ -235,16 +235,16 @@ vector<float> *g_err =new vector<float>;
 vector<float> *c_err =new vector<float>;
 vector<float> *b_err =new vector<float>;
 
-map<string,*vector<float> > frac;
+map<string,vector<float>* > frac;
 
 frac["q_frac"]=q_frac;
 frac["g_frac"]=g_frac;
 frac["c_frac"]=c_frac;
 frac["b_frac"]=b_frac;
-err["q_err"]=q_err;
-err["g_err"]=g_err;
-err["c_err"]=c_err;
-err["b_err"]=b_err;
+frac["q_err"]=q_err;
+frac["g_err"]=g_err;
+frac["c_err"]=c_err;
+frac["b_err"]=b_err;
 //----------------------------------------------------------FIT------------------------
  QGFit(histos,frac,lumi);
 //-------------------------------------------------------------------------------------
@@ -340,7 +340,7 @@ err["b_err"]=b_err;
 }//end QGAnalysis
 
 
-int QGFit(map<string,TH1F*> &histos,map<string,*vector<float> > &frac,float lumi,int WriteResults)
+int QGFit(map<string,TH1F*> &histos,map<string,vector<float>* > &frac,float lumi,int WriteResults)
 {
 TH1F* llPt_DY=histos["llPt_DY"];
 TH1F* llPt_TT=histos["llPt_TT"];
@@ -354,10 +354,10 @@ vector<float> *q_frac = frac["q_frac"];
 vector<float> *g_frac = frac["g_frac"];
 vector<float> *c_frac = frac["c_frac"];
 vector<float> *b_frac = frac["b_frac"];
-vector<float> *q_err = err["q_err"];
-vector<float> *g_err = err["g_err"];
-vector<float> *c_err = err["c_err"];
-vector<float> *b_err = err["b_err"];
+vector<float> *q_err = frac["q_err"];
+vector<float> *g_err = frac["g_err"];
+vector<float> *c_err = frac["c_err"];
+vector<float> *b_err = frac["b_err"];
 
 q_frac->clear();q_frac->resize(llPt_data->GetNbinsX()+1);
 g_frac->clear();g_frac->resize(llPt_data->GetNbinsX()+1);
@@ -538,11 +538,14 @@ string configFile;
 
 if(argc<2) configFile="data/config.ini";
 else configFile=argv[1];
+string configFile2;
+if(argc>=3){configFile2=argv[2];}
+else configFile2="";
 
 Read A(configFile.c_str());
-//sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
-string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";  
-float lumi; sscanf(A.ReadParameter("LUMI"),"%f",&lumi);
+//sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
+string DirOut=A.ReadParFromMultFile(configFile2.c_str(),"OUTDIR"); DirOut+="/";  
+float lumi; sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LUMI"),"%f",&lumi);
 
 fdata_4=TFile::Open(Form("%sQG_DoubleMu_4.root",DirOut.c_str()));
 fdata_1=TFile::Open(Form("%sQG_DoubleE_1.root",DirOut.c_str()));

@@ -346,12 +346,16 @@ string configFile;
 if(argc<2) configFile="data/config.ini";
 else configFile=argv[1];
 
+string configFile2;
+if(argc>=3){configFile2=argv[2];}
+else configFile2="";
+
 Read A(configFile.c_str());
 
-sscanf(A.ReadParameter("JETPT"),"%f",&JetPtCut );
-sscanf(A.ReadParameter("JETDR"),"%f",&JetDRCut);
-//sscanf(A.ReadParameter("LLM"),"%f",&llMCut ); //Met Cut is minimal
-sscanf(A.ReadParameter("CHID2"),"%d",&CHID2 );
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETPT"),"%f",&JetPtCut );
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETDR"),"%f",&JetDRCut);
+//sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LLM"),"%f",&llMCut ); //Met Cut is minimal
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
@@ -359,23 +363,23 @@ printf("* JetDR=%4.2f      *\n",JetDRCut);
 printf("* ChID^2=%3d      *\n",CHID2);
 printf("*******************\n");
 
-string DirMC=A.ReadParameter("MCDIR"); DirMC+="/";
-string DY=A.ReadParameter("DY");
-string TT=A.ReadParameter("TT");
-string WJ=A.ReadParameter("WJ");
-string WW=A.ReadParameter("WW");
-string WZ=A.ReadParameter("WZ");
-string ZZ=A.ReadParameter("ZZ");
+string DirMC=A.ReadParFromMultFile(configFile2.c_str(),"MCDIR"); DirMC+="/";
+string DY=A.ReadParFromMultFile(configFile2.c_str(),"DY");
+string TT=A.ReadParFromMultFile(configFile2.c_str(),"TT");
+string WJ=A.ReadParFromMultFile(configFile2.c_str(),"WJ");
+string WW=A.ReadParFromMultFile(configFile2.c_str(),"WW");
+string WZ=A.ReadParFromMultFile(configFile2.c_str(),"WZ");
+string ZZ=A.ReadParFromMultFile(configFile2.c_str(),"ZZ");
 
-string DirData=A.ReadParameter("DATADIR"); DirData+="/";
-string DoubleMu=A.ReadParameter("DoubleMu");
-string DoubleE=A.ReadParameter("DoubleE");
-string MuEG=A.ReadParameter("MuEG");
+string DirData=A.ReadParFromMultFile(configFile2.c_str(),"DATADIR"); DirData+="/";
+string DoubleMu=A.ReadParFromMultFile(configFile2.c_str(),"DoubleMu");
+string DoubleE=A.ReadParFromMultFile(configFile2.c_str(),"DoubleE");
+string MuEG=A.ReadParFromMultFile(configFile2.c_str(),"MuEG");
  
-string DirOut=A.ReadParameter("OUTDIR"); DirOut+="/";
+string DirOut=A.ReadParFromMultFile(configFile2.c_str(),"OUTDIR"); DirOut+="/";
 
 int useFork=0;
-sscanf(A.ReadParameter("BATCH"),"%d",&useFork)  ;
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"BATCH"),"%d",&useFork)  ;
 //not in the configuration fail
 int forkNum=0;
 if(useFork)
