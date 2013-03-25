@@ -20,6 +20,8 @@
 	#include "src/ReadParameters.C"
 #endif
 
+#define MAXBINS 100
+
 using namespace std;
 const int debug=1;//0 NO DEBUG 1 MINIMAL 2 MAX
 
@@ -28,13 +30,12 @@ int CreateHisto(map<string,TH1F*> &histos);
 void ValidationPlot();
 void Loop(map<string,TH1F*> &histos, TChain *t,int type=0); //0 data 1 mc
 
-float JetPtCut=30;
+float JetPtCut=50;
 float JetDRCut=0.4;
 float llMCut=20;
 int CHID2=-4;
-#define MAXBINS 30
 float PtBins[MAXBINS];
-float RhoBins[MAXBINS];
+int nPtBins=0;
 
 
 // ------------------ Varibales plots -------------------------
@@ -46,22 +47,20 @@ for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++)
 	}
 histos.clear();
 //DEBUG LEVEL 2
+string name;
 //--- counting
+histos["nVtx"] 		= new TH1F("nVtx","nVtx;N_{Vtx};events",50,0,50);
 
-//rho
-histos["rho"]		= new TH1F("rho","rho;#rho;events",50,0,50);
-histos["rho25"]		= new TH1F("rho25","rho25;#rho(2.5); events",50,0,50);
 
 //jets
-histos["jet0Pt"]	= new TH1F("jet0Pt","jet0Pt;P_{T}^{1st jet};events",50,50,150);
-for(int pt_bin=0;pt_bin+1 <MAXBINS && PtBins[pt_bin+1]>=0;pt_bin++)
-for(int rho_bin=0;rho_bin+1 <MAXBINS && RhoBins[rho_bin+1]>=0;rho_bin++)
+//histos["jet0QGL"]	= new TH1F("jet0QGL","jet0QGL;QGL^{1st jet};events",50,-1.001,1.001);
+
+for(int bin=0;bin<nPtBins;bin++)
 	{
-	string name=Form("QGL_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
-	histos[name.c_str()]	= new TH1F(name.c_str(),"QGL;QGL;events",100,-1.0,1.00001);
-	name=Form("QGLMLP_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
-	histos[name.c_str()]	= new TH1F(name.c_str(),"QGLMLP;QGLMLP;events",100,-1.0,1.00001);
+	name=Form("QGL_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;histos[name]	= new TH1F(name.c_str(),(name+";QGL^{1st jet};events").c_str(),100,-1.001,1.001);
+	name=Form("QGMLP_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;histos[name]	= new TH1F(name.c_str(),(name+";QGMLP^{1st jet};events").c_str(),100,-1.001,1.001);
 	}
+
 
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
 
@@ -73,11 +72,11 @@ void Loop(map<string,TH1F*> &histos, TChain *t,int type)
 //DEBUG LEVEL 2
 //int selRECO;		t->SetBranchAddress("selRECO",&selRECO);
 int nVtx;		t->SetBranchAddress("nVtx",&nVtx);
-int nLeptons;		t->SetBranchAddress("nLeptons",&nLeptons);
-int nPhotons;		t->SetBranchAddress("nPhotons",&nPhotons);
-int nJets;		t->SetBranchAddress("nJets",&nJets);
-float rho;		t->SetBranchAddress("rho",&rho);
-float rho25;		t->SetBranchAddress("rho25",&rho25);
+//int nLeptons;		t->SetBranchAddress("nLeptons",&nLeptons);
+//int nPhotons;		t->SetBranchAddress("nPhotons",&nPhotons);
+//int nJets;		t->SetBranchAddress("nJets",&nJets);
+//float rho;		t->SetBranchAddress("rho",&rho);
+//float rho25;		t->SetBranchAddress("rho25",&rho25);
 float llM;		t->SetBranchAddress("llM",&llM);
 float llPt;		t->SetBranchAddress("llPt",&llPt);
 float llPhi;		t->SetBranchAddress("llPhi",&llPhi);
@@ -94,19 +93,11 @@ vector<float> *jetEta=NULL	;t->SetBranchAddress("jetEta",&jetEta);
 vector<float> *jetPhi=NULL	;t->SetBranchAddress("jetPhi",&jetPhi);
 vector<float> *jetE=NULL	;t->SetBranchAddress("jetE",&jetE);
 vector<float> *jetQGL=NULL	;t->SetBranchAddress("jetQGL",&jetQGL);
-vector<float> *jetQGLMLP=NULL	;t->SetBranchAddress("jetQGLMLP",&jetQGLMLP);
+vector<float> *jetQGMLP=NULL	;t->SetBranchAddress("jetQGMLP",&jetQGMLP);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
 vector<float> *jetBeta=NULL	;t->SetBranchAddress("jetBeta",&jetBeta);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
 	jetVeto=new vector<int>;
-vector<float> *photonPt=NULL; t->SetBranchAddress("photonPt",&photonPt);
-vector<float> *photonEta=NULL; t->SetBranchAddress("photonEta",&photonEta);
-vector<float> *photonPhi=NULL; t->SetBranchAddress("photonPhi",&photonPhi);
-vector<float> *photonE=NULL; t->SetBranchAddress("photonE",&photonE);
-
-//vector<float> *photonIsoFPRNeutral=NULL;if(type==0) t->SetBranchAddress("photonIsoFPRNeutral",&photonIsoFPRNeutral);
-//vector<float> *photonIsoFPRCharged=NULL;if(type==0) t->SetBranchAddress("photonIsoFPRCharged",&photonIsoFPRCharged);
-//vector<float> *photonIsoFPRPhoton=NULL; if(type==0) t->SetBranchAddress("photonIsoFPRPhoton",&photonIsoFPRPhoton);
 
 
 double PUWeight; if(type>0)t->SetBranchAddress("PUWeight",&PUWeight);
@@ -161,7 +152,8 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 
 	//llM selection
 	if(!(fabs(llM-91)<llMCut))continue;
-	
+	TLorentzVector ll=l1+l2;
+
 	//----------------------Jets with BStar: requirements already applied  E jet0 + veto
 	for(int k=0;k<jetPt->size();k++)
 		{
@@ -180,27 +172,32 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if( (jet0_BS>=0) && (*jetPt)[jet0_BS]< JetPtCut) jet0_BS=-1;
 	if( (jet1_BS>=0) && (*jetPt)[jet1_BS]< JetPtCut) jet1_BS=-1;
 	if( (jet2_BS>=0) && (*jetPt)[jet2_BS]< JetPtCut) jet2_BS=-1;
-	
-	//Find Pt/Rho Bin
-	int pt_bin=-1;for(int i=0;i<MAXBINS && PtBins[i+1]>=0;i++){if( PtBins[i]<(*jetPt)[jet0_BS] && (*jetPt)[jet0_BS]<PtBins[i+1]){pt_bin=i;break;}}
-	int rho_bin=-1;for(int i=0;i<MAXBINS && RhoBins[i+1]>=0;i++){if( RhoBins[i]<rho && rho<RhoBins[i+1]){rho_bin=i;break;}}
-	
-	string name=Form("QGL_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
-	if(jet0_BS>=0)histos[name]->Fill( (*jetQGL)[jet0_BS],weight);
-	name=Form("QGLMLP_jet0Pt_bin%d_rho_bin%d",pt_bin,rho_bin);
-	if(jet0_BS>=0)histos[name]->Fill( (*jetQGLMLP)[jet0_BS],weight);
 
+	if (jet0_BS<0) continue;
+
+	TLorentzVector j0;
+	j0.SetPtEtaPhiE((*jetPt)[jet0_BS],(*jetEta)[jet0_BS],(*jetPhi)[jet0_BS],(*jetE)[jet0_BS]);	
+	//select the correct Pt Bin
+	int ptbin=0;
+	for(ptbin=0;ptbin<nPtBins;ptbin++)if( ((*jetPt)[jet0_BS]>PtBins[ptbin]) &&( (*jetPt)[jet0_BS]<PtBins[ptbin+1] )) break;
+	if(ptbin==nPtBins)continue;
+	
+	//additional selection bs(ptZ-ptJet0)/(ptZ+ptJet0)<.4 
+	if(!(  (ll.Pt() - (*jetPt)[jet0_BS] )/(ll.Pt() + (*jetPt)[jet0_BS])<.4)  ) continue;
+	//(deltaPhi_jet>3.1415-0.5) 
+	if(!  (ll.DeltaPhi(j0) >3.1415-0.5 )) continue;
+	//anti b-tag
+	if(! ((*jetBtag)[jet0_BS]<0.75))continue;
+	string name;
+
+	name=Form("QGL_jet0_pt%.0f_%.0f",PtBins[ptbin],PtBins[ptbin+1])   ;
+	histos[name]->Fill((*jetQGL)[jet0_BS],weight);
+	name=Form("QGMLP_jet0_pt%.0f_%.0f",PtBins[ptbin],PtBins[ptbin+1])   ;
+	histos[name]->Fill((*jetQGMLP)[jet0_BS],weight);
 	} //END LOOP OVER ENTRIES
 	
 	jetVeto->clear();
 	delete jetVeto;
-}
-
-//------------------- MAIN PROCEDURE ---------------------------------
-void ValidationPlot(){
-//DEBUG LEVEL 1
-ValidationPlotData("/tmp/amarini/DoubleMu_Run2012A-13Jul2012-v1_AOD.root","Plot/validationHistosData.root","Plot/");
-return; 
 }
 
 //------------------- Produce Plots DATA ---------------------------------
@@ -277,15 +274,17 @@ histos.clear();
 tIn->Delete();
 }
 
+//------------------- MAIN PROCEDURE ---------------------------------
 //------------------- MAIN -------------------------------------------
 #ifdef STANDALONE
 int main(int argc, char **argv){
 //DEBUG LEVEL 1
 string configFile;
+string configFile2;
 
 if(argc<2) configFile="data/config.ini";
 else configFile=argv[1];
-string configFile2;
+
 if(argc>=3){configFile2=argv[2];}
 else configFile2="";
 
@@ -295,12 +294,20 @@ sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETPT"),"%f",&JetPtCut );
 sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETDR"),"%f",&JetDRCut);
 sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LLM"),"%f",&llMCut );
 sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
+const char *ptbins_str=A.ReadParFromMultFile(configFile2.c_str(),"PTBINS");
+nPtBins=0;int n;
+while( sscanf(ptbins_str,"%f%n",&PtBins[nPtBins],&n)>0){ptbins_str+=n;nPtBins++;}
+nPtBins--;
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
 printf("* JetDR=%4.2f      *\n",JetDRCut);
 printf("* llM  =%4.1f      *\n",llMCut);
 printf("* ChID^2=%3d      *\n",CHID2);
+printf("* PtBins=");
+for(int i=0;i<=nPtBins;i++)
+printf("%.0f ",PtBins[i]);
+printf("*\n");
 printf("*******************\n");
 
 string DirMC=A.ReadParFromMultFile(configFile2.c_str(),"MCDIR"); DirMC+="/";
@@ -318,50 +325,41 @@ string MuEG=A.ReadParFromMultFile(configFile2.c_str(),"MuEG");
  
 string DirOut=A.ReadParFromMultFile(configFile2.c_str(),"OUTDIR"); DirOut+="/";
 
-string PtBins_str=A.ReadParFromMultFile(configFile2.c_str(),"PTBINS");
-string RhoBins_str=A.ReadParFromMultFile(configFile2.c_str(),"RHOBINS");
-	const char *ptr=PtBins_str.c_str();int n_str,pt_bin=0;
-	while(sscanf(ptr,"%f%n",&PtBins[pt_bin],&n_str)>=1){ptr+=n_str;pt_bin++;}
-	ptr=RhoBins_str.c_str();int rho_bin=0;
-	while(sscanf(ptr,"%f%n",&RhoBins[rho_bin],&n_str)>=1){ptr+=n_str;rho_bin++;}
-	PtBins[pt_bin]=-1.;
-	RhoBins[rho_bin]=-1.;
-
 int useFork=0;
 sscanf(A.ReadParFromMultFile(configFile2.c_str(),"BATCH"),"%d",&useFork)  ;
 //not in the configuration fail
 int forkNum=0;
 if(useFork)
 	{
-	if(argc<3)useFork=0;
-	else sscanf(argv[2],"%d",&forkNum);
+	if(argc<4)useFork=0;
+	else sscanf(argv[3],"%d",&forkNum);
 	}
 	
 
 if( useFork){
 
-	if(forkNum==1)ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==2)ValidationPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==3)ValidationPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==4)ValidationPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==5)ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
-	if(forkNum==6)ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==1)ValidationPlotMC( (DirMC+DY).c_str(),Form("vQG_DY_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==2)ValidationPlotMC( (DirMC+TT).c_str(),Form("vQG_TT_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==3)ValidationPlotMC( (DirMC+WJ).c_str(),Form("vQG_WJ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==4)ValidationPlotMC( (DirMC+WW).c_str(),Form("vQG_WW_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==5)ValidationPlotMC( (DirMC+WZ).c_str(),Form("vQG_WZ_%d.root",-CHID2), DirOut.c_str());
+	if(forkNum==6)ValidationPlotMC( (DirMC+ZZ).c_str(),Form("vQG_ZZ_%d.root",-CHID2), DirOut.c_str());
 	
-	if(CHID2==-4){if(forkNum==7)ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu_4.root", DirOut.c_str());}
-	if(CHID2==-1){if(forkNum==7)ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE_1.root", DirOut.c_str());}
-	if(CHID2==-2){if(forkNum==7)ValidationPlotData( (DirData+MuEG).c_str(),"MuEG_2.root", DirOut.c_str());}
+	if(CHID2==-4){if(forkNum==7)ValidationPlotData( (DirData+DoubleMu).c_str(),"vQG_DoubleMu_4.root", DirOut.c_str());}
+	if(CHID2==-1){if(forkNum==7)ValidationPlotData( (DirData+DoubleE).c_str(),"vQG_DoubleE_1.root", DirOut.c_str());}
+	if(CHID2==-2){if(forkNum==7)ValidationPlotData( (DirData+MuEG).c_str(),"vQG_MuEG_2.root", DirOut.c_str());}
 
 } else { //!FORK
-	ValidationPlotMC( (DirMC+DY).c_str(),Form("DY_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+TT).c_str(),Form("TT_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+WJ).c_str(),Form("WJ_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+WW).c_str(),Form("WW_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+WZ).c_str(),Form("WZ_%d.root",-CHID2), DirOut.c_str());
-	ValidationPlotMC( (DirMC+ZZ).c_str(),Form("ZZ_%d.root",-CHID2), DirOut.c_str());
+	ValidationPlotMC( (DirMC+DY).c_str(),Form("vQG_DY_%d.root",-CHID2), DirOut.c_str());
+	ValidationPlotMC( (DirMC+TT).c_str(),Form("vQG_TT_%d.root",-CHID2), DirOut.c_str());
+	ValidationPlotMC( (DirMC+WJ).c_str(),Form("vQG_WJ_%d.root",-CHID2), DirOut.c_str());
+	ValidationPlotMC( (DirMC+WW).c_str(),Form("vQG_WW_%d.root",-CHID2), DirOut.c_str());
+	ValidationPlotMC( (DirMC+WZ).c_str(),Form("vQG_WZ_%d.root",-CHID2), DirOut.c_str());
+	ValidationPlotMC( (DirMC+ZZ).c_str(),Form("vQG_ZZ_%d.root",-CHID2), DirOut.c_str());
 	
-	if(CHID2==-4){ValidationPlotData( (DirData+DoubleMu).c_str(),"DoubleMu_4.root", DirOut.c_str());}
-	if(CHID2==-1){ValidationPlotData( (DirData+DoubleE).c_str(),"DoubleE_1.root", DirOut.c_str());}
-	if(CHID2==-2){ValidationPlotData( (DirData+MuEG).c_str(),"MuEG_2.root", DirOut.c_str());}
+	if(CHID2==-4){ValidationPlotData( (DirData+DoubleMu).c_str(),"vQG_DoubleMu_4.root", DirOut.c_str());}
+	if(CHID2==-1){ValidationPlotData( (DirData+DoubleE).c_str(),"vQG_DoubleE_1.root", DirOut.c_str());}
+	if(CHID2==-2){ValidationPlotData( (DirData+MuEG).c_str(),"vQG_MuEG_2.root", DirOut.c_str());}
 
 }
 }

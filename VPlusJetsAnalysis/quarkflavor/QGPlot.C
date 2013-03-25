@@ -384,8 +384,8 @@ sscanf(A.ReadParFromMultFile(configFile2.c_str(),"BATCH"),"%d",&useFork)  ;
 int forkNum=0;
 if(useFork)
 	{
-	if(argc<3)useFork=0;
-	else sscanf(argv[2],"%d",&forkNum);
+	if(argc<4)useFork=0;
+	else sscanf(argv[3],"%d",&forkNum);
 	}
 if( useFork){
 	if(forkNum==1)QGPlotMC( (DirMC+DY).c_str(),Form("QG_DY_%d.root",-CHID2), DirOut.c_str());

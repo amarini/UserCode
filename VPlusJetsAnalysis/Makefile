@@ -55,7 +55,7 @@ QGAnalysis: src/ReadParameters.C quarkflavor/QGAnalysis.C symlink
 	g++ -D STANDALONE `root-config --libs --cflags` $(EXTRAFLAGS) -lRooFit -lRooFitCore -lMinuit quarkflavor/QGAnalysis.C -o QGAnalysis
 
 .PHONY: ValidationQG
-ValidationQG:ValidationQGPlot ValidationQGHisto
+ValidationQG:ValidationPlotQG ValidationHistoQG
 
 symlink_vQG:
 	[ -h validationQG/src ] || ln -s "${PWD}/src" validationQG/src
