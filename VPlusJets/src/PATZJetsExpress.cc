@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.48 2013/03/18 08:43:34 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.49 2013/03/18 12:28:05 amarini Exp $
 //
 //
 
@@ -218,10 +218,13 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         // ---- motherid ---------------------------------------------------
         int motherId; 
 	float isoPtDR03;
+	float isoSumPtDR03;
 	float isoEDR03;
 	float isoPtDR04;
+	float isoSumPtDR04;
 	float isoEDR04;
 	float isoPtDR05;
+	float isoSumPtDR05;
 	float isoEDR05;
       };
       struct JET {
@@ -436,10 +439,13 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float photonEtaGEN_;
       float photonPhiGEN_;
       float photonIsoPtDR03GEN_;
+      float photonIsoSumPtDR03GEN_;
       float photonIsoEDR03GEN_;
       float photonIsoPtDR04GEN_;
+      float photonIsoSumPtDR04GEN_;
       float photonIsoEDR04GEN_;
       float photonIsoPtDR05GEN_;
+      float photonIsoSumPtDR05GEN_;
       float photonIsoEDR05GEN_;
       int photonMotherIdGEN_;
       float photonRECODRGEN_;
@@ -1061,6 +1067,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	    //--- for particle isolation, don't check for invisible particles
 	    //correct for the fact that also the photon itself IS among the list of particles looped over
 	    //subtract the momentum vector and the energy
+	    float isoSumPtDR03=-i_gen->p4().Pt();
+	    float isoSumPtDR04=-i_gen->p4().Pt();
+	    float isoSumPtDR05=-i_gen->p4().Pt();
 	    float isoPxDR03=-i_gen->p4().Px();
 	    float isoPxDR04=-i_gen->p4().Px();
 	    float isoPxDR05=-i_gen->p4().Px();
@@ -1076,14 +1085,17 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 		TLorentzVector partP4GEN(j_gen->p4().Px(),j_gen->p4().Py(),j_gen->p4().Pz(),j_gen->p4().E());
 		float DR = partP4GEN.DeltaR(phoP4GEN);
 		if(DR<0.5){
+		  isoSumPtDR05+=j_gen->p4().Pt();
 		  isoPxDR05+=j_gen->p4().Px();
 		  isoPyDR05+=j_gen->p4().Py();
 		  isoEDR05+=j_gen->p4().E();
 		  if(DR<0.4){
+		    isoSumPtDR04+=j_gen->p4().Pt();
 		    isoPxDR04+=j_gen->p4().Px();
 		    isoPyDR04+=j_gen->p4().Py();
 		    isoEDR04+=j_gen->p4().E();
 		    if(DR<0.3){
+		      isoSumPtDR03+=j_gen->p4().Pt();
 		      isoPxDR03+=j_gen->p4().Px();
 		      isoPyDR03+=j_gen->p4().Py();
 		      isoEDR03+=j_gen->p4().E();
@@ -1095,6 +1107,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 
             aGenPhoton.pdgId = i_gen->pdgId();
             aGenPhoton.p4    = phoP4GEN;
+	    aGenPhoton.isoSumPtDR03=isoSumPtDR03;
+	    aGenPhoton.isoSumPtDR04=isoSumPtDR04;
+	    aGenPhoton.isoSumPtDR05=isoSumPtDR05;
 	    aGenPhoton.isoEDR03=isoEDR03;
 	    aGenPhoton.isoEDR04=isoEDR04;
 	    aGenPhoton.isoEDR05=isoEDR05;
@@ -2415,13 +2430,17 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         photonEtaGEN_    = myGenPhotons[0].p4.Eta();
         photonPhiGEN_    = myGenPhotons[0].p4.Phi();
         photonEGEN_      = myGenPhotons[0].p4.Energy();
-	photonIsoPtDR03GEN_= myGenPhotons[0].isoPtDR03;
-	photonIsoEDR03GEN_= myGenPhotons[0].isoEDR03;
-	photonIsoPtDR04GEN_= myGenPhotons[0].isoPtDR04;
-	photonIsoEDR04GEN_= myGenPhotons[0].isoEDR04;
-	photonIsoPtDR05GEN_= myGenPhotons[0].isoPtDR05;
-	photonIsoEDR05GEN_= myGenPhotons[0].isoEDR05;
-	photonMotherIdGEN_ = myGenPhotons[0].motherId;
+	photonIsoPtDR03GEN_   = myGenPhotons[0].isoPtDR03;
+	photonIsoSumPtDR03GEN_= myGenPhotons[0].isoSumPtDR03;
+	photonIsoEDR03GEN_    = myGenPhotons[0].isoEDR03;
+	photonIsoPtDR04GEN_   = myGenPhotons[0].isoPtDR04;
+	photonIsoSumPtDR04GEN_= myGenPhotons[0].isoSumPtDR04;
+	photonIsoEDR04GEN_    = myGenPhotons[0].isoEDR04;
+	photonIsoPtDR05GEN_   = myGenPhotons[0].isoPtDR05;
+	photonIsoSumPtDR05GEN_= myGenPhotons[0].isoSumPtDR05;
+	photonIsoEDR05GEN_    = myGenPhotons[0].isoEDR05;
+	photonMotherIdGEN_    = myGenPhotons[0].motherId;
+	//cout<<"diff ptR03ptR04/ptR05: "<<photonIsoPtDR03GEN_-photonIsoSumPtDR03GEN_<<"/"<<photonIsoPtDR04GEN_-photonIsoSumPtDR04GEN_<<"/"<<photonIsoPtDR05GEN_-photonIsoSumPtDR05GEN_<<endl;
         if(myPhotons.size()>0)photonRECODRGEN_ = myPhotons[0].p4.DeltaR(myGenPhotons[0].p4); // GEN TO RECO matching
 
       }   
@@ -2762,10 +2781,13 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("photonEtaGEN"     ,&photonEtaGEN_      ,"photonEtaGEN/F");
   myTree_->Branch("photonPhiGEN"     ,&photonPhiGEN_      ,"photonPhiGEN/F");
   myTree_->Branch("photonIsoPtDR03GEN"    ,&photonIsoPtDR03GEN_     ,"photonIsoPtDR03GEN/F");
+  myTree_->Branch("photonIsoSumPtDR03GEN"    ,&photonIsoSumPtDR03GEN_     ,"photonIsoSumPtDR03GEN/F");
   myTree_->Branch("photonIsoEDR03GEN"     ,&photonIsoEDR03GEN_     ,"photonIsoEDR03GEN/F");
   myTree_->Branch("photonIsoPtDR04GEN"    ,&photonIsoPtDR04GEN_     ,"photonIsoPtDR04GEN/F");
+  myTree_->Branch("photonIsoSumPtDR04GEN"    ,&photonIsoSumPtDR04GEN_     ,"photonIsoSumPtDR04GEN/F");
   myTree_->Branch("photonIsoEDR04GEN"     ,&photonIsoEDR04GEN_     ,"photonIsoEDR04GEN/F");
   myTree_->Branch("photonIsoPtDR05GEN"    ,&photonIsoPtDR05GEN_     ,"photonIsoPtDR05GEN/F");
+  myTree_->Branch("photonIsoSumPtDR05GEN"    ,&photonIsoSumPtDR05GEN_     ,"photonIsoSumPtDR05GEN/F");
   myTree_->Branch("photonIsoEDR05GEN"     ,&photonIsoEDR05GEN_     ,"photonIsoEDR05GEN/F");
   myTree_->Branch("photonMotherIdGEN",&photonMotherIdGEN_ ,"photonMotherIdGEN/I");
   myTree_->Branch("photonRECODRGEN"  ,&photonRECODRGEN_   ,"photonRECODRGEN/F");
@@ -2942,10 +2964,13 @@ void PATZJetsExpress::clearTree()
   photonMotherIdGEN_ = -999;
   photonIsoEDR03GEN_ = -999; 
   photonIsoPtDR03GEN_= -999;
+  photonIsoSumPtDR03GEN_= -999;
   photonIsoEDR04GEN_ = -999; 
   photonIsoPtDR04GEN_= -999; 
+  photonIsoSumPtDR04GEN_= -999; 
   photonIsoEDR05GEN_ = -999; 
   photonIsoPtDR05GEN_= -999; 
+  photonIsoSumPtDR05GEN_= -999; 
   photonRECODRGEN_   = +999; // please keep this positive (will cut offline to <0.2 for matched)
   VBPartonDM_        = -999;
   VBPartonM_         = -999;
