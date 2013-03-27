@@ -51,7 +51,7 @@ case 1122: a= .96; b= -.28; break;
 case 1113: a= .865; b= -.05; break; 
 case 1123: a= .94; b= .3; break; 
 
-case 2111: a= .98; b= .04; break; 
+case 2111: a= .99; b= .02; break; 
 case 2121: a= .99; b= -0.02; break; 
 case 2112: a= .94; b= 0.14; break; 
 case 2122: a= .995; b= 0.04; break; 
