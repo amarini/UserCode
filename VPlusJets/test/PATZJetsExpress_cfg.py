@@ -1,6 +1,6 @@
 from PhysicsTools.PatAlgos.patTemplate_cfg import *
 
-isMC=False
+isMC=True
 
 process.load('Configuration.StandardSequences.Reconstruction_cff')
 process.load('RecoJets.Configuration.RecoPFJets_cff')
@@ -24,12 +24,15 @@ from PhysicsTools.SelectorUtils.pvSelector_cfi import pvSelector
 #process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 if(isMC):
-	process.GlobalTag.globaltag = 'START53_V16::All'    # MC 53Y release
+	process.GlobalTag.globaltag = 'START53_V18::All'    # MC 53Y release
 else:
-	process.GlobalTag.globaltag = 'FT_R_53_V18::All' 	# For 2012A+B+C data reprocessing in 53X.
-	                                              #(Snapshot not valid for runs > 210041 [= 2013-01-15])[2]
-	#process.GlobalTag.globaltag = 'GR_P_V41_AN3::All' #	>=533X 	To be used for analysis of 2012C v2 prompt reco data. 
-	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All' #	>=533X 	To be used for analysis of 2012D prompt reco data
+	process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All'  # 2012AB - July13 2012 - re-reco of 2012AB in 53X
+	#process.GlobalTag.globaltag = 'FT_53_V6C_AN3::All' # 2012A - Aug06 2012 - re-reco of run-range 190782-190949 
+	#process.GlobalTag.globaltag = 'FT53_V10A_AN3::All' # 2012C-v1 - Aug24 2012 - re-reco of 2012C (v1)
+	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All'  # 2012C-v2 - prompt reco for 2012C_v2 - prompt reco
+	#process.GlobalTag.globaltag = 'FT_P_V42C_AN3::All' # 2012C (only 201191) - 11Dec 2012 - ecal recovery of run 201191
+	#process.GlobalTag.globaltag = 'GR_P_V42_AN3::All'  # 2012D - prompt reco for 2012D - prompt reco	
+	#process.GlobalTag.globaltag = 'FT_P_V43E_AN3::All' # 2012D (only range: 207883-208307) - 16Jan 2013 - recovery of 2012D run range 207883-208307
 
 ##--------- good primary vertices ---------------
 process.goodOfflinePrimaryVertices = cms.EDFilter("PrimaryVertexObjectFilter",
@@ -48,19 +51,19 @@ process.patJets.addTagInfos = True
 
 # ---- format the message service ---------------------------------------
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 # ---- load geometry package --------------------------------------------
 #process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
-#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 #process.maxLuminosityBlocks = cms.untracked.PSet(input = cms.untracked.int32(1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-#'file:/afs/cern.ch/userw/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
-'file:pickevents.root'
-#'file:/scratch0/webermat/WJets_MadGraph_START_53_V7A.root'
+#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+#'file:pickevents.root'
+#'file:/scratch0/webermat/GJets_HT_200To400_8TeV_madgraph.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValH130GGgluonfusion/GEN-SIM-RECO/v2/00000/202DD4DB-F929-E211-8F53-001A92810AF2.root'
 #'/store/data/Run2012B/DoubleMu/AOD/PromptReco-v1/000/193/752/504D95A3-789B-E111-9B6C-003048D3C944.root', 
@@ -133,7 +136,7 @@ process.jetExtender = cms.EDProducer("JetExtendedProducer",
 
 # ---- define the output file -------------------------------------------
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("PATZJetsExpress.root"),
+    fileName = cms.string("PATZJetsExpressTest.root"),
     closeFileFast = cms.untracked.bool(True)
 )
 
@@ -169,6 +172,7 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     jets            = cms.InputTag('jetExtender','extendedPatJets'),
     srcRho          = cms.InputTag('kt6PFJets','rho'),
     srcRho25        = cms.InputTag('kt6PFJetsCentralNeutral','rho'),
+    srcRhoQG        = cms.InputTag('kt6PFJetsIsoQG','rho'),				  
     pfIsoValEleCH03 = cms.InputTag('elPFIsoValueCharged03PFIdPFIso'),
     pfIsoValEleNH03 = cms.InputTag('elPFIsoValueNeutral03PFIdPFIso'),
     pfIsoValEleG03  = cms.InputTag('elPFIsoValueGamma03PFIdPFIso'),                                    
@@ -213,12 +217,15 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon20_CaloIdVL_IsoL_v',
                                   'HLT_Photon30_v',
                                   'HLT_Photon30_CaloIdVL_v',
+				  'HLT_Photon30_CaloIdVL_IsoL_v',
+				  'HLT_Photon50_CaloIdVL_v',
                                   'HLT_Photon50_CaloIdVL_IsoL_v',
                                   'HLT_Photon75_CaloIdVL_v',
+				  'HLT_Photon75_CaloIdVL_IsoL_v',
                                   'HLT_Photon90_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
-                                  'HLT_Photon125_v',
                                   'HLT_Photon135_v',
+		                  'HLT_Photon150_v',
                                   'HLT_Mu15_v',
                                   'HLT_Mu24_v',
                                   'HLT_Mu30_v',
@@ -259,12 +266,15 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Photon20_CaloIdVL_IsoL_v',
                                   'HLT_Photon30_v',
                                   'HLT_Photon30_CaloIdVL_v',
+			          'HLT_Photon30_CaloIdVL_IsoL_v',
+			          'HLT_Photon50_CaloIdVL_v',
                                   'HLT_Photon50_CaloIdVL_IsoL_v',
                                   'HLT_Photon75_CaloIdVL_v',
+				  'HLT_Photon75_CaloIdVL_IsoL_v',
                                   'HLT_Photon90_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
-                                  'HLT_Photon125_v',
-                                  'HLT_Photon135_v'),
+                                  'HLT_Photon135_v',
+				  'HLT_Photon150_v'),
     triggerFamily5  = cms.vstring('HLT_Mu15_v',
                                   'HLT_Mu24_v',
                                   'HLT_Mu30_v',
@@ -293,8 +303,11 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
                                   'HLT_Mu17_Mu8_v',
                                   'HLT_Ele27_WP80_v',
                                   'HLT_Photon30_CaloIdVL_v',
+				  'HLT_Photon30_CaloIdVL_IsoL_v',
+				  'HLT_Photon50_CaloIdVL_v',
                                   'HLT_Photon50_CaloIdVL_IsoL_v',
                                   'HLT_Photon75_CaloIdVL_v',
+				  'HLT_Photon75_CaloIdVL_IsoL_v',
                                   'HLT_Photon90_CaloIdVL_v',
                                   'HLT_Photon90_CaloIdVL_IsoL_v',
                                   'HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v',
@@ -331,12 +344,15 @@ process.hltFilter = cms.EDFilter('HLTHighLevel',
                                      'HLT_Photon20_CaloIdVL_IsoL_v*',
                                      'HLT_Photon30_v*',
                                      'HLT_Photon30_CaloIdVL_v*',
+				     'HLT_Photon30_CaloIdVL_IsoL_v*',
+				     'HLT_Photon50_CaloIdVL_v*',
                                      'HLT_Photon50_CaloIdVL_IsoL_v*',
                                      'HLT_Photon75_CaloIdVL_v*',
+				     'HLT_Photon75_CaloIdVL_IsoL_v*',
                                      'HLT_Photon90_CaloIdVL_v*',
                                      'HLT_Photon90_CaloIdVL_IsoL_v*',
-                                     'HLT_Photon125_v*',
-                                     'HLT_Photon135_v*'                                    
+                                     'HLT_Photon135_v*',
+				     'HLT_Photon150_v*', 
                                      'HLT_Mu15_v2*',
                                      'HLT_Mu24_v*',
                                      'HLT_Mu30_v*',
@@ -370,7 +386,7 @@ pathTriggerElectronsFamily2 = '(path("HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_C
 
 pathTriggerMuonElectronFamily3 = '(path("HLT_Mu17_Ele8_CaloIdL_v*", 1, 1) || path("HLT_Mu8_Ele17_CaloIdL_v*", 1, 1) || path("HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_v*", 1, 1) || path("HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_v*", 1, 1) || path("HLT_DoubleMu5_Ele8_CaloIdT_TrkIdVL_v*", 1, 1) || path("HLT_DoubleMu8_Ele8_CaloIdT_TrkIdVL_v*", 1, 1) || path("HLT_Mu17_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*", 1, 1) || path("HLT_Mu30_Ele30_CaloIdL_v*", 1, 1) || path("HLT_Mu7_Ele7_CaloIdT_CaloIsoVL_v*", 1, 1) || path("HLT_Mu8_DoubleEle8_CaloIdT_TrkIdVL_v*", 1, 1) || path("HLT_Mu8_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_v*", 1, 1) || path("HLT_Mu8_Ele8_CaloIdT_TrkIdVL_Ele8_CaloIdL_TrkIdVL_v*", 1, 1))' 
 
-pathTriggerPhotonsFamily4 = '(path("HLT_Photon20_CaloIdVL_v*", 1, 1) || path("HLT_Photon20_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon30_v*", 1, 1) || path("HLT_Photon30_CaloIdVL_v*", 1, 1) || path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon125_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1))'
+pathTriggerPhotonsFamily4 = '(path("HLT_Photon20_CaloIdVL_v*", 1, 1) || path("HLT_Photon20_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon30_v*", 1, 1) || path("HLT_Photon30_CaloIdVL_v*", 1, 1) || path("HLT_Photon30_CaloIdVL_IsoL_v*", 1, 1)|| path("HLT_Photon50_CaloIdVL_v*", 1, 1) || path("HLT_Photon50_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_v*", 1, 1) || path("HLT_Photon75_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_v*", 1, 1) || path("HLT_Photon90_CaloIdVL_IsoL_v*", 1, 1) || path("HLT_Photon135_v*", 1, 1)|| path("HLT_Photon150_v*", 1, 1))'
 
 pathTriggerMuonsFamily5 = '(path("HLT_Mu15_v2*", 1, 1) || path("HLT_Mu24_v*", 1, 1) || path("HLT_Mu30_v*", 1, 1) || path("HLT_Mu40_v*", 1, 1) || path("HLT_Mu40_eta2p1_v*", 1, 1) || path("HLT_IsoMu17_v*", 1, 1) || path("HLT_IsoMu20_v*", 1, 1) || path("HLT_IsoMu24_v*", 1, 1) || path("HLT_IsoMu24_eta2p1_v*", 1, 1))' # selecting the trigger objects
 
@@ -472,6 +488,7 @@ process.patDefaultSequence.replace(process.patElectronsTriggerMatchHLTFamily2,
 #process.out.outputCommands.append('keep *_patMuonElectronTriggerMatchHLTFamily3ele_*_*')
 #process.out.outputCommands.append('keep *_patElectronsTriggerMatchHLTFamily6_*_*')
 
+#process.dump = cms.EDAnalyzer("EventContentAnalyzer")
 
 del process.outpath
 
