@@ -36,6 +36,7 @@
 using namespace std;
 using namespace RooFit;
 int CHID2=-4;
+const int debug=2;
 
 //TFile
 TFile *fdata_4;
@@ -73,31 +74,38 @@ int QGFit(map<string,TH1F*> &histos,map<string,vector<float>* > &frac,float lumi
 
 int QGAnalysis(float lumi=18.7,const char *OutFile="")
 { // Main function: open files, call fit, call subfunctions, writes results.
+if(debug>1)printf("Analysis\n");
 fout=TFile::Open( OutFile ,"RECREATE");
 //Take llPt
+if(debug>1)printf("taking histos\n");
 TH1F* llPt_data=(TH1F*)fdata_4->Get("llPt")->Clone("llPt_data");
 	llPt_data->Add((TH1F*)fdata_1->Get("llPt"));
+if(debug>1)printf("DY_4\n");
 TH1F* llPt_DY=(TH1F*)fDY_4->Get("llPt")->Clone("llPt_DY");
+if(debug>1)printf("DY_1\n");
 	llPt_DY->Add((TH1F*)fDY_1->Get("llPt"));
-TH1F* llPt_TT=(TH1F*)fTT_4->Get("llPt")->Clone("llPt_TT");
-	llPt_TT->Add((TH1F*)fTT_1->Get("llPt"));
-TH1F* llPt_WJ=(TH1F*)fWJ_4->Get("llPt")->Clone("llPt_WJ");
-	llPt_WJ->Add((TH1F*)fWJ_1->Get("llPt"));
-TH1F* llPt_WW=(TH1F*)fWW_4->Get("llPt")->Clone("llPt_WW");
-	llPt_WW->Add((TH1F*)fWW_1->Get("llPt"));
-TH1F* llPt_WZ=(TH1F*)fWZ_4->Get("llPt")->Clone("llPt_WZ");
-	llPt_WZ->Add((TH1F*)fWZ_1->Get("llPt"));
-TH1F* llPt_ZZ=(TH1F*)fZZ_4->Get("llPt")->Clone("llPt_ZZ");
-	llPt_ZZ->Add((TH1F*)fZZ_1->Get("llPt"));
+//if(debug>1)printf("TT_4\n");
+TH1F* llPt_TT=NULL;//=(TH1F*)fTT_4->Get("llPt")->Clone("llPt_TT");
+//if(debug>1)printf("TT_1\n");
+	//llPt_TT->Add((TH1F*)fTT_1->Get("llPt"));
+if(debug>1)printf("VV\n");
+TH1F* llPt_WJ=NULL;//=(TH1F*)fWJ_4->Get("llPt")->Clone("llPt_WJ");
+	//llPt_WJ->Add((TH1F*)fWJ_1->Get("llPt"));
+TH1F* llPt_WW=NULL;//=(TH1F*)fWW_4->Get("llPt")->Clone("llPt_WW");
+	//llPt_WW->Add((TH1F*)fWW_1->Get("llPt"));
+TH1F* llPt_WZ=NULL;//=(TH1F*)fWZ_4->Get("llPt")->Clone("llPt_WZ");
+	//llPt_WZ->Add((TH1F*)fWZ_1->Get("llPt"));
+TH1F* llPt_ZZ=NULL;//=(TH1F*)fZZ_4->Get("llPt")->Clone("llPt_ZZ");
+	//llPt_ZZ->Add((TH1F*)fZZ_1->Get("llPt"));
 
 //Scale MC to luminosity
 cout<<"LUMI="<<lumi<<"1/fb"<<endl;
 llPt_DY->Scale(lumi);
-llPt_TT->Scale(lumi);
-llPt_WJ->Scale(lumi);
-llPt_WW->Scale(lumi);
-llPt_WZ->Scale(lumi);
-llPt_ZZ->Scale(lumi);
+//llPt_TT->Scale(lumi);
+//llPt_WJ->Scale(lumi);
+//llPt_WW->Scale(lumi);
+//llPt_WZ->Scale(lumi);
+//llPt_ZZ->Scale(lumi);
 
 if(!DataBKG){
 //Subtract BKG from data
@@ -111,10 +119,10 @@ llPt_data->Add(llPt_ZZ,-1.0);
 cout<< "BKG Subtraction from Data"<<endl;
 TH1F* llPt_data_2=(TH1F*)fdata_2->Get("llPt")->Clone("llPt_data_2");
  llPt_data->Add(llPt_data_2,-1.0);
- llPt_data->Add(llPt_WJ,-1.0);
- llPt_data->Add(llPt_WW,-1.0);
- llPt_data->Add(llPt_WZ,-1.0);
- llPt_data->Add(llPt_ZZ,-1.0);
+// llPt_data->Add(llPt_WJ,-1.0);
+// llPt_data->Add(llPt_WW,-1.0);
+// llPt_data->Add(llPt_WZ,-1.0);
+// llPt_data->Add(llPt_ZZ,-1.0);
 }
 
 histos["llPt_DY"]=llPt_DY;
@@ -248,7 +256,7 @@ frac["b_err"]=b_err;
 //----------------------------------------------------------FIT------------------------
  QGFit(histos,frac,lumi);
 //-------------------------------------------------------------------------------------
-
+if(debug>0)printf("writing results\n");
 
 //	if(WriteResults)
 	{	
@@ -335,7 +343,7 @@ frac["b_err"]=b_err;
 	llPt_DY_c->Scale(lumi);llPt_DY_c->Write();
 	llPt_DY_b->Scale(lumi);llPt_DY_b->Write();
 	}
-
+if(debug>0)printf("end\n");
 
 }//end QGAnalysis
 
@@ -378,6 +386,7 @@ RooRealVar b("b","b",0,1.00001) ;
 
 for(int bin=0; bin<=llPt_data->GetNbinsX()+1;bin++)
 {
+	if(debug>1)printf("llPtBin=%d\n",bin);
 	TH1F* qgl_llPt_q=histos[Form("qgl_llPt_bin%d_flavor_q",bin)];
 	TH1F* qgl_llPt_g=histos[Form("qgl_llPt_bin%d_flavor_g",bin)];
 	TH1F* qgl_llPt_c=histos[Form("qgl_llPt_bin%d_flavor_c",bin)];
@@ -575,6 +584,10 @@ fWW_1=TFile::Open(Form("%sQG_WW_%d.root",DirOut.c_str(),-CHID2));
 fWZ_1=TFile::Open(Form("%sQG_WZ_%d.root",DirOut.c_str(),-CHID2));
 fZZ_1=TFile::Open(Form("%sQG_ZZ_%d.root",DirOut.c_str(),-CHID2));
 
+if(debug>0)printf("starting analysis\n");
+if((debug>0)&&((fdata_4==NULL)||(fdata_1==NULL)||(fdata_2==NULL)||(fDY_4==NULL)||(fTT_4==NULL)||(fWJ_4==NULL)||(fWW_4==NULL)||(fWZ_4==NULL)||(fZZ_4==NULL)))printf("Files not opened correctly\n");
+if((debug>0)&&((fDY_2==NULL)||(fTT_2==NULL)||(fWJ_2==NULL)||(fWW_2==NULL)||(fWZ_2==NULL)||(fZZ_2==NULL)))printf("Files not opened correctly\n");
+if((debug>0)&&((fDY_1==NULL)||(fTT_1==NULL)||(fWJ_1==NULL)||(fWW_1==NULL)||(fWZ_1==NULL)||(fZZ_1==NULL)))printf("Files not opened correctly\n");
 
 QGAnalysis(lumi,Form("%sQG_Analysis.root",DirOut.c_str()) );
 

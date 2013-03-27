@@ -130,6 +130,8 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 		(*jetVeto)[k]=0;
 		if(R1<JetDRCut) (*jetVeto)[k]=1;
 		if(R2<JetDRCut) (*jetVeto)[k]|=2;
+		if( ( 1. - (*jetBeta)[k] >= 0.2 * TMath::Log( nVtx - 0.67))) //betaStar=1-beta
+                        (*jetVeto)[k]|=8; //1= lept1, 2=lept2, 4= gamma, 8=betaStar
 
 		}
 		

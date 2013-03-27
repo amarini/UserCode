@@ -35,6 +35,7 @@ void Loop(map<string,TH1F*> &histos,map<string,TH2F*> &histos2, TChain *t,int ty
 float JetPtCut=50;
 float JetDRCut=0.4;
 float llMCut=20;
+float JetEtaCut=2.5;
 int CHID2=-4;
 
 
@@ -141,6 +142,7 @@ vector<float> *jetPhi=NULL	;t->SetBranchAddress("jetPhi",&jetPhi);
 vector<float> *jetE=NULL	;t->SetBranchAddress("jetE",&jetE);
 vector<float> *jetQGL=NULL	;t->SetBranchAddress("jetQGL",&jetQGL);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
+vector<float> *jetBeta=NULL	;t->SetBranchAddress("jetBeta",&jetBeta);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
 	jetVeto=new vector<int>;
 
@@ -182,17 +184,23 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 		(*jetVeto)[k]=0;
 		if(R1<JetDRCut) (*jetVeto)[k]=1;
 		if(R2<JetDRCut) (*jetVeto)[k]|=2;
+		
+		if( ( 1. - (*jetBeta)[k] >= 0.2 * TMath::Log( nVtx - 0.67))) //betaStar=1-beta
+                        (*jetVeto)[k]|=8; //1= lept1, 2=lept2, 4= gamma, 8=betaStar
+
+		if( fabs((*jetEta)[k])<JetEtaCut) (*jetVeto)[k]|=16;//ETA
 
 		}
 		
 	int nJetsVeto=0;
-	for(int iJ=0;iJ<jetVeto->size() && (*jetPt)[iJ]>=JetPtCut;iJ++)if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ) nJetsVeto++;
+	// ################ JET with ETA /PT Cut & BS : ALL
+	for(int iJ=0;iJ<jetVeto->size() && (*jetPt)[iJ]>=JetPtCut;iJ++)if( !( (*jetVeto)[iJ] & 31 ) ) nJetsVeto++;
 	if(debug>1)cout<<"nJetsVeto "<<nJetsVeto<<endl;
 	if(debug>1)cout<<"jetSize Pt "<<jetPt->size()<<" Veto "<<jetVeto->size()<<endl;
 	int jet0=-1,jet1=-1,jet2=-1;
-		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ( (*jetVeto)[iJ]&2)) ){jet0=iJ; break;}
-		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet1=iJ; break;}
-		if(nJetsVeto>2)for(int iJ=jet1+1;iJ<jetPt->size();iJ++) if( !( ( (*jetVeto)[iJ]&1)  || ((*jetVeto)[iJ]&2)) ){jet2=iJ; break;}
+		if(nJetsVeto>0)for(int iJ=0;iJ<jetPt->size();iJ++)      if( !(  (*jetVeto)[iJ] &31 ) ){jet0=iJ; break;}
+		if(nJetsVeto>1)for(int iJ=jet0+1;iJ<jetPt->size();iJ++) if( !(  (*jetVeto)[iJ] &31 ) ){jet1=iJ; break;}
+		if(nJetsVeto>2)for(int iJ=jet1+1;iJ<jetPt->size();iJ++) if( !(  (*jetVeto)[iJ] &31 ) ){jet2=iJ; break;}
 	if( (jet0>=0) && (*jetPt)[jet0]< JetPtCut) jet0=-1;
 	if( (jet1>=0) && (*jetPt)[jet1]< JetPtCut) jet1=-1;
 	if( (jet2>=0) && (*jetPt)[jet2]< JetPtCut) jet2=-1;
@@ -356,6 +364,7 @@ sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETPT"),"%f",&JetPtCut );
 sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETDR"),"%f",&JetDRCut);
 //sscanf(A.ReadParFromMultFile(configFile2.c_str(),"LLM"),"%f",&llMCut ); //Met Cut is minimal
 sscanf(A.ReadParFromMultFile(configFile2.c_str(),"CHID2"),"%d",&CHID2 );
+sscanf(A.ReadParFromMultFile(configFile2.c_str(),"JETETA"),"%f",&JetEtaCut );
 
 printf("********CUT********\n");
 printf("* JetPt=%4.1f      *\n",JetPtCut);
