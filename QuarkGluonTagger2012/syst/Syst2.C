@@ -1,7 +1,7 @@
 #include "TMath.h"
 #include <string>
 
-inline float function(float x, float a ,float b)
+inline float function(float x0, float a ,float b,float min=0,float max=1)
 {
 //TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 
 using namespace TMath;
@@ -9,6 +9,11 @@ using namespace TMath;
 //return (ATan( a*Tan( (Pi()*x)-(Pi()/2.0)) + b)/Pi()) + 0.5;
 
   //string var=Form("TMath::TanH( %f * TMath::ATanH(2*%s-1) + %f)/2+.5 ",par[0],varName.c_str(),par[1]);
+
+float x=(x0-min)/(max-min); 
+if(x<0)x=0;
+if(x>1)x=1;
+
 return (TanH( a* ATanH(2*x-1)+b )/2+.5 ) ;
 
 }
