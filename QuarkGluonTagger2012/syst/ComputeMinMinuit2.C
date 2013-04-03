@@ -14,7 +14,6 @@ string Zselection="&& axis1_QCJet0>0 && axis2_QCJet0>0 && mZ>70 && mZ<110 && abs
 //----- global vars called by minuit :(
 TTree *t_mc;
 TTree *t_data;
-
 float PtMin=30;
 float PtMax=80;
 float RhoMin=0;
@@ -23,11 +22,14 @@ float EtaMin=0;
 float EtaMax=2.0;
 string selection=Form("%s%.0f%s%.0f%s%.0f%s%.0f%s%.1f%s%.1f%s","ptJet0>",PtMin," && ptJet0<",PtMax," && rhoPF>",RhoMin," && rhoPF<",RhoMax," && ",EtaMin,"<=abs(etaJet0) && abs(etaJet0)",EtaMax,Zselection.c_str());
 //string varName="QGLikelihood2012Jet0";
-//string varName="QGLMLP";
+
+//DONT DO REGEXP!!!
+//string varName="QGLHisto";
+
+string varName="QGLMLP";//QGL HISTO
 float lmin=0;
 float lmax=1;
 
-string varName="QGLMLP";//QGL HISTO
 string opt="CHI2 WW";
 Int_t nBins=30;
 Double_t xMin=0.,xMax=1.00001;
@@ -37,25 +39,15 @@ TGraph2D *g2;
 
 void FCN(Int_t &npar,Double_t*gin,Double_t&f,Double_t*par,Int_t flag)
 {
-//switch (flag)
-//{
-//case 1: //Init	
-//	t_data->Draw( Form("%s>>h_data(%d,%lf,%lf)",varName.c_str(),nBins,xMin,xMax),selection.c_str(), "E");
-//	h_data=(TH1F*)gDirectory->Get("h_data");
-//	break;
-//case 2:break;
-//case 3:break;
-//default:
 	{
 	//here entres parameters
-	string var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",par[0],varName.c_str(),par[1]
-				);
-	if(varName="QGLMLP")
-		{
-		var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",par[0],Form("( (%s-%f)/(%f-%f))",varName.c_str(),lmin,lmax,lmin),par[1] );
-		}
+	//string var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",par[0],varName.c_str(),par[1]
+	string var;
+	var=Form("TMath::TanH( %f * TMath::ATanH(2*%s-1) + %f)/2+.5 ",par[0],varName.c_str(),par[1] );
+	if(varName=="QGLMLP")
+		var=Form("TMath::TanH( %f * TMath::ATanH(2*%s-1) + %f)/2+.5 ",par[0],Form("( (%s-%f)/(%f-%f))",varName.c_str(),lmin,lmax,lmin),par[1] );
 	string sel=string("PUReWeight*eventWeight*("+selection+")");
-//	cout<<"Going to Draw:"<<var<<" With Selection "<<selection<<endl;
+	//cout<<"Going to Draw:"<<var<<" With Selection "<<selection<<endl; //DEBUG
 
 	t_mc->Draw( Form("%s>>h_mc(%d,%lf,%lf)",var.c_str(),nBins,xMin,xMax),sel.c_str(), "E" );
 	h_mc=(TH1F*)gDirectory->Get("h_mc");
@@ -71,8 +63,9 @@ return;
 
 TMinuit *gMinuit=new TMinuit(2);
 
-int ComputeMinMinuit(){
+int ComputeMinMinuit2(){
 
+printf("%s\n",selection.c_str());//DEBUG
  //Set GLobal vars
  TFile *f_data=TFile::Open("/Users/andreamarini/Documents/QGDiscriminator/ZJet/ZJet_DoubleMu-Run2012C.root");
  t_data=(TTree*)f_data->Get("tree_passedEvents");
@@ -114,7 +107,9 @@ if(varName=="QGLMLP"){
 			{
 			t_mc->GetEntry(i);
 			if((ptJet0<PtMin)||(ptJet0>PtMax)||(abs(etaJet0)<EtaMin)||(abs(etaJet0)>EtaMax)|| (rhoPF<RhoMin)||(rhoPF>RhoMax))continue;
+			//Z
 			if( (mZ<70) || (mZ>110)||( abs(ptZ-ptJet0)/(ptZ+ptJet0)>.4 )||   (betaStarJet0 > 0.2 * TMath::Log( nvertex - 0.67)) || (deltaPhi_jet<3.1415-0.5) ) continue;
+
 			if(lmin>QGLMLP) lmin=QGLMLP;
 			if(lmax<QGLMLP) lmax=QGLMLP;
 			}
@@ -181,8 +176,8 @@ printf("min0=%f min1=%f, v0=%f v1=%f %d %d\n",min0,min1,v0,v1,gpar0->GetN(),gpar
 float nstep=10;
 //float stp0=.01;
 //float stp1=.02;
-float stp0=.03;
-float stp1=.03;
+float stp0=.02;
+float stp1=.02;
 
 //TFitResults* r0=gpar0->Fit("pol2");
 //TFitResults* r1=gpar1->Fit("pol2");
