@@ -9,7 +9,8 @@ using namespace TMath;
 float x=(x0-min)/(max-min); 
 if(x<0)x=0;
 if(x>1)x=1;
-return (ATan( a*Tan( (Pi()*x)-(Pi()/2.0)) + b)/Pi()) + 0.5;
+float x1= (ATan( a*Tan( (Pi()*x)-(Pi()/2.0)) + b)/Pi()) + 0.5;
+return x1*(max-min)+min;
 }
 
 float Syst(const char *tagger,float pt, float rho, float eta,float value )//"QGL","MLP"
@@ -41,7 +42,7 @@ if( eta >2.5 ){EtaBin=2;
 	if( 80<= pt ) PtBin=3;
 	}
 
-float a,b;
+float a,b,lmin=0,lmax=1;
 
 long Selector=PtBin+10*RhoBin+100*EtaBin+ 1000*tag; // 10 is human readable
 
@@ -54,9 +55,11 @@ case 1122: a= .96; b= -.28; break;
 case 1113: a= .865; b= -.05; break; 
 case 1123: a= .94; b= .3; break; 
 
-case 2111: a= .99; b= .02; break; 
+//case 2111: a= .99; b= .02; break; 
+case 2111: a= .98; b= .03; lmin=0.075;lmax=0.876;break; 
 case 2121: a= .99; b= -0.02; break; 
-case 2112: a= .94; b= 0.14; break; 
+//case 2112: a= .94; b= 0.14; break; 
+case 2112: a= .94; b= 0.11;lmin=0.065;lmax=0.9; break; 
 case 2122: a= .995; b= 0.04; break; 
 case 2113: a= .965; b= 0.08; break; 
 case 2123: a= 1.030; b= -0.18; break; 
@@ -94,5 +97,5 @@ case 3223: a=1.005; b=-0.04; break;
 default: return -1;
 }
 
-return function(value, a ,b);
+return function(value, a ,b,lmin,lmax);
 }

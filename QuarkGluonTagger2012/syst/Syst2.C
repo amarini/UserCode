@@ -14,7 +14,9 @@ float x=(x0-min)/(max-min);
 if(x<0)x=0;
 if(x>1)x=1;
 
-return (TanH( a* ATanH(2*x-1)+b )/2+.5 ) ;
+float x1= (TanH( a* ATanH(2*x-1)+b )/2+.5 ) ;
+
+return x1*(max-min)+min;
 
 }
 
@@ -47,15 +49,15 @@ if( eta >2.5 ){EtaBin=2;
 	if( 80<= pt ) PtBin=3;
 	}
 
-float a,b;
+float a,b,lmin=0,lmax=1;
 
 long Selector=PtBin+10*RhoBin+100*EtaBin+ 1000*tag; // 10 is human readable
 
 switch (Selector){
 // tag eta rho pt
 //MLP
-case 2111: a= .985; b= .02; break; 
-case 2121: a= 1.00; b= .0; break; 
+case 2111: a= .98; b= .03;lmin=0.075;lmax=0.876; break; 
+case 2112: a= .97; b= .12;lmin=0.065;lmax=0.90; break; 
 //HISTO
 // pt- 30-80 rho -0 -15
 case 3111: a=0.94; b=0.04; break;
@@ -75,5 +77,5 @@ case 3223: a=.945; b=-.34; break;
 default: return -1;
 }
 
-return function(value, a ,b);
+return function(value, a ,b,lmin,lmax);
 }
