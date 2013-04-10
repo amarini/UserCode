@@ -1,4 +1,5 @@
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TFile.h"
 #include "THStack.h"
 #include <string>
@@ -9,6 +10,7 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TMath.h"
+#include <iostream>
 
 using namespace std;
 bool LogScale=false;
@@ -189,6 +191,64 @@ for(int i=0;i<histoName.size();i++)
 //		}
 
 	Plot(data,mc,histoName[i].c_str(),plotDir,lumi);
+	}
+
+histoName.clear();
+if(debug>0)printf("Booking histos 2D\n" );
+	//histoName.push_back("nVtx");
+	for(int bin=0;bin<nPtBins;bin++)
+		{
+	//QGL_Btag_jet0_pt30_50_pdgid0
+		name=Form("QGL_Btag_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;
+		histoName.push_back(name);
+		name=Form("QGMLP_Btag_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;
+		histoName.push_back(name);
+		}
+
+for(int i=0;i<histoName.size();i++)
+	{
+	TCanvas *c=new TCanvas("c1","c1",800,800);
+	cout<<"Getting Mu"<< histoName[i]+"_pdgid1" <<endl;
+	TH2F * h_q=(TH2F*)DY_mu->Get( (histoName[i]+"_pdgid1").c_str())->Clone();
+	cout<<"Getting Mu"<< histoName[i]+"_pdgid2" <<endl;
+		h_q->Add((TH2F*) DY_mu->Get( (histoName[i]+"_pdgid2").c_str()) );
+	cout<<"Getting Mu"<< histoName[i]+"_pdgid3" <<endl;
+		h_q->Add((TH2F*) DY_mu->Get( (histoName[i]+"_pdgid3").c_str()) );
+
+	cout<<"Getting E: "<< histoName[i]+"_pdgid1" <<endl;
+		h_q->Add((TH2F*) DY_e->Get( (histoName[i]+"_pdgid1").c_str()) );
+	cout<<"Getting E: "<< histoName[i]+"_pdgid2" <<endl;
+		h_q->Add((TH2F*) DY_e->Get( (histoName[i]+"_pdgid2").c_str()) );
+	cout<<"Getting E: "<< histoName[i]+"_pdgid3" <<endl;
+		h_q->Add((TH2F*) DY_e->Get( (histoName[i]+"_pdgid3").c_str()) );
+	cout<<"Getting Mu: "<< histoName[i]+"_pdgid4" <<endl;
+	TH2F * h_c=(TH2F*)DY_mu->Get( (histoName[i]+"_pdgid4").c_str());
+	cout<<"Getting E: "<< histoName[i]+"_pdgid4" <<endl;
+	        h_c->Add((TH2F*) DY_e->Get( (histoName[i]+"_pdgid4").c_str()) );
+
+	cout<<"Getting Mu: "<< histoName[i]+"_pdgid5" <<endl;
+	TH2F * h_b=(TH2F*)DY_mu->Get( (histoName[i]+"_pdgid5").c_str());
+	cout<<"Getting E: "<< histoName[i]+"_pdgid5" <<endl;
+	        h_b->Add((TH2F*) DY_e->Get( (histoName[i]+"_pdgid5").c_str()) );
+	
+	cout<<"Getting Mu: "<< histoName[i]+"_pdgid21" <<endl;
+	TH2F * h_g=(TH2F*)DY_mu->Get( (histoName[i]+"_pdgid21").c_str());
+	cout<<"Getting E: "<< histoName[i]+"_pdgid21" <<endl;
+		h_g->Add((TH2F*) DY_e->Get( (histoName[i]+"_pdgid21").c_str()) );
+	
+	h_q->SetMarkerColor(kBlue+2);     h_q->SetLineColor(kBlue+2);    h_q->SetMarkerStyle(20);   h_q->SetMarkerSize(0.7);
+	h_g->SetMarkerColor(kRed+2);      h_g->SetLineColor(kRed+2);     h_g->SetMarkerStyle(20);   h_g->SetMarkerSize(0.7);
+	h_c->SetMarkerColor(kOrange);     h_c->SetLineColor(kOrange);    h_c->SetMarkerStyle(20);   h_c->SetMarkerSize(0.7);
+	h_b->SetMarkerColor(kGreen+2);    h_b->SetLineColor(kGreen+2);   h_b->SetMarkerStyle(20);   h_b->SetMarkerSize(0.7);
+
+	h_q->GetXaxis()->SetRangeUser(0,1);
+	h_q->GetYaxis()->SetRangeUser(0,1);
+	h_q->Draw("P");	
+	h_c->Draw("P SAME");	
+	h_b->Draw("P SAME");	
+	h_g->Draw("P SAME");	
+	
+	c->SaveAs(Form("%svQG_%s.pdf",plotDir,histoName[i].c_str()));
 	}
 
 }

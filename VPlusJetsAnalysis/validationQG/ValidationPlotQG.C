@@ -1,6 +1,7 @@
 #include "TROOT.h"
 #include "TFile.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TTree.h"
 #include "TChain.h"
 #include "TCanvas.h"
@@ -26,9 +27,9 @@ using namespace std;
 const int debug=1;//0 NO DEBUG 1 MINIMAL 2 MAX
 
 void ValidationPlotData(const char *fileIn,const char *fileOut, const char *dirOut);
-int CreateHisto(map<string,TH1F*> &histos);
+int CreateHisto(map<string,TH1F*> &histos,map<string,TH2F*> &histos2);
 void ValidationPlot();
-void Loop(map<string,TH1F*> &histos, TChain *t,int type=0); //0 data 1 mc
+void Loop(map<string,TH1F*> &histos,map<string,TH2F*>&histos2, TChain *t,int type=0); //0 data 1 mc
 
 float JetPtCut=50;
 float JetDRCut=0.4;
@@ -39,7 +40,7 @@ int nPtBins=0;
 
 
 // ------------------ Varibales plots -------------------------
-int CreateHisto(map<string,TH1F*> &histos)
+int CreateHisto(map<string,TH1F*> &histos,map<string,TH2F*> &histos2)
 {
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++)
 	{
@@ -59,15 +60,27 @@ for(int bin=0;bin<nPtBins;bin++)
 	{
 	name=Form("QGL_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;histos[name]	= new TH1F(name.c_str(),(name+";QGL^{1st jet};events").c_str(),100,-1.001,1.001);
 	name=Form("QGMLP_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;histos[name]	= new TH1F(name.c_str(),(name+";QGMLP^{1st jet};events").c_str(),100,-1.001,1.001);
+	
+	name=Form("QGL_Btag_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;histos2[name]	= new TH2F(name.c_str(),(name+";QGL^{1st jet};BTag").c_str(),100,-1.001,1.001,100,-1.001,1.001);
+	name=Form("QGMLP_Btag_jet0_pt%.0f_%.0f",PtBins[bin],PtBins[bin+1])   ;histos2[name]	= new TH2F(name.c_str(),(name+";QGMLP^{1st jet};BTag").c_str(),100,-1.001,1.001,100,-1.001,1.001);
+	for(int i=0;i<7 ;i++){
+	if(i==6)i=21;
+			name=Form("QGL_Btag_jet0_pt%.0f_%.0f_pdgid%d",PtBins[bin],PtBins[bin+1],i)   ;
+			histos2[name]	= new TH2F(name.c_str(),(name+";QGL^{1st jet};BTag").c_str(),100,-1.001,1.001,100,-1.001,1.001);
+			name=Form("QGMLP_Btag_jet0_pt%.0f_%.0f_pdgid%d",PtBins[bin],PtBins[bin+1],i)   ;
+			histos2[name]	= new TH2F(name.c_str(),(name+";QGMLP^{1st jet};BTag").c_str(),100,-1.001,1.001,100,-1.001,1.001);
+
+	}
 	}
 
 
 for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Sumw2(); 
+for(map<string,TH2F*>::iterator it=histos2.begin();it!=histos2.end();it++) it->second->Sumw2(); 
 
 return 0;
 }
 //------------------- LOOP
-void Loop(map<string,TH1F*> &histos, TChain *t,int type)
+void Loop(map<string,TH1F*> &histos, map<string,TH2F*> &histos2, TChain *t,int type)
 {
 //DEBUG LEVEL 2
 //int selRECO;		t->SetBranchAddress("selRECO",&selRECO);
@@ -97,6 +110,7 @@ vector<float> *jetQGMLP=NULL	;t->SetBranchAddress("jetQGMLP",&jetQGMLP);
 vector<float> *jetBtag=NULL	;t->SetBranchAddress("jetBtag",&jetBtag);
 vector<float> *jetBeta=NULL	;t->SetBranchAddress("jetBeta",&jetBeta);
 vector<int>   *jetVeto=NULL	;//t->SetBranchAddress("jetVeto",&jetVeto);
+vector<int> *jetPdgId=NULL      ;if(type>0)t->SetBranchAddress("jetPdgId",&jetPdgId);
 	jetVeto=new vector<int>;
 
 
@@ -186,6 +200,21 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	if(!(  (ll.Pt() - (*jetPt)[jet0_BS] )/(ll.Pt() + (*jetPt)[jet0_BS])<.4)  ) continue;
 	//(deltaPhi_jet>3.1415-0.5) 
 	if(!  (ll.DeltaPhi(j0) >3.1415-0.5 )) continue;
+	
+	{
+		string name;
+		name=Form("QGL_Btag_jet0_pt%.0f_%.0f",PtBins[ptbin],PtBins[ptbin+1])   ;
+		histos2[name]->Fill((*jetQGL)[jet0_BS],(*jetBtag)[jet0_BS],weight);
+		name=Form("QGMLP_Btag_jet0_pt%.0f_%.0f",PtBins[ptbin],PtBins[ptbin+1])   ;
+		histos2[name]->Fill((*jetQGL)[jet0_BS],(*jetBtag)[jet0_BS],weight);
+		if(type>0){	
+			name=Form("QGL_Btag_jet0_pt%.0f_%.0f_pdgid%d",PtBins[ptbin],PtBins[ptbin+1],int(fabs((*jetPdgId)[jet0_BS])))   ;
+			histos2[name]->Fill((*jetQGL)[jet0_BS],(*jetBtag)[jet0_BS],weight);
+			name=Form("QGMLP_Btag_jet0_pt%.0f_%.0f_pdgid%d",PtBins[ptbin],PtBins[ptbin+1],int(fabs((*jetPdgId)[jet0_BS])))   ;
+			histos2[name]->Fill((*jetQGL)[jet0_BS],(*jetBtag)[jet0_BS],weight);
+			}
+		
+	}
 	//anti b-tag
 	if(! ((*jetBtag)[jet0_BS]<0.75))continue;
 	string name;
@@ -194,6 +223,8 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 	histos[name]->Fill((*jetQGL)[jet0_BS],weight);
 	name=Form("QGMLP_jet0_pt%.0f_%.0f",PtBins[ptbin],PtBins[ptbin+1])   ;
 	histos[name]->Fill((*jetQGMLP)[jet0_BS],weight);
+	
+
 	} //END LOOP OVER ENTRIES
 	
 	jetVeto->clear();
@@ -204,6 +235,7 @@ for(unsigned long long iEntry=0;iEntry<t->GetEntries() ;iEntry++)
 void ValidationPlotData(const char *fileIn,const char *fileOut, const char *dirOut){
 //DEBUG LEVEL 1
 map<string,TH1F*> histos;
+map<string,TH2F*> histos2;
 
 if(debug>0)cout<<"Validation Plot Data"<<endl;
 //TFile *fOut=TFile::Open(fileOut,"UPDATE");
@@ -216,9 +248,9 @@ if(debug>0) for(int i=0;i<nFiles;i++) cout<<"   -->File "<<i<<" is " <<tIn->GetL
 //TTree *tIn=(TTree*)fIn->Get("accepted/events");
 
 if(debug>0)cout<<"Create Histos"<<endl;
-CreateHisto(histos);
+CreateHisto(histos,histos2);
 if(debug>0)cout<<"Begin Loop"<<endl;
-Loop(histos,tIn,0);
+Loop(histos,histos2,tIn,0);
 
 if(debug>0)cout<<"Saving results"<<endl;
 //for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++){
@@ -231,10 +263,13 @@ if(debug>0)cout<<"Saving results"<<endl;
 fOut->cd();
 for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)
 	iM->second->Write();
+for(map<string,TH2F*>::iterator iM=histos2.begin();iM!=histos2.end();iM++)
+	iM->second->Write();
 
 fOut->Close();
 //for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)iM->second->Delete();
 histos.clear();
+histos2.clear();
 tIn->Delete();
 	
 }
@@ -243,6 +278,7 @@ tIn->Delete();
 void ValidationPlotMC(const char *fileIn,const char *fileOut, const char *dirOut){
 //DEBUG LEVEL 1
 map<string,TH1F*> histos;
+map<string,TH2F*> histos2;
 
 if(debug>0)cout<<"Validation Plot MC"<<endl;
 TFile *fOut=TFile::Open(  Form("%s%s",dirOut,fileOut),"RECREATE");
@@ -253,9 +289,9 @@ cout<<"Added "<< nFiles <<" files to the chain"<<endl;
 if(debug>0) for(int i=0;i<nFiles;i++) cout<<"   -->File "<<i<<" is " <<tIn->GetListOfFiles()->At(i)->GetTitle()<<endl;
 
 if(debug>0)cout<<"Create Histos"<<endl;
-CreateHisto(histos);
+CreateHisto(histos,histos2);
 if(debug>0)cout<<"Begin Loop"<<endl;
-Loop(histos,tIn,1);
+Loop(histos,histos2,tIn,1);
 
 if(debug>0)cout<<"Saving results"<<endl;
 //for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++){
@@ -267,6 +303,8 @@ if(debug>0)cout<<"Saving results"<<endl;
 
 fOut->cd();
 for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)
+	iM->second->Write();
+for(map<string,TH2F*>::iterator iM=histos2.begin();iM!=histos2.end();iM++)
 	iM->second->Write();
 fOut->Close();
 //for(map<string,TH1F*>::iterator iM=histos.begin();iM!=histos.end();iM++)iM->second->Delete();
