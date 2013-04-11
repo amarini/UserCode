@@ -15,8 +15,8 @@ string Zselection="&& axis1_QCJet0>0 && axis2_QCJet0>0 && mZ>70 && mZ<110 && abs
 TTree *t_mc;
 TTree *t_data;
 
-float PtMin=30;
-float PtMax=80;
+float PtMin=80;
+float PtMax=120;
 float RhoMin=0;
 float RhoMax=15;
 float EtaMin=0;
@@ -35,36 +35,29 @@ Double_t xMin=0.,xMax=1.00001;
 TH1F*h_mc,*h_data;
 TGraph2D *g2;
 
+bool printed=false;
+
 void FCN(Int_t &npar,Double_t*gin,Double_t&f,Double_t*par,Int_t flag)
 {
-//switch (flag)
-//{
-//case 1: //Init	
-//	t_data->Draw( Form("%s>>h_data(%d,%lf,%lf)",varName.c_str(),nBins,xMin,xMax),selection.c_str(), "E");
-//	h_data=(TH1F*)gDirectory->Get("h_data");
-//	break;
-//case 2:break;
-//case 3:break;
-//default:
 	{
 	//here entres parameters
-	string var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",par[0],varName.c_str(),par[1]
-				);
-	if(varName="QGLMLP")
+	string var;
+	var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",par[0],varName.c_str(),par[1]);
+	if(varName=="QGLMLP")
 		{
-		var=Form("TMath::ATan( %f * TMath::Tan(TMath::Pi()*%s-TMath::Pi()/2.) + %f)/TMath::Pi() +0.5 ",par[0],Form("( (%s-%f)/(%f-%f))",varName.c_str(),lmin,lmax,lmin),par[1] );
+		var=Form("(TMath::TanH( %f * TMath::ATanH(2*%s-1) + %f)/2+.5)*(%f-%f)+%f",par[0],Form("( (%s-%f)/(%f-%f))",varName.c_str(),lmin,lmax,lmin),par[1] ,lmax,lmin,lmin);
 		}
 	string sel=string("PUReWeight*eventWeight*("+selection+")");
-//	cout<<"Going to Draw:"<<var<<" With Selection "<<selection<<endl;
+
+	if(!printed) {printf("var=%s\nsel=%s\n",var.c_str(),sel.c_str());printed=true;}
 
 	t_mc->Draw( Form("%s>>h_mc(%d,%lf,%lf)",var.c_str(),nBins,xMin,xMax),sel.c_str(), "E" );
 	h_mc=(TH1F*)gDirectory->Get("h_mc");
 	//scale
 	h_mc->Scale(h_data->Integral()/h_mc->Integral());
 	f=h_data->Chi2Test(h_mc,opt.c_str());
-	//cout<<"CHI2="<<f<<" par[0]=" <<par[0]<<" par[1]="<<par[1]<<endl;
+
 	}
-//}
 return;
 }
 
@@ -73,6 +66,7 @@ TMinuit *gMinuit=new TMinuit(2);
 
 int ComputeMinMinuit(){
 
+printf("%s\n",selection.c_str());//DEBUG
  //Set GLobal vars
  TFile *f_data=TFile::Open("/Users/andreamarini/Documents/QGDiscriminator/ZJet/ZJet_DoubleMu-Run2012C.root");
  t_data=(TTree*)f_data->Get("tree_passedEvents");
@@ -93,7 +87,7 @@ double bmax[2];
 vstrt[0]=.9489; vstrt[1]=0.09716;
 //vstrt[0]=1.0; vstrt[1]=0.;
 stp[0]=0.01; stp[1]=0.01;
-bmin[0]=0.9; bmax[0]=1.1;
+bmin[0]=0.7; bmax[0]=1.1;
 bmin[1]=-.8; bmax[1]=.8;
 
 //INIT 
@@ -110,16 +104,21 @@ if(varName=="QGLMLP"){
 		float rhoPF;t_mc->SetBranchAddress("rhoPF",&rhoPF);
 		float etaJet0;t_mc->SetBranchAddress("etaJet0",&etaJet0);
 		float QGLMLP;t_mc->SetBranchAddress("QGLMLP",&QGLMLP);
+		bool first=true;
 		for(int i=0;i<t_mc->GetEntries();i++)
 			{
 			t_mc->GetEntry(i);
 			if((ptJet0<PtMin)||(ptJet0>PtMax)||(abs(etaJet0)<EtaMin)||(abs(etaJet0)>EtaMax)|| (rhoPF<RhoMin)||(rhoPF>RhoMax))continue;
+			//Z
 			if( (mZ<70) || (mZ>110)||( abs(ptZ-ptJet0)/(ptZ+ptJet0)>.4 )||   (betaStarJet0 > 0.2 * TMath::Log( nvertex - 0.67)) || (deltaPhi_jet<3.1415-0.5) ) continue;
+			if(first){lmin=QGLMLP;lmax=QGLMLP;first=false;}
 			if(lmin>QGLMLP) lmin=QGLMLP;
 			if(lmax<QGLMLP) lmax=QGLMLP;
 			}
+		printf("computed min-max\n");
 	}
 
+		printf("lmin= %.3f lmax=%.3f\n",lmin,lmax);
 int ierflag=0;
 gMinuit->mnparm(0,"Shape",vstrt[0],stp[0],bmin[0],bmax[0],ierflag);
 gMinuit->mnparm(1,"Shift",vstrt[1],stp[1],bmin[1],bmax[1],ierflag);
@@ -178,11 +177,11 @@ for(int i=0;i<gpar1->GetN();i++){if(((v1>y[i])||(v1<0) )&&(y[i]>0)){min1=x[i];v1
 
 printf("min0=%f min1=%f, v0=%f v1=%f %d %d\n",min0,min1,v0,v1,gpar0->GetN(),gpar1->GetN());
 
-float nstep=10;
+float nstep=5;
 //float stp0=.01;
 //float stp1=.02;
-float stp0=.03;
-float stp1=.03;
+float stp0=.01;
+float stp1=.01;
 
 //TFitResults* r0=gpar0->Fit("pol2");
 //TFitResults* r1=gpar1->Fit("pol2");

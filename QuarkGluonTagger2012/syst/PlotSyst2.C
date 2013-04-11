@@ -74,9 +74,9 @@ string Zselection="&& axis1_QCJet0>0 && axis2_QCJet0>0 && mZ>70 && mZ<110 && abs
 TTree *t_mc;
 TTree *t_data;
 
-float PtMin=80;
-float PtMax=120;
-float RhoMin=0;
+float PtMin=30;
+float PtMax=250;
+float RhoMin=0.;
 float RhoMax=40.;
 float EtaMin=3.0;
 float EtaMax=4.7;
@@ -96,7 +96,12 @@ string sel=string("PUReWeight*eventWeight*("+selection+")");
 string varName("QGLHisto");
 int nBins=30;
 float xMin=0,xMax=1.000001;
-t_data->Draw( Form("%s>>h_data(%d,%lf,%lf)",varName.c_str(),nBins,xMin,xMax),selection.c_str(), "E");
+if(EtaMax<2.5)
+	{t_data->Draw( Form("%s>>h_data(%d,%lf,%lf)",varName.c_str(),nBins,xMin,xMax),selection.c_str(), "E");
+	printf("QGLHisto Central\n");}
+else
+	{t_data->Draw( Form("%sFwd>>h_data(%d,%lf,%lf)",varName.c_str(),nBins,xMin,xMax),selection.c_str(), "E");
+	printf("QGLHisto Fwd\n");}
 t_mc->Draw( Form("%s>>h_mc0(%d,%lf,%lf)",varName.c_str(),nBins,xMin,xMax),sel.c_str(), "E");
 
 TH1F* h_mc0=(TH1F*)gDirectory->Get("h_mc0");
@@ -116,7 +121,7 @@ float ptJet0;t_mc->SetBranchAddress("ptJet0",&ptJet0);
 float rhoPF;t_mc->SetBranchAddress("rhoPF",&rhoPF);
 float etaJet0;t_mc->SetBranchAddress("etaJet0",&etaJet0);
 float QGLHisto;t_mc->SetBranchAddress("QGLHisto",&QGLHisto);
-float QGLHisto;t_mc->SetBranchAddress("QGLHisto",&QGLHisto);
+float QGLMLP;t_mc->SetBranchAddress("QGLMLP",&QGLMLP);
 float eventWeight;t_mc->SetBranchAddress("eventWeight",&eventWeight);
 float PUReWeight;t_mc->SetBranchAddress("PUReWeight",&PUReWeight);
 

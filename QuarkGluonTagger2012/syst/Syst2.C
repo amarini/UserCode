@@ -58,6 +58,22 @@ switch (Selector){
 //MLP
 case 2111: a= .98; b= .03;lmin=0.075;lmax=0.876; break; 
 case 2112: a= .97; b= .12;lmin=0.065;lmax=0.90; break; 
+case 2113: a= .95; b= .08;lmin=0.06;lmax=0.917; break; 
+case 2121: a= .99; b= -.02;lmin=0.076;lmax=0.876; break; 
+case 2122: a= .94; b= .14;lmin=0.066;lmax=0.901; break; 
+case 2123: a= 1.030; b= -.090;lmin=0.06;lmax=0.916; break; 
+
+//FWD - nPFCand -- for data
+
+case 2211: a=1.23; b=-0.000; lmin=.157; lmax=.814; break;
+case 2221: a=0.94; b=-0.090; lmin=.170; lmax=.817; break;
+
+case 2212: a=.910; b= 0.160; lmin=.187; lmax=.804; break;
+case 2222: a=.880; b= 0.180; lmin=.188; lmax=.864; break;
+
+case 2213: a=.840; b= 0.140; lmin=.177; lmax=.739; break;
+case 2223: a=1.130; b=0.020; lmin=.177; lmax=.817; break;
+
 //HISTO
 // pt- 30-80 rho -0 -15
 case 3111: a=0.94; b=0.04; break;
@@ -67,12 +83,21 @@ case 3122: a=0.96; b=0.06 ; break;
 case 3113: a=0.87; b=-0.16; break;
 case 3123: a=.965; b=0.08; break;
 //FWD
-case 3211: a=0.89; b=-.16; break;
-case 3221: a=.83; b=-.22; break;
-case 3212: a=.835; b=-.5; break;
-case 3222: a=.765; b=-.18; break;
-case 3213: a=.97; b=.04; break;
-case 3223: a=.945; b=-.34; break;
+//case 3211: a=0.89; b=-.16; break;
+//case 3221: a=.83; b=-.22; break;
+//case 3212: a=.835; b=-.5; break;
+//case 3222: a=.765; b=-.18; break;
+//case 3213: a=.97; b=.04; break;
+//case 3223: a=.945; b=-.34; break;
+//FWD - nPFCand -- for data
+case 3211: a=0.96; b=-.15; break;
+case 3221: a=.92; b=-.03; break;
+	//50-80
+case 3212: a=.88; b=-.35; break;
+case 3222: a=.95; b=.1; break;
+
+case 3213: a=.92; b=-.22; break;
+case 3223: a=.97; b=0.07; break;
 
 default: return -1;
 }
