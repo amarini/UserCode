@@ -20,7 +20,7 @@ ZAnalysis.a: ZAnalysis BaseAnalysis
 	ar  rcs ZAnalysis.a ZAnalysis.o ../BaseAnalysis/BaseAnalysis.o ../BaseAnalysis/ReadParameters.o
 
 zexe: zexe.cc ZAnalysis ZAnalysis.a
-	g++ $(CPPFLAGS) ZAnalysis.a zexe.cc -o zexe
+	g++ $(CPPFLAGS) zexe.cc ZAnalysis.a -o zexe
 
 .PHONY:clean
 clean:
