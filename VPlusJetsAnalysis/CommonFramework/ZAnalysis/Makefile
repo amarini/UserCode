@@ -1,14 +1,22 @@
-ROOUNFOLDLIB=/Users/andreamarini/Downloads/RooUnfold-1.1.1/
-ROOUNFOLDINC=/Users/andreamarini/Downloads/RooUnfold-1.1.1/src/
+ROOUNFOLDLIB=/afs/cern.ch/work/a/amarini/RooUnfold-1.1.1/
+ROOUNFOLDINC=/afs/cern.ch/work/a/amarini/RooUnfold-1.1.1/src/
 
 CPPFLAGS=`root-config --libs --cflags` -I$(ROOUNFOLDINC) -L$(ROOUNFOLDLIB) -lRooUnfold
 
-.PHONY: ZAnalysis
-ZAnalysis: ../BaseAnalysis/BaseAnalysis.h ZAnalysis.h ZAnalysis.cc
-	g++ $(CPPFLAGS) -c ZAnalysis.cc
-ZAnalysis.o: ZAnalysis
+.PHONY:all
+all: ZAnalysis.a
 
-ZAnalysis.a: ZAnalysis
+.PHONY: ZAnalysis
+ZAnalysis: ZAnalysis.o
+
+ZAnalysis.o: ../BaseAnalysis/BaseAnalysis.h ZAnalysis.h ZAnalysis.cc
+	g++ $(CPPFLAGS) -c ZAnalysis.cc
+
+.PHONY: BaseAnalysis
+BaseAnalysis:
+	cd .. && make BaseAnalysis
+
+ZAnalysis.a: ZAnalysis BaseAnalysis
 	ar  rcs ZAnalysis.a ZAnalysis.o ../BaseAnalysis/BaseAnalysis.o ../BaseAnalysis/ReadParameters.o
 
 zexe: zexe.cc ZAnalysis ZAnalysis.a
