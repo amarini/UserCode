@@ -12,4 +12,8 @@ ZAnalysis: BaseAnalysis
 GAnalysis: BaseAnalysis
 	cd GAnalysis && make
 
+.PHONY: zexe
+zexe:
+	cd ZAnalysis && make zexe
+	[ -h zexe ] || ln -s ZAnalysis/zexe
 

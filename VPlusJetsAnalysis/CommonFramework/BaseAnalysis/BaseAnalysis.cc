@@ -17,16 +17,47 @@ configFileNew=b;
 int BaseAnalysis::OpenFiles()
 {
 t=new TChain("accepted/events");
+//cout<<"booked Size=" <<bookedFiles.size()<<endl;
 for(int i=0; i < int(bookedFiles.size()) ; i++ )
 	{
-	t->Add( ReadMult(configFileBase.c_str(),configFileNew.c_str(),bookedFiles[i].c_str()) );	
+	cout<<"Added "<<t->Add( ReadMult(configFileBase.c_str(),configFileNew.c_str(),bookedFiles[i].c_str()) ) <<"files"<<endl;
+		cout<<  ReadMult(configFileBase.c_str(),configFileNew.c_str(),bookedFiles[i].c_str()) <<endl;
 	}
 	return 0;
+}
+int BaseAnalysis::SetCuts()
+{
+char * ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"CHID2");
+if(ptr==NULL)CHID2=-4;else {sscanf(ptr,"%d",&CHID2);}
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"LLM");
+if(ptr==NULL)llMCut=20;else{sscanf(ptr,"%f",&llMCut);}
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"JETPT");
+if(ptr==NULL)JetPtCut=50;else sscanf(ptr,"%f",&JetPtCut);
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"JETETA");
+if(ptr==NULL)JetEtaCut=2.5;else sscanf(ptr,"%f",&JetEtaCut); //not impl
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"JETDR");
+if(ptr==NULL)JetDRCut=.5;else sscanf(ptr,"%f",&JetDRCut);
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"LEPPT");
+if(ptr==NULL)LepPtCut=20;else sscanf(ptr,"%f",&LepPtCut); //not impl
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"LEPETA");
+if(ptr==NULL)LepEtaCut=2.4;else sscanf(ptr,"%f",&LepEtaCut); //not impl
+ptr=ReadMult(configFileBase.c_str(),configFileNew.c_str(),"LLY");
+if(ptr==NULL)ZYCut=1.4;else sscanf(ptr,"%f",&ZYCut);
+
+printf("********************************\n");
+printf("*LLM   = %3f                   *\n",llMCut);
+printf("*CHID2 = %3d                   *\n",CHID2);
+printf("*JETPT = %3f                   *\n",JetPtCut);
+//printf("*JETETA=                       *\n");
+printf("*JETDR = %.3f                 *\n",JetDRCut);
+printf("*LLY   = %.3f                 *\n",ZYCut);
+printf("********************************\n");
 }
 
 int BaseAnalysis::BookFile(string a)
 {
 bookedFiles.push_back(a);
+cout<<"File "<< a <<" booked " << bookedFiles.size()<<endl;
 	return 0;
 }
 
@@ -40,9 +71,16 @@ int BaseAnalysis::Smear(){
 int BaseAnalysis::Loop(int type,int j ,int NJobs)
 {
 //all variables 
+//debug=3;
+//if(debug>2)t->Print();
+if(debug>0) printf("Booking RECO Branches\n");
+if(debug>1) printf("Booking Branch nVtx\n");
 t->SetBranchAddress("nVtx",&nVtx);
+if(debug>1) printf("Booking Branch nLeptons\n");
 t->SetBranchAddress("nLeptons",&nLeptons);
+if(debug>1) printf("Booking Branch nPhotons\n");
 t->SetBranchAddress("nPhotons",&nPhotons);
+if(debug>1) printf("Booking Branch nJets\n");
 t->SetBranchAddress("nJets",&nJets);
 t->SetBranchAddress("rho",&rho);
 t->SetBranchAddress("rho25",&rho25);
@@ -70,24 +108,26 @@ t->SetBranchAddress("photonPt",&photonPt);
 t->SetBranchAddress("photonEta",&photonEta);
 t->SetBranchAddress("photonPhi",&photonPhi);
 t->SetBranchAddress("photonE",&photonE);
-if(type>0)t->SetBranchAddress("PUWeight",&PUWeight);
+if(debug>0) printf("Booking GEN Branches\n");
 
+if(type>0)t->SetBranchAddress("PUWeight",&PUWeight);
 if(type>0)t->SetBranchAddress("llMGEN",&llMGEN);
+if(type>0)t->SetBranchAddress("llYGEN",&llYGEN);
 if(type>0)t->SetBranchAddress("llPtGEN",&llPtGEN);
-if(type>0)t->SetBranchAddress("lepPtGEN",&lepPtGEN);
-if(type>0)t->SetBranchAddress("lepEtaGEN",&lepEtaGEN);
-if(type>0)t->SetBranchAddress("lepPhiGEN",&lepPhiGEN);
-if(type>0)t->SetBranchAddress("lepEGEN",&lepEGEN);
-if(type>0)t->SetBranchAddress("lepChIdGEN",&lepChIdGEN);
-if(type>0)t->SetBranchAddress("jetPtGEN",&jetPtGEN);
-if(type>0)t->SetBranchAddress("jetEtaGEN",&jetEtaGEN);
-if(type>0)t->SetBranchAddress("jetPhiGEN",&jetPhiGEN);
-if(type>0)t->SetBranchAddress("jetEGEN",&jetEGEN);
+if(type>0)t->SetBranchAddress("lepPtGEN",&lepPtGEN); else lepPtGEN=NULL;
+if(type>0)t->SetBranchAddress("lepEtaGEN",&lepEtaGEN); else lepEtaGEN=NULL;
+if(type>0)t->SetBranchAddress("lepPhiGEN",&lepPhiGEN); else lepPhiGEN=NULL;
+if(type>0)t->SetBranchAddress("lepEGEN",&lepEGEN); else lepEGEN=NULL;
+if(type>0)t->SetBranchAddress("lepChIdGEN",&lepChIdGEN);else lepChIdGEN=NULL;
+if(type>0)t->SetBranchAddress("jetPtGEN",&jetPtGEN); else jetPtGEN=NULL;
+if(type>0)t->SetBranchAddress("jetEtaGEN",&jetEtaGEN); else jetEtaGEN=NULL;
+if(type>0)t->SetBranchAddress("jetPhiGEN",&jetPhiGEN); else jetPhiGEN=NULL;
+if(type>0)t->SetBranchAddress("jetEGEN",&jetEGEN); else jetEGEN=NULL;
 
 //t->SetBranchStatus("*",0); 
 //ACTIVATE BRANCHES
 
-if(debug>1)cout<<"Beginning loop "<<endl;
+if(debug>0)cout<<"Beginning loop "<<endl;
 unsigned long long EntryMin=0;
 unsigned long long EntryMax=t->GetEntries();
 
@@ -146,7 +186,9 @@ for(unsigned long long iEntry=EntryMin;iEntry<EntryMax ;iEntry++)
         if( (jet0>=0) && (*jetPt)[jet0]< JetPtCut) jet0=-1;
         if( (jet1>=0) && (*jetPt)[jet1]< JetPtCut) jet1=-1;
         if( (jet2>=0) && (*jetPt)[jet2]< JetPtCut) jet2=-1;
-
+	
+	jet.resize(3);
+	jet_BS.resize(3);
 	jet[0]=jet0;
 	jet[1]=jet1;
 	jet[2]=jet2;
@@ -154,22 +196,6 @@ for(unsigned long long iEntry=EntryMin;iEntry<EntryMax ;iEntry++)
         //double weight=1;
 	weight=1;
         if(type>0)weight=PUWeight;
-      if( jet0 < 0 )continue; //cut on the first jet
-
-        //if((photonPt->size()>0)&&((*photonPt)[0]>130 )){
-        //        //find the first isolated photon
-        //        int pho0=0;
-        //        //if(type==0){for(pho0=0;pho0<photonPt->size();pho0++) if( ((*photonIsoFPRNeutral)[pho0]+(*photonIsoFPRCharged)[pho0]+(*photonIsoFPRPhoton)[pho0])/(*photonPt)[pho0] < .5) {break;} }
-        //        TLorentzVector g;
-        //        if( (pho0<photonPt->size()) && ((*photonPt)[pho0]>130)){
-        //        g.SetPtEtaPhiE( (*photonPt)[pho0],(*photonEta)[pho0],(*photonPhi)[pho0],(*photonE)[pho0]);
-        //        histos["llgM"]->Fill((l1+l2+g).M(),weight);
-        //        histos["l1gM"]->Fill((l1+g).M(),weight);
-        //        histos["l2gM"]->Fill((l2+g).M(),weight);
-        //        }
-        //}
-	
-	
 
         //----------------------Jets with BStar: requirements already applied  E jet0 + veto
         for(int k=0;k<jetPt->size();k++)

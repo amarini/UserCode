@@ -21,6 +21,7 @@ ZAnalysis.a: ZAnalysis BaseAnalysis
 
 zexe: zexe.cc ZAnalysis ZAnalysis.a
 	g++ $(CPPFLAGS) zexe.cc ZAnalysis.a -o zexe
+	echo "export LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:/afs/cern.ch/work/a/amarini/RooUnfold-1.1.1/"
 
 .PHONY:clean
 clean:

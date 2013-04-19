@@ -1,5 +1,5 @@
-ROOUNFOLDLIB=/Users/andreamarini/Downloads/RooUnfold-1.1.1/libRooUnfold.so
-ROOUNFOLDINC=/Users/andreamarini/Downloads/RooUnfold-1.1.1/src/
+ROOUNFOLDLIB=/afs/cern.ch/work/a/amarini/RooUnfold-1.1.1/libRooUnfold.so
+ROOUNFOLDINC=/afs/cern.ch/work/a/amarini/RooUnfold-1.1.1/src/
 
 CPPFLAGS=`root-config --libs --cflags` -I$(ROOUNFOLDINC) -L$(ROOUNFOLDLIB) -lRooUnfold
 

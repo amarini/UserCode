@@ -4,6 +4,7 @@
 #include "TH2F.h"
 #include "TChain.h"
 #include "TTree.h"
+#include "TFile.h"
 #include "RooUnfold.h"
 #include "RooUnfoldResponse.h"
 
@@ -31,36 +32,8 @@ public:
 	char* Read(const char*fileName,const char * parName,char*R=NULL);
 	char* ReadMult(const char *fileName1,const char*fileName2,const char*parName);
 	int SetSmearType(int smeartype,string label) {SmearType=smeartype;extraLabel=label;}
-protected:
-	//histograms
-	map<string,TH1F*> histos;
-	map<string,TH2F*> histos2;
-	map<string,RooUnfoldResponse*> response;
-	string extraLabel; //useful for syst smear
-	int SmearType;
-	//
-	vector<int> jet;
-	vector<int> jet_BS;
-	
-	string configFileBase;
-	string configFileNew;
-	vector<string> bookedFiles;
-	TChain *t;
-
-	
-	int debug;
-	//cut
-	int CHID2;
-	float llMCut;
-	float JetPtCut;
-	float JetEtaCut;
-	float JetDRCut;
-	float LepPtCut;
-	float LepEtaCut;
-	float ZYCut;
-	
-	int JetSel; // 3 = Z | 4 = gamma |
-	
+	int SetCuts();
+protected:	
 	//tree - var
 	double weight;
 	int nVtx;
@@ -99,6 +72,7 @@ protected:
 	///GEN
 	float llMGEN;
 	float llPtGEN;
+	float llYGEN;
 	vector<float> *lepPtGEN; 		
 	vector<float> *lepEtaGEN; 		
 	vector<float> *lepPhiGEN; 		
@@ -108,5 +82,35 @@ protected:
 	vector<float> *jetEtaGEN; 		
 	vector<float> *jetPhiGEN; 		
 	vector<float> *jetEGEN; 		
+//protected:
+	//histograms
+	map<string,TH1F*> histos;
+	map<string,TH2F*> histos2;
+	map<string,RooUnfoldResponse*> response;
+	string extraLabel; //useful for syst smear
+	int SmearType;
+	//
+	vector<int> jet;
+	vector<int> jet_BS;
+	
+	string configFileBase;
+	string configFileNew;
+	vector<string> bookedFiles;
+	TChain *t;
+
+	
+	int debug;
+	//cut
+	int CHID2;
+	float llMCut;
+	float JetPtCut;
+	float JetEtaCut;
+	float JetDRCut;
+	float LepPtCut;
+	float LepEtaCut;
+	float ZYCut;
+	
+	int JetSel; // 3 = Z | 4 = gamma |
+	
 };
 #endif

@@ -10,7 +10,7 @@ public:
 	int CreateHistos();
 	//int SetActive(); //read list of active Branches from a configuration file
 	int FillHistos();
-	int OpenFiles();
+//	int OpenFiles();
 	bool BaseSelection();
 	bool BaseSelectionGEN();
 	int FillMiss();
