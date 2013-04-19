@@ -33,6 +33,7 @@ public:
 	char* ReadMult(const char *fileName1,const char*fileName2,const char*parName);
 	int SetSmearType(int smeartype,string label) {SmearType=smeartype;extraLabel=label;}
 	int SetCuts();
+	int GetChId(){return -CHID2;}
 protected:	
 	//tree - var
 	double weight;
