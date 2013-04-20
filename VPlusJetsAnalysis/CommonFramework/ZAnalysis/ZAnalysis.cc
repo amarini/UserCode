@@ -56,6 +56,10 @@ int ZAnalysis::FillHistosGEN()
 		FillMiss();
 	}
 	
+	//in any case fill histo gen
+	if(extraLabel=="")
+		histos[ "llPtGEN" ]->Fill(llPtGEN,weight);
+	
 return 0;	
 }
 int ZAnalysis::FillHistos()
@@ -152,6 +156,8 @@ histos[("rho25"+extraLabel).c_str()]		= new TH1F(("rho25"+extraLabel).c_str(),"r
 //DiBoson
 histos[("llM"+extraLabel).c_str()]		= new TH1F(("llM"+extraLabel).c_str(),"llM;M^{ll};events",50,40,150);
 histos[("llPt"+extraLabel).c_str()]		= new TH1F(("llPt"+extraLabel).c_str(),"llPt;P_{T}^{ll};events",100,0,450);
+if(extraLabel=="") //no syst on the GEN LEVEL
+	histos["llPtGEN"]		= new TH1F("llPtGEN","llPt;P_{T}^{ll};events",100,0,450);
 if(debug>2)printf("Creating Response\n");
 	//TFile *out=TFile::Open("out.root","RECREATE");
 	//out->cd();

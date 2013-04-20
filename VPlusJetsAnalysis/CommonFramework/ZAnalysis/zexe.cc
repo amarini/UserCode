@@ -54,6 +54,6 @@ ZAnalysis *A=new ZAnalysis();
 	A->Loop(type,j,nJ); //type=0 data 1 MC; j , nJobs
 
 	printf("Write\n");
-	A->Write(Form("output/output_type%d_chid%d_%d_%d.root",type,A->GetChId(),j,nJ));
+	A->Write(Form("%s/output_type%d_chid%d_%d_%d.root",A->ReadMult("data/config.ini",argv[1],"OUTDIR"),type,A->GetChId(),j,nJ));
 
 }
