@@ -341,7 +341,7 @@ pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,fl
 	float min0=1,min1=0;
 	pair<float,float> R;
 		if(type==0)R=MinG(g2_q);
-		if(type==0)R=MinG(g2_g);
+		if(type==1)R=MinG(g2_g);
 	min0=R.first;min1=R.second;
 
 	for(int i=-nstep;i<=nstep;i++)
@@ -358,7 +358,7 @@ pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,fl
 		}
 	
 		if(type==0)R=MinG(g2_q);
-		if(type==0)R=MinG(g2_g);
+		if(type==1)R=MinG(g2_g);
 	//SAME ON G,& REDO
 	//printf("a=%.3f;b=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R.first,R.second,lmin,lmax);
 	return R;
@@ -436,19 +436,20 @@ int ComputeDoubleMin(){
 		mc->Add("/Users/andreamarini/Documents/QGDiscriminator/ZJet/ZJet_DYJetsToLL_M-50*.root");
 	Analyzer A;
 	A.nstep=10;
-	//A.varName="QGLHisto";
-	A.varName="QGLMLP";
+	A.varName="QGLHisto";
+	//A.varName="QGLMLP";
 	A.CreateHisto();
 	A.SetTrees(mc,data);
 		freopen("/dev/null","w",stderr);
-	A.ComputeMinFast(); //A.ComputDoubleMin;
+	//A.ComputeMinFast(); //A.ComputeDoubleMin;
+	A.ComputeDoubleMin();
 		/*
 		A.alpha=1;
 		A.beta=0;
 		A.Loop(mc,2)
 		A.Loop(data,1)
 		*/
-	A.SpanMin();
+	//A.SpanMin();
 	return 0;
 	}
 
