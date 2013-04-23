@@ -284,9 +284,10 @@ void Analyzer::SpanMin(){
 		if(varName=="QGLHisto")t=3;
 		int bin=(p+1)+(r+1)*10+(e+1)*100 + t*1000;
 		printf("case %d:",bin);
-		ComputeMinFast(); //Be Fast!
+		//ComputeMinFast(); //Be Fast!
+		ComputeDoubleMin(); //Be Slow!
 		}
-		
+	printf("DONE\n");	
 	}
 void Analyzer::ComputeDoubleMin(){
 	nstep=5; //otherwise too slow?
@@ -430,26 +431,26 @@ void Analyzer::ComputeMinFast(){
 int ComputeDoubleMin(){
 	TChain *mc=new TChain("tree_passedEvents");
 	TChain *data=new TChain("tree_passedEvents");
-		data->Add("/Users/andreamarini/Documents/QGDiscriminator/ZJet/ZJet_DoubleMu*.root");
-		data->Add("/Users/andreamarini/Documents/QGDiscriminator/ZJet/ZJet_DoubleE*.root");
+		data->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DoubleMu*.root");
+		data->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DoubleE*.root");
 
-		mc->Add("/Users/andreamarini/Documents/QGDiscriminator/ZJet/ZJet_DYJetsToLL_M-50*.root");
+		mc  ->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DYJetsToLL_M-50*.root");
 	Analyzer A;
 	A.nstep=10;
-	A.varName="QGLHisto";
-	//A.varName="QGLMLP";
+	//A.varName="QGLHisto";
+	A.varName="QGLMLP";
 	A.CreateHisto();
 	A.SetTrees(mc,data);
 		freopen("/dev/null","w",stderr);
 	//A.ComputeMinFast(); //A.ComputeDoubleMin;
-	A.ComputeDoubleMin();
+	//A.ComputeDoubleMin();
 		/*
 		A.alpha=1;
 		A.beta=0;
 		A.Loop(mc,2)
 		A.Loop(data,1)
 		*/
-	//A.SpanMin();
+	A.SpanMin();
 	return 0;
 	}
 
