@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
 
 
 using namespace std;
@@ -33,14 +34,14 @@ public:
 	float stp0;
 	float stp1;
 	
-	
+	int ResetFast();	
 	float function(float x0, float a ,float b,float min=0,float max=1);
 	void ComputeMin();
 	void Loop(TChain *t,int type); //type|=4 : compute lmin,lmax; type|=1 data type |=2 mc
 	void FillHisto(TH1F *h,string var);
-	pair<float, float> MinG(TGraph2D *g);
+	pair<float, float> MinG(TGraph2D *g,double *min0=NULL,double*min1=NULL); //min0 minimum, min1=minlast point - 0-1
 	void SpanMin();
-	void CreateHisto();
+	void CreateHisto(int type=3);
 	void SetTrees(TChain *mc,TChain*data){t_data=data;t_mc=mc;}
 	void Reset(TH1F *h);
 	pair<float,float> SmearDoubleMin(float a0_q,float b0_q , float a0_g,float b0_g,int type); //type = 0 Q, 1 G
@@ -107,7 +108,7 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 		treeVar["ptZ"]			=-999;t->SetBranchAddress("ptZ",		&treeVar["ptZ"]			);
 		treeVar["ptJet0"]		=-999;t->SetBranchAddress("ptJet0",		&treeVar["ptJet0"]		);
 		treeVar["rhoPF"]		=-999;t->SetBranchAddress("rhoPF",		&treeVar["rhoPF"]		);
-		treeVar["etaJet"]		=-999;t->SetBranchAddress("etaJet0",		&treeVar["etaJet"]		);
+		treeVar["etaJet0"]		=-999;t->SetBranchAddress("etaJet0",		&treeVar["etaJet0"]		);
 		treeVarInt["pdgIdPartJet0"]	=-999;if(type!=1)t->SetBranchAddress("pdgIdPartJet0",	&treeVarInt["pdgIdPartJet0"]); //only mc 
 
 		treeVar["QGLHisto"]		=-999;t->SetBranchAddress("QGLHisto",		&treeVar["QGLHisto"]		);
@@ -119,21 +120,32 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 		treeVar["eventWeight"]		=1   ;if(type!=1)t->SetBranchAddress("eventWeight",	&treeVar["eventWeight"]		); //only mc
 		
 		if(type&4) {lmin=1.0;lmax=0;} //reset lmin-lmax
+		if(type&1) {delete h_data; CreateHisto(1);}
+		if(type&10) {delete h_mc; CreateHisto(2);} //8+2
 
 		for(int i=0;i<t->GetEntries();i++)
 			{
 			t->GetEntry(i);
-			if( treeVarInt["nPFCand_QC_ptCutJet"] <=0 )continue;
-			if((treeVar["ptJet0"]<PtMin)||(treeVar["ptJet0"]>PtMax)||(abs(treeVar["etaJet0"])<EtaMin)||(abs(treeVar["etaJet0"])>EtaMax)|| (treeVar["rhoPF"]<RhoMin)||(treeVar["rhoPF"]>RhoMax))continue;
+			//printf("Count -1: %f %f %f\n",treeVar["ptJet0"],treeVar["etaJet0"],treeVar["rhoPF"]);
+			if((treeVar["ptJet0"]<PtMin)||(treeVar["ptJet0"]>PtMax)||(fabs(treeVar["etaJet0"])<EtaMin)||(fabs(treeVar["etaJet0"])>EtaMax)|| (treeVar["rhoPF"]<RhoMin)||(treeVar["rhoPF"]>RhoMax))continue;
+			//printf("Count 0\n");
 			//Z
-			if( (treeVar["mZ"]<70) || (treeVar["mZ"]>110)||(treeVar["betaStarJet0"] > 0.2 * TMath::Log( treeVarInt["nvertex"] - 0.67)) || (treeVar["deltaPhi_jet"]<3.1415-0.5) ) continue;
-			if( (treeVar["axis1_QCJet0"] <=0 ) || (treeVar["axis2_QCJet0"] <=0) )continue;
-			if( (treeVar["ptD_QCJet0"]<=0)) continue;
+			if( (treeVar["mZ"]<70) || (treeVar["mZ"]>110)|| ( fabs(treeVar["deltaPhi_jet"])<3.1415-0.5) ) continue;
+			//printf("Count 1 -- Z\n");
+			if( (EtaMin<2.5) && (treeVar["betaStarJet0"] > 0.2 * TMath::Log( treeVarInt["nvertex"] - 0.67))  ) continue;
+			//printf("Count 2 -- beta*\n");
+			if(( (treeVar["axis1_QCJet0"] <=0 ) || (treeVar["axis2_QCJet0"] <=0) ))continue;
+			//printf("Count 3 -- axis\n");
+			if( treeVarInt["nPFCand_QC_ptCutJet"] <=0 )continue;
+			if( treeVar["ptD_QCJet0"] <=0 )continue;
+			//printf("Count 4 -- mult\n");
 			//---------------------------
 		
 			if(type&1){
+				//printf("passed selection - type 1 --> %.3f - %.3f\n",treeVar[varName],treeVar[varName+"Fwd"]);
 				string var=varName;
 				if(EtaMin>2.5)var+="Fwd"; //only in data fwd
+				alpha=1; beta=0;
 				FillHisto(h_data,var);
 				}	
 			if(type&2){
@@ -154,7 +166,7 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 				FillHisto(h_mc,varName);
 				}
 			if(type&16){
-				for(int j=0;j<alphaFast.size();j++)
+				for(int j=0;j<int(alphaFast.size());j++)
 					{
 					alpha=alphaFast[j];
 					beta=betaFast[j];
@@ -162,7 +174,7 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 					}
 				}
 			if(type&32){ //TODO
-				for(int j=0;j<alphaFast.size();j++)
+				for(int j=0;j<int(alphaFast.size());j++)
 					{
 					alpha=1;beta=0;
 					if( treeVarInt["pdgIdPartJet0"] ==21) {alpha=a_g;beta=b_g;}
@@ -174,15 +186,20 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 }
 
 void Analyzer::FillHisto(TH1F *h,string var){
+	//printf("Filling Histos with %f\n",function(treeVar[var],alpha,beta,lmin,lmax ));
 	h->Fill(  function(treeVar[var],alpha,beta,lmin,lmax ), treeVar["eventWeight"]*treeVar["PUReWeight"] );
 	}
 
-void Analyzer::CreateHisto()
+void Analyzer::CreateHisto(int type)
 	{	
+	if(type&2){
 	h_mc=new TH1F("hmc","hmc",nBins,xMin,xMax);
-	h_data=new TH1F("hmc","hmc",nBins,xMin,xMax);
 	h_mc->Sumw2();
+	}
+	if(type&1){
+	h_data=new TH1F("hdata","hdata",nBins,xMin,xMax);
 	h_data->Sumw2();
+	}
 	}
 void Analyzer::Reset(TH1F *h)
 	{
@@ -191,7 +208,7 @@ void Analyzer::Reset(TH1F *h)
 	//h->Sumw2();
 	}
 
-pair<float, float> Analyzer::MinG(TGraph2D *g){
+pair<float, float> Analyzer::MinG(TGraph2D *g,double *min0,double*min1){
 	pair<float,float> R(-99,-99);
 	if(g==NULL) return R;
 	if(g->GetN()==0)return R;
@@ -203,6 +220,8 @@ pair<float, float> Analyzer::MinG(TGraph2D *g){
 	float a=z1[0];R=pair<float,float>(x1[0],y1[0]);
 	for(int i=0;i<g->GetN();i++){if((z1[i]<a)||(a<0)){a=z1[i];    R=pair<float,float>(x1[i],y1[i]); }}
 	
+	if(min0!=NULL) *min0=a;
+	if(min1!=NULL) *min1=z1[g2->GetN()-1]	;
 	return R;
 }
 
@@ -247,7 +266,7 @@ void Analyzer::ComputeMin(){
 		h_mc->Scale(h_data->Integral()/h_mc->Integral());
 		g2->SetPoint(g2->GetN(),alpha,beta, h_data->Chi2Test(h_mc,opt.c_str())  );
 		}
-	
+	//double min0,min1;	
 	R=MinG(g2);
 	printf("a=%.3f;b=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R.first,R.second,lmin,lmax);
 	return;
@@ -270,22 +289,23 @@ void Analyzer::SpanMin(){
 		EtaBins.push_back(  pair<float,float>(0,2) );
 		EtaBins.push_back(  pair<float,float>(3,4.7) );
 	
-	for ( int e=0; e< EtaBins.size();e++)
-	for ( int p=0; p< PtBins.size();p++)
-	for ( int r=0; r< RhoBins.size();r++)
+	for ( int e=0; e< int(EtaBins.size());e++)
+	for ( int p=0; p< int(PtBins.size()) ;p++)
+	for ( int r=0; r< int(RhoBins.size());r++)
 		{
 		PtMin=PtBins[p].first;PtMax=PtBins[p].second;
 		EtaMin=EtaBins[e].first;EtaMax=EtaBins[e].second;
 		RhoMin=RhoBins[r].first;RhoMax=RhoBins[r].second;
 	
 		if(g2!=NULL)delete g2;	
-		int t;
+		int t=0;
 		if(varName=="QGLMLP")t=2;
 		if(varName=="QGLHisto")t=3;
 		int bin=(p+1)+(r+1)*10+(e+1)*100 + t*1000;
+		printf("//%s: Pt=%.0f_%.0f Rho=%.0f_%.0f Eta=%.0f_%.0f\n",varName.c_str(),PtMin,PtMax,RhoMin,RhoMax,EtaMin,EtaMax);
 		printf("case %d:",bin);
-		//ComputeMinFast(); //Be Fast!
-		ComputeDoubleMin(); //Be Slow!
+		ComputeMinFast(); //Be Fast!
+		//ComputeDoubleMin(); //Be Slow!
 		}
 	printf("DONE\n");	
 	}
@@ -364,14 +384,28 @@ pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,fl
 	//printf("a=%.3f;b=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R.first,R.second,lmin,lmax);
 	return R;
 }
+
+int Analyzer::ResetFast()
+{
+	alphaFast.clear();
+	betaFast.clear();
+	for(int i=0;i<int(h_mcFast.size());i++){delete h_mcFast[i]; };
+	h_mcFast.clear();
+	return 0;
+
+}
 void Analyzer::ComputeMinFast(){
-	g2=new TGraph2D(); //TODO
+	g2=new TGraph2D(); 
 	
 	alpha=1.0;beta=0;
 	Loop(t_data,1);
+	for(int j=0;j<=h_data->GetNbinsX()+1;j++)if(h_data->GetBinError(j)==0)h_data->SetBinError(j,1);
 	if(varName=="QGLMLP")
 		Loop(t_mc,4);
 	//scan
+	//reset Fast
+	ResetFast();
+	
 	alpha=1.0;beta=0;
 	for(float ai=aMin; ai<=aMax; ai+=0.02)
 		{
@@ -388,10 +422,12 @@ void Analyzer::ComputeMinFast(){
 		betaFast.push_back(bi);	
 		h_mcFast.push_back(new TH1F( Form("hmc_%d",int(h_mcFast.size())),"hmc",nBins,xMin,xMax) );
 		}
-	
+
+	for(int j=0;j< int(h_mcFast.size());j++) h_mcFast[j]->Sumw2();	
 	Loop(t_mc,16);
-		for(int i=0 ;i<alphaFast.size();i++)
+		for(int i=0 ;i<int(alphaFast.size());i++)
 			{
+			for(int j=0;j<=h_mcFast[i]->GetNbinsX()+1;j++)if(h_mcFast[i]->GetBinError(j)==0)h_mcFast[i]->SetBinError(j,1);
 			h_mcFast[i]->Scale(h_data->Integral()/h_mcFast[i]->Integral());
 			g2->SetPoint(g2->GetN(),alphaFast[i],betaFast[i], h_data->Chi2Test(h_mcFast[i],opt.c_str())  );
 			}
@@ -400,10 +436,7 @@ void Analyzer::ComputeMinFast(){
 	pair<float,float> R=MinG(g2);
 	min0=R.first;min1=R.second;
 		
-	alphaFast.clear();
-	betaFast.clear();
-	for(int i=0;i<h_mcFast.size();i++){delete h_mcFast[i]; };
-	h_mcFast.clear();//	
+	ResetFast();
 
 	delete g2;
 	g2=new TGraph2D();
@@ -416,19 +449,44 @@ void Analyzer::ComputeMinFast(){
 		h_mcFast.push_back(new TH1F( Form("hmc_%d",int(h_mcFast.size())),"hmc",nBins,xMin,xMax) );
 		//g2->SetPoint(g2->GetN(),alpha,beta, h_data->Chi2Test(h_mc,opt.c_str())  );
 		}
+	alphaFast.push_back(min0);
+	betaFast.push_back(0);
+	h_mcFast.push_back(new TH1F( Form("hmc_%d",int(h_mcFast.size())),"hmc",nBins,xMin,xMax) );
+
+	alphaFast.push_back(min1);
+	betaFast.push_back(bMax);
+	h_mcFast.push_back(new TH1F( Form("hmc_%d",int(h_mcFast.size())),"hmc",nBins,xMin,xMax) );
 	
+	alphaFast.push_back(1);
+	betaFast.push_back(0);
+	h_mcFast.push_back(new TH1F( Form("hmc_%d",int(h_mcFast.size())),"hmc",nBins,xMin,xMax) );
+	
+	for(int j=0;j<int(h_mcFast.size());j++) h_mcFast[j]->Sumw2();	
 	Loop(t_mc,16);
-		for(int i=0 ;i<alphaFast.size();i++)
+		for(int i=0 ;i<int(alphaFast.size());i++)
 			{
+			for(int j=0;j<=h_mcFast[i]->GetNbinsX()+1;j++)if(h_mcFast[i]->GetBinError(j)==0)h_mcFast[i]->SetBinError(j,1);
 			h_mcFast[i]->Scale(h_data->Integral()/h_mcFast[i]->Integral());
 			g2->SetPoint(g2->GetN(),alphaFast[i],betaFast[i], h_data->Chi2Test(h_mcFast[i],opt.c_str())  );
 			}
-	R=MinG(g2);
-	printf("a=%.3f;b=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R.first,R.second,lmin,lmax);
+	double m0,m1;
+	R=MinG(g2,&m0,&m1);
+	printf("a=%.3f;b=%.3f;lmin=%.3f;lmax=%.3f;break;//chi2=%.3lf; chi2_0=%.3lf\n",R.first,R.second,lmin,lmax,m0,m1);
+	{
+	TFile *out=TFile::Open("output.root","UPDATE");out->cd();
+	for(int i=0;i<int(h_mcFast.size());i++)
+		{
+		h_mcFast[i]->SetName(Form("%s_alpha%.2f_beta%.2f_lmin%.3f_lmax%.3f_pt%0f_%.0f_rho%.0f_%.0f_eta%.0f_%.0f",varName.c_str(),alphaFast[i],betaFast[i],lmin,lmax,PtMin,PtMax,RhoMin,RhoMax,EtaMin,EtaMax));
+		h_mcFast[i]->Write();
+		}
+	h_data->SetName(Form("%s_data_pt%0f_%.0f_rho%.0f_%.0f_eta%.0f_%.0f",varName.c_str(),PtMin,PtMax,RhoMin,RhoMax,EtaMin,EtaMax));
+	h_data->Write();
+	}
 	return;
 }
 
 int ComputeDoubleMin(){
+	system("rm output.root");
 	TChain *mc=new TChain("tree_passedEvents");
 	TChain *data=new TChain("tree_passedEvents");
 		data->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DoubleMu*.root");
@@ -436,9 +494,9 @@ int ComputeDoubleMin(){
 
 		mc  ->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DYJetsToLL_M-50*.root");
 	Analyzer A;
-	A.nstep=10;
-	//A.varName="QGLHisto";
-	A.varName="QGLMLP";
+	A.nstep=20;
+	A.varName="QGLHisto";
+//	A.varName="QGLMLP";
 	A.CreateHisto();
 	A.SetTrees(mc,data);
 		freopen("/dev/null","w",stderr);
@@ -450,6 +508,8 @@ int ComputeDoubleMin(){
 		A.Loop(mc,2)
 		A.Loop(data,1)
 		*/
+	A.SpanMin();
+	A.varName="QGLMLP";
 	A.SpanMin();
 	return 0;
 	}
