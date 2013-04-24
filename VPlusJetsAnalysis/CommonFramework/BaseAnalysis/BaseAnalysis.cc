@@ -239,7 +239,9 @@ int BaseAnalysis::Write(string outputFile){
 	out->cd();
 	for(map<string,TH1F*>::iterator it=histos.begin();it!=histos.end();it++) it->second->Write();
 	for(map<string,TH2F*>::iterator it=histos2.begin();it!=histos2.end();it++) it->second->Write();
+#ifdef USE_ROOUNFOLD
 	for(map<string,RooUnfoldResponse*>::iterator it=response.begin();it!=response.end();it++) it->second->Write();
+#endif
 }
 
 int BaseAnalysis::Sumw2(){

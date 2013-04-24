@@ -8,9 +8,9 @@
 #include "TCanvas.h"
 #include "math.h"
 
-TH1F * Unfold(TH1F* h1,RooUnfoldResponse *R,int par,TH1D **hD=NULL,TMatrixD**Cov=NULL)
+TH1F * Unfold(TH1F* h1,RooUnfoldResponse *R,int par,int nToys=1000,TH1D **hD=NULL,TMatrixD**Cov=NULL)
 {
-	RooUnfoldSvd U(R,h1,par,1000);U.SetNToys(1000); //toys
+	RooUnfoldSvd U(R,h1,par,nToys);U.SetNToys(nToys); //toys
 	TH1F *hTrueBin = (TH1F*)U.Hreco(RooUnfold::kCovToy);
 	if(hD) (*hD)=U.Impl()->GetD();
 	if(Cov){
@@ -120,31 +120,36 @@ h_e_JES_DN ->Add(h_emu_JES_DN,-0.5);
 h_mu_JES_DN->Add(h_vv_4,-1.0);
 h_e_JES_DN ->Add(h_vv_1,-1.0);
 //----------------UNFOLD--------------------------------------
-TH1F *u_mu=Unfold(h_mu,R_4,10);
-TH1F *u_e=Unfold(h_e,R_1,10);
+int ParUnf=h_mu->GetNbinsX()-2;
+TH1F *u_mu=Unfold(h_mu,R_4,ParUnf);u_mu->SetName("u_mu");
+TH1F *u_e=Unfold(h_e,R_1,ParUnf);u_e->SetName("u_e");
 //----------------UNFOLD STUDIES PAR --------------------
 	map<string,TH1F*> unfold_pars;
+	Out->cd();
 	TCanvas *c=new TCanvas("Par_studies","par_studies",800,600);
-	for(int p=1;p<h_mu->GetNbinsX()-1;p++){
+	for(int p=20;p<h_mu->GetNbinsX()-1;p+=3){
 	  string name=Form("mu_%d",p);
-	  unfold_pars[name]=Unfold(h_mu,R_4,p);
-	  unfold_pars[name]->SetLineColor(kGreen+10*p);	
+	  unfold_pars[name]=Unfold(h_mu,R_4,p,100);
+	  unfold_pars[name]->SetName(name.c_str());
+	  unfold_pars[name]->SetLineColor(kGreen+2*p);	
 	  if(p!=1) unfold_pars[name]->Draw("P E SAME");	
 		else unfold_pars[name]->Draw("P E ");
 	
 	  name=Form("e_%d",p);
-	  unfold_pars[name]=Unfold(h_e,R_1,p);
-	  unfold_pars[name]->SetLineColor(kGreen+5*p);	
+	  unfold_pars[name]=Unfold(h_e,R_1,p,100);
+	  unfold_pars[name]->SetName(name.c_str());
+	  unfold_pars[name]->SetLineColor(kGreen+2*p+1);	
 	  unfold_pars[name]->Draw("P E SAME");	
 	}
+	Out->cd();
 	c->Write();
 //---------------- END UNFOLD STUDIES --------------------
 
 //-------------------SYST-----------------------------------
-TH1F *u_mu_JES_UP=Unfold(h_mu_JES_UP,R_4,10);
-TH1F *u_e_JES_UP =Unfold(h_e_JES_UP,R_4,10);
-TH1F *u_mu_JES_DN=Unfold(h_mu_JES_DN,R_4,10);
-TH1F *u_e_JES_DN =Unfold(h_e_JES_DN,R_4,10);
+TH1F *u_mu_JES_UP=Unfold(h_mu_JES_UP,R_4,ParUnf); u_mu_JES_UP->SetName("u_mu_JES_UP");
+TH1F *u_e_JES_UP =Unfold(h_e_JES_UP,R_4,ParUnf);  u_e_JES_UP->SetName("u_e_JES_UP");
+TH1F *u_mu_JES_DN=Unfold(h_mu_JES_DN,R_4,ParUnf);u_mu_JES_DN->SetName("u_mu_JES_DN");
+TH1F *u_e_JES_DN =Unfold(h_e_JES_DN,R_4,ParUnf); u_e_JES_DN->SetName("u_e_JES_DN");
 
 //-------------------COMBINATION----------------------------
 TH1F*u_l=(TH1F*)u_mu->Clone("llPt_l");
@@ -171,7 +176,21 @@ syst->Draw("E4 SAME");
 h_dy_gen->Draw("HIST SAME");
 u_l->Draw("P SAME");
 
+Out->cd();
 c1->Write();
+h_mu->Write();
+h_e->Write();
+h_dy_gen->Write();
+u_mu->Write();
+u_mu_JES_UP->Write();
+u_mu_JES_DN->Write();
+u_e->Write();
+u_e_JES_UP->Write();
+u_e_JES_DN->Write();
+u_l->Write();
+u_l_JES_UP->Write();
+u_l_JES_DN->Write();
+syst->Write();
 
 //write everything
 //..

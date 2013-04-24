@@ -57,6 +57,6 @@ done
 if [ "$1" == "add" ]; then
 for CHID in 1 2 4 ; do
 for type in {0..6} ;do
-hadd $OUTDIR/output_type${type}_chid${CHID}.root $OUTDIR/output_type${type}_chid${CHID}_*_10.root 
+hadd -f $OUTDIR/output_type${type}_chid${CHID}.root $OUTDIR/output_type${type}_chid${CHID}_*_10.root 
 done; done;
 fi;

@@ -5,8 +5,11 @@
 #include "TChain.h"
 #include "TTree.h"
 #include "TFile.h"
+
+#ifdef USE_ROOUNFOLD
 #include "RooUnfold.h"
 #include "RooUnfoldResponse.h"
+#endif
 
 #ifndef BASE_ANALYSIS_H
 #define BASE_ANALYSIS_H
@@ -87,7 +90,9 @@ protected:
 	//histograms
 	map<string,TH1F*> histos;
 	map<string,TH2F*> histos2;
+#ifdef USE_ROOUNFOLD
 	map<string,RooUnfoldResponse*> response;
+#endif
 	string extraLabel; //useful for syst smear
 	int SmearType;
 	//

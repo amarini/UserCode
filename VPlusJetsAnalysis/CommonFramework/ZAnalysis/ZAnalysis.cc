@@ -39,7 +39,9 @@ return true;
 
 int ZAnalysis::FillMiss()
 {
+#ifdef USE_ROOUNFOLD
 response[ ("llPt"+extraLabel).c_str()]->Miss(llPtGEN,weight);
+#endif
 return 0;
 }
 
@@ -59,6 +61,8 @@ int ZAnalysis::FillHistosGEN()
 	//in any case fill histo gen
 	if(extraLabel=="")
 		histos[ "llPtGEN" ]->Fill(llPtGEN,weight);
+	//fill always the Response matrix
+	histos["R_llPt_GEN"+extraLabel]->Fill(llPtGEN,weight);    	
 	
 return 0;	
 }
@@ -119,9 +123,17 @@ if(jet_BS[0]>=0){
 	//fill Response
 	{
 	if(selGen){
+		#ifdef USE_ROOUNFOLD
 		response[ ("llPt"+extraLabel).c_str()]->Fill(llPt,llPtGEN,weight);
+		#endif
+                histos2["R_llPt_MATRIX"+extraLabel]->Fill(llPt,llPtGEN,weight);	
 		}
-	else response[ ("llPt"+extraLabel).c_str()]->Fake(llPt,weight);
+	else{
+		#ifdef USE_ROOUNFOLD
+		 response[ ("llPt"+extraLabel).c_str()]->Fake(llPt,weight);
+		#endif
+	    }
+                histos["R_llPt_RECO"+extraLabel]->Fill(llPt,weight); //fill regardless to selGen
 	}
 }else{
 	if(selGen) FillMiss();
@@ -159,11 +171,12 @@ histos[("llPt"+extraLabel).c_str()]		= new TH1F(("llPt"+extraLabel).c_str(),"llP
 if(extraLabel=="") //no syst on the GEN LEVEL
 	histos["llPtGEN"]		= new TH1F("llPtGEN","llPt;P_{T}^{ll};events",100,0,450);
 if(debug>2)printf("Creating Response\n");
-	//TFile *out=TFile::Open("out.root","RECREATE");
-	//out->cd();
-	//TH1F* h_aux=new TH1F(("h"+extraLabel).c_str(),"h1",100,0,1);
-	//RooUnfoldResponse *R = new RooUnfoldResponse(100,0,1,"nome","titolo");
+#ifdef USE_ROOUNFOLD
 	response[("llPt"+extraLabel).c_str()] = new RooUnfoldResponse(histos["llPt"+extraLabel],histos["llPt"+extraLabel],("R_llPt"+extraLabel).c_str());
+#endif
+	histos["R_llPt_GEN"+extraLabel] 	=new TH1F(("R_llPt_GEN"+extraLabel).c_str(),"Response Matrix GEN",100,0,450);
+	histos["R_llPt_RECO"+extraLabel]	=new TH1F(("R_llPt_RECO"+extraLabel).c_str(),"Response Matrix RECO",100,0,450);
+	histos2["R_llPt_MATRIX"+extraLabel]	=new TH2F(("R_llPt_MATRIX"+extraLabel).c_str(),"Repsonse Matrix;RECO;GEN;events",100,0,450,100,0,450);
 if(debug>2) printf("done 1 \n");
 histos[("llY"+extraLabel).c_str()]		= new TH1F(("llY"+extraLabel).c_str(),"llY;Y^{ll};events",50,-5,5);
 histos[("llPhi"+extraLabel).c_str()]		= new TH1F(("llPhi"+extraLabel).c_str(),"llPhi;#phi^{ll};events",50,-3.1416,3.1416);
