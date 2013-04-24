@@ -55,10 +55,19 @@ TFile *DoubleE =TFile::Open( (OutputDir+"/output_type0_chid1.root").c_str());
 TFile *EMu     =TFile::Open( (OutputDir+"/output_type0_chid2.root").c_str());
 
 //Get Response Matrixes
+//Use this code if you have the response directly: they cannot be merged
+//RooUnfoldResponse *R_4=(RooUnfoldResponse*)DY_4->Get("R_llPt")->Clone("R_llPt_4");
+//RooUnfoldResponse *R_1=(RooUnfoldResponse*)DY_4->Get("R_llPt")->Clone("R_llPt_1");
+TH1F* R_4_GEN= (TH1F*)DY_4->Get("R_llPt_GEN")->Clone("R_llPt_GEN_4");
+TH1F* R_4_RECO= (TH1F*)DY_4->Get("R_llPt_RECO")->Clone("R_llPt_RECO_4");
+TH2F* R_4_MATRIX= (TH2F*)DY_4->Get("R_llPt_MATRIX")->Clone("R_llPt_MATRIX_4");
 
-RooUnfoldResponse *R_4=(RooUnfoldResponse*)DY_4->Get("R_llPt")->Clone("R_llPt_4");
-RooUnfoldResponse *R_1=(RooUnfoldResponse*)DY_4->Get("R_llPt")->Clone("R_llPt_1");
+TH1F* R_1_GEN= (TH1F*)DY_1->Get("R_llPt_GEN")->Clone("R_llPt_GEN_1");
+TH1F* R_1_RECO= (TH1F*)DY_1->Get("R_llPt_RECO")->Clone("R_llPt_RECO_1");
+TH2F* R_1_MATRIX= (TH2F*)DY_1->Get("R_llPt_MATRIX")->Clone("R_llPt_MATRIX_1");
 
+RooUnfoldResponse *R_4=new RooUnfoldResponse(R_4_RECO,R_4_GEN,R_4_MATRIX);
+RooUnfoldResponse *R_1=new RooUnfoldResponse(R_1_RECO,R_1_GEN,R_1_MATRIX);
 //Get Histos
 
 TH1F*h_mu=(TH1F*)DoubleMu->Get("llPt")->Clone("llPt_4");
@@ -120,14 +129,14 @@ h_e_JES_DN ->Add(h_emu_JES_DN,-0.5);
 h_mu_JES_DN->Add(h_vv_4,-1.0);
 h_e_JES_DN ->Add(h_vv_1,-1.0);
 //----------------UNFOLD--------------------------------------
-int ParUnf=h_mu->GetNbinsX()-2;
+int ParUnf=30;
 TH1F *u_mu=Unfold(h_mu,R_4,ParUnf);u_mu->SetName("u_mu");
 TH1F *u_e=Unfold(h_e,R_1,ParUnf);u_e->SetName("u_e");
 //----------------UNFOLD STUDIES PAR --------------------
 	map<string,TH1F*> unfold_pars;
 	Out->cd();
 	TCanvas *c=new TCanvas("Par_studies","par_studies",800,600);
-	for(int p=20;p<h_mu->GetNbinsX()-1;p+=3){
+	for(int p=10;p<h_mu->GetNbinsX()-1;p+=3){
 	  string name=Form("mu_%d",p);
 	  unfold_pars[name]=Unfold(h_mu,R_4,p,100);
 	  unfold_pars[name]->SetName(name.c_str());
