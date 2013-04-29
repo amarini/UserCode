@@ -48,6 +48,9 @@ public:
 	void ComputeDoubleMin();
 	void ComputeMinFast();
 
+	pair<float,float> SmearDoubleMinFast(float a0_q,float b0_q , float a0_g,float b0_g,int type); //type = 0 Q, 1 G
+	void ComputeDoubleMinFast();
+	void LoopFast();
 //private:
 	TChain *t_mc;
 	TChain *t_data;
@@ -82,6 +85,8 @@ public:
 	
 	map<string,float> treeVar;
 	map<string,int> treeVarInt;
+//----- vector with all the likelihood /MLP results - for a given selection /pdgId/value
+	vector<pair<int,float>> varAll;
 };
 
 
@@ -89,9 +94,11 @@ float Analyzer::function(float x0, float a ,float b,float min,float max)
 {
 using namespace TMath;
 float x=(x0-min)/(max-min); 
-if(x<0)x=0;
-if(x>1)x=1;
+if(x<=0)x=0;
+if(x>=1)x=1;
 float x1= (TanH( a* ATanH(2*x-1)+b )/2+.5 ) ;
+if(x<=0)x1=0; //prevent overflow and underflow bins
+if(x>=1)x1=1;
 return x1*(max-min)+min;
 }
 
@@ -122,6 +129,7 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 		if(type&4) {lmin=1.0;lmax=0;} //reset lmin-lmax
 		if(type&1) {delete h_data; CreateHisto(1);}
 		if(type&10) {delete h_mc; CreateHisto(2);} //8+2
+		if(type&32) {varAll.clear();} //reset varAll
 
 		for(int i=0;i<t->GetEntries();i++)
 			{
@@ -173,14 +181,8 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 					FillHisto(h_mcFast[j],varName);
 					}
 				}
-			if(type&32){ //TODO
-				for(int j=0;j<int(alphaFast.size());j++)
-					{
-					alpha=1;beta=0;
-					if( treeVarInt["pdgIdPartJet0"] ==21) {alpha=a_g;beta=b_g;}
-					if( fabs(treeVarInt["pdgIdPartJet0"]) < 5) {alpha=a_q;beta=b_q;}
-					if( fabs(treeVarInt["pdgIdPartJet0"])== 0) {alpha=1;beta=0;}
-					}
+			if(type&32){ 
+					varAll.push_back(pair<int,float>(treeVarInt["pdgIdPartJet0"],treeVar[varName]));
 				}
 			}
 }
@@ -306,7 +308,8 @@ void Analyzer::SpanMin(){
 		printf("//%s: Pt=%.0f_%.0f Rho=%.0f_%.0f Eta=%.0f_%.0f\n",varName.c_str(),PtMin,PtMax,RhoMin,RhoMax,EtaMin,EtaMax);
 		printf("case %d:",bin);
 		//ComputeMinFast(); //Be Fast!
-		ComputeDoubleMin(); //Be Slow!
+		//ComputeDoubleMin(); //Be Slow!
+		ComputeDoubleMinFast(); //Be Fast!
 		}
 	printf("DONE\n");	
 	}
@@ -501,6 +504,105 @@ void Analyzer::ComputeMinFast(){
 	}
 	return;
 }
+//-----------------------------------DOUBLE MIN FAST ---------------------------------------------------------
+void Analyzer::ComputeDoubleMinFast(){
+	//nstep=5; //otherwise too slow?
+	alpha=1.0;beta=0;
+	Loop(t_data,1);
+	if(varName=="QGLMLP")
+		Loop(t_mc,4);
+	Loop(t_mc,32);
+
+	pair<float,float> R_q,R_g;
+	R_q=SmearDoubleMinFast(1,0,1,0,0); //
+	R_g=SmearDoubleMinFast(R_q.first,R_q.second,1,0,1); //
+	R_q=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,0); //
+	R_g=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,1); //
+
+	printf("a_q=%.3f;b_q=%.3f;a_g=%.3f;b_g=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R_q.first,R_q.second,R_g.first,R_g.second,lmin,lmax);
+	}
+
+void Analyzer::LoopFast()
+{
+//delete and recreate h_mc (empty)
+delete  h_mc;
+CreateHisto(2); 
+for(int z=0;z<int(varAll.size());++z){ 
+	{alpha=1;beta=0;}
+	if(varAll[z].first == 21){alpha=a_g; beta=b_g; } 
+	if(fabs(varAll[z].first) <5 ) {alpha=a_q;beta = b_q;}if( fabs(treeVarInt["pdgIdPartJet0"])== 0) {alpha=1;beta=0;}
+	if(fabs(varAll[z].first) == 0) {alpha=1;beta=0;}
+
+	treeVar[varName]=varAll[z].second;
+	FillHisto(h_mc,varName);
+	}
+
+}
+
+pair<float,float> Analyzer::SmearDoubleMinFast(float a0_q,float b0_q , float a0_g,float b0_g,int type){ //type = 0 Q, 1 G
+	TGraph2D *g2_q=new TGraph2D(); 
+	TGraph2D *g2_g=new TGraph2D(); 
+	
+	//scan
+	a_q=a0_q;b_q=b0_q;
+	a_g=a0_g;b_g=b0_g;
+
+	alpha=1.0;beta=0;
+	for(float ai=0.7; ai<=1.1; ai+=0.02)
+		{
+		Reset(h_mc);	
+		if(type==0)a_q=ai;
+		if(type==1)a_g=ai;
+		LoopFast();	
+		h_mc->Scale(h_data->Integral()/h_mc->Integral());
+
+		if(type==0)g2_q->SetPoint(g2_q->GetN(),a_q,b_q, h_data->Chi2Test(h_mc,opt.c_str())  );	
+		if(type==1)g2_g->SetPoint(g2_g->GetN(),a_g,b_g, h_data->Chi2Test(h_mc,opt.c_str())  );	
+		}
+	alpha=1.0;beta=0;
+	a_q=a0_q;b_q=b0_q;
+	a_g=a0_g;b_g=b0_g;
+
+	for(float bi=-0.5; bi<=0.5; bi+=0.01)
+		{
+		Reset(h_mc);	
+		if(type==0)b_q=bi;
+		if(type==1)b_g=bi;
+		LoopFast();
+		h_mc->Scale(h_data->Integral()/h_mc->Integral());
+		if(type==0)g2_q->SetPoint(g2_q->GetN(),a_q,b_q, h_data->Chi2Test(h_mc,opt.c_str())  );	
+		if(type==1)g2_g->SetPoint(g2_g->GetN(),a_g,b_g, h_data->Chi2Test(h_mc,opt.c_str())  );	
+		}
+	
+	//Find min0;min1
+	float min0=1,min1=0;
+	pair<float,float> R;
+		if(type==0)R=MinG(g2_q);
+		if(type==1)R=MinG(g2_g);
+	min0=R.first;min1=R.second;
+
+	for(int i=-nstep;i<=nstep;i++)
+	for(int j=-nstep;j<=nstep;j++)
+        	{
+        	if(type==0)a_q=min0+i*stp0;
+        	if(type==1)a_g=min0+i*stp0;
+        	if(type==0)b_q=min1+j*stp1;
+        	if(type==1)b_g=min1+j*stp1;
+		LoopFast();
+		h_mc->Scale(h_data->Integral()/h_mc->Integral());
+		if(type==0)g2_q->SetPoint(g2_q->GetN(),a_q,b_q, h_data->Chi2Test(h_mc,opt.c_str())  );	
+		if(type==1)g2_g->SetPoint(g2_g->GetN(),a_g,b_g, h_data->Chi2Test(h_mc,opt.c_str())  );	
+		}
+	
+		if(type==0)R=MinG(g2_q);
+		if(type==1)R=MinG(g2_g);
+	//SAME ON G,& REDO
+	//printf("a=%.3f;b=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R.first,R.second,lmin,lmax);
+	return R;
+}
+//----------------------------------------------------------------------------------------------------
+
+
 
 int ComputeDoubleMin(){
 	system("[ -f output.root ] && rm output.root");
