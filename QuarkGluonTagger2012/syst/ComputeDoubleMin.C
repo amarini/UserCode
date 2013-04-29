@@ -278,40 +278,43 @@ void Analyzer::SpanMin(){
 	vector<pair<float,float> > EtaBins;
 	vector<pair<float,float> > RhoBins;
 	
-		PtBins.push_back(  pair<float,float>(30,50) );
-		PtBins.push_back(  pair<float,float>(50,80) );
+	//	PtBins.push_back(  pair<float,float>(30,50) );
+	//	PtBins.push_back(  pair<float,float>(50,80) );
 		PtBins.push_back(  pair<float,float>(80,120) );
 		PtBins.push_back(  pair<float,float>(120,250) );
 		
 		RhoBins.push_back(  pair<float,float>(0,15) );
 		RhoBins.push_back(  pair<float,float>(15,40) );
 		
-		EtaBins.push_back(  pair<float,float>(0,2) );
+	//	EtaBins.push_back(  pair<float,float>(0,2) );
 		EtaBins.push_back(  pair<float,float>(3,4.7) );
 	
 	for ( int e=0; e< int(EtaBins.size());e++)
 	for ( int p=0; p< int(PtBins.size()) ;p++)
 	for ( int r=0; r< int(RhoBins.size());r++)
 		{
+		fprintf(stderr,"Bins: %d %d %d\n",e,p,r);
 		PtMin=PtBins[p].first;PtMax=PtBins[p].second;
 		EtaMin=EtaBins[e].first;EtaMax=EtaBins[e].second;
 		RhoMin=RhoBins[r].first;RhoMax=RhoBins[r].second;
 	
-		if(g2!=NULL)delete g2;	
+		//if(g2!=NULL)delete g2;	
 		int t=0;
 		if(varName=="QGLMLP")t=2;
 		if(varName=="QGLHisto")t=3;
 		int bin=(p+1)+(r+1)*10+(e+1)*100 + t*1000;
 		printf("//%s: Pt=%.0f_%.0f Rho=%.0f_%.0f Eta=%.0f_%.0f\n",varName.c_str(),PtMin,PtMax,RhoMin,RhoMax,EtaMin,EtaMax);
 		printf("case %d:",bin);
-		ComputeMinFast(); //Be Fast!
-		//ComputeDoubleMin(); //Be Slow!
+		//ComputeMinFast(); //Be Fast!
+		ComputeDoubleMin(); //Be Slow!
 		}
 	printf("DONE\n");	
 	}
 void Analyzer::ComputeDoubleMin(){
+	fprintf(stderr,"Compute DoubleMin\n");
 	nstep=5; //otherwise too slow?
 	pair<float,float> R_q,R_g;
+	fprintf(stderr,"First Smear\n");
 	R_q=SmearDoubleMin(1,0,1,0,0); //
 	R_g=SmearDoubleMin(R_q.first,R_q.second,1,0,1); //
 	R_q=SmearDoubleMin(R_q.first,R_q.second,R_g.first,R_g.second,0); //
@@ -320,11 +323,20 @@ void Analyzer::ComputeDoubleMin(){
 	printf("a_q=%.3f;b_q=%.3f;a_g=%.3f;b_g=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R_q.first,R_q.second,R_g.first,R_g.second,lmin,lmax);
 	}
 pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,float b0_g,int type){ //type = 0 Q, 1 G
+	fprintf(stderr,"SmearDoubleMin\n");
 	TGraph2D *g2_q=new TGraph2D(); 
 	TGraph2D *g2_g=new TGraph2D(); 
 	
 	alpha=1.0;beta=0;
+
+	//if(h_data!=NULL)delete h_data;
+	//if(h_mc!=NULL)delete h_mc;
+	fprintf(stderr,"Creating Histos\n");
+	CreateHisto(3);
+	
+	fprintf(stderr,"Going to do Data Loop\n");
 	Loop(t_data,1);
+
 	if(varName=="QGLMLP")
 		Loop(t_mc,4);
 	//scan
@@ -332,12 +344,14 @@ pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,fl
 	a_g=a0_g;b_g=b0_g;
 
 	alpha=1.0;beta=0;
+	fprintf(stderr,"Going to do span ai\n");
 	for(float ai=0.7; ai<=1.1; ai+=0.02)
 		{
 		Reset(h_mc);	
 		if(type==0)a_q=ai;
 		if(type==1)a_g=ai;
 		Loop(t_mc,8);
+		for(int j=0;j<=h_mc->GetNbinsX()+1;j++)if(h_mc->GetBinError(j)==0)h_mc->SetBinError(j,1);
 		h_mc->Scale(h_data->Integral()/h_mc->Integral());
 
 		if(type==0)g2_q->SetPoint(g2_q->GetN(),a_q,b_q, h_data->Chi2Test(h_mc,opt.c_str())  );	
@@ -347,12 +361,14 @@ pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,fl
 	a_q=a0_q;b_q=b0_q;
 	a_g=a0_g;b_g=b0_g;
 
+	fprintf(stderr,"Going to do span bi\n");
 	for(float bi=-0.5; bi<=0.5; bi+=0.01)
 		{
 		Reset(h_mc);	
 		if(type==0)b_q=bi;
 		if(type==1)b_g=bi;
 		Loop(t_mc,8);
+		for(int j=0;j<=h_mc->GetNbinsX()+1;j++)if(h_mc->GetBinError(j)==0)h_mc->SetBinError(j,1);
 		h_mc->Scale(h_data->Integral()/h_mc->Integral());
 		if(type==0)g2_q->SetPoint(g2_q->GetN(),a_q,b_q, h_data->Chi2Test(h_mc,opt.c_str())  );	
 		if(type==1)g2_g->SetPoint(g2_g->GetN(),a_g,b_g, h_data->Chi2Test(h_mc,opt.c_str())  );	
@@ -373,6 +389,7 @@ pair<float,float> Analyzer::SmearDoubleMin(float a0_q,float b0_q , float a0_g,fl
         	if(type==0)b_q=min1+j*stp1;
         	if(type==1)b_g=min1+j*stp1;
 		Loop(t_mc,8);
+		for(int k=0;k<=h_mc->GetNbinsX()+1;k++)if(h_mc->GetBinError(k)==0)h_mc->SetBinError(k,1);
 		h_mc->Scale(h_data->Integral()/h_mc->Integral());
 		if(type==0)g2_q->SetPoint(g2_q->GetN(),a_q,b_q, h_data->Chi2Test(h_mc,opt.c_str())  );	
 		if(type==1)g2_g->SetPoint(g2_g->GetN(),a_g,b_g, h_data->Chi2Test(h_mc,opt.c_str())  );	
@@ -486,7 +503,7 @@ void Analyzer::ComputeMinFast(){
 }
 
 int ComputeDoubleMin(){
-	system("rm output.root");
+	system("[ -f output.root ] && rm output.root");
 	TChain *mc=new TChain("tree_passedEvents");
 	TChain *data=new TChain("tree_passedEvents");
 		data->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DoubleMu*.root");
@@ -508,6 +525,7 @@ int ComputeDoubleMin(){
 		A.Loop(mc,2)
 		A.Loop(data,1)
 		*/
+	fprintf(stderr,"Going to do Span\n");
 	A.SpanMin();
 	A.varName="QGLMLP";
 	A.SpanMin();
