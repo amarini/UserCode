@@ -86,7 +86,7 @@ public:
 	map<string,float> treeVar;
 	map<string,int> treeVarInt;
 //----- vector with all the likelihood /MLP results - for a given selection /pdgId/value
-	vector<pair<int,float>> varAll;
+	vector<pair<int,float> > varAll;
 };
 
 
@@ -280,15 +280,15 @@ void Analyzer::SpanMin(){
 	vector<pair<float,float> > EtaBins;
 	vector<pair<float,float> > RhoBins;
 	
-	//	PtBins.push_back(  pair<float,float>(30,50) );
-	//	PtBins.push_back(  pair<float,float>(50,80) );
+		PtBins.push_back(  pair<float,float>(30,50) );
+		PtBins.push_back(  pair<float,float>(50,80) );
 		PtBins.push_back(  pair<float,float>(80,120) );
 		PtBins.push_back(  pair<float,float>(120,250) );
 		
 		RhoBins.push_back(  pair<float,float>(0,15) );
 		RhoBins.push_back(  pair<float,float>(15,40) );
 		
-	//	EtaBins.push_back(  pair<float,float>(0,2) );
+		EtaBins.push_back(  pair<float,float>(0,2) );
 		EtaBins.push_back(  pair<float,float>(3,4.7) );
 	
 	for ( int e=0; e< int(EtaBins.size());e++)
