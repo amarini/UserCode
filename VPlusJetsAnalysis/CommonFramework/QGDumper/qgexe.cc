@@ -18,7 +18,7 @@ if(argc>5){
 QGDumper *A=new QGDumper();
 	
 	printf("SetConfig\n");
-	A->SetConfigFile("data/config.ini",argv[1]);
+	A->SetConfigFile(argv[1],argv[2]);
 	A->SetCuts();
 	A->treeName="tree_passedEvents";
 	A->outFileName=Form("%s/QGDump_type%d_chid%d_%d_%d.root",A->ReadMult(argv[1],argv[2],"OUTDIR"),type,A->GetChId(),j,nJ);
