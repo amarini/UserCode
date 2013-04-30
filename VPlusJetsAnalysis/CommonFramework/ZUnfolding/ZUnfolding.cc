@@ -57,7 +57,7 @@ TFile *EMu     =TFile::Open( (OutputDir+"/output_type0_chid2.root").c_str());
 //Get Response Matrixes
 //Use this code if you have the response directly: they cannot be merged
 //RooUnfoldResponse *R_4=(RooUnfoldResponse*)DY_4->Get("R_llPt")->Clone("R_llPt_4");
-//RooUnfoldResponse *R_1=(RooUnfoldResponse*)DY_4->Get("R_llPt")->Clone("R_llPt_1");
+//RooUnfoldResponse *R_1=(RooUnfoldResponse*)DY_1->Get("R_llPt")->Clone("R_llPt_1");
 TH1F* R_4_GEN= (TH1F*)DY_4->Get("R_llPt_GEN")->Clone("R_llPt_GEN_4");
 TH1F* R_4_RECO= (TH1F*)DY_4->Get("R_llPt_RECO")->Clone("R_llPt_RECO_4");
 TH2F* R_4_MATRIX= (TH2F*)DY_4->Get("R_llPt_MATRIX")->Clone("R_llPt_MATRIX_4");
@@ -156,9 +156,9 @@ TH1F *u_e=Unfold(h_e,R_1,ParUnf);u_e->SetName("u_e");
 
 //-------------------SYST-----------------------------------
 TH1F *u_mu_JES_UP=Unfold(h_mu_JES_UP,R_4,ParUnf); u_mu_JES_UP->SetName("u_mu_JES_UP");
-TH1F *u_e_JES_UP =Unfold(h_e_JES_UP,R_4,ParUnf);  u_e_JES_UP->SetName("u_e_JES_UP");
+TH1F *u_e_JES_UP =Unfold(h_e_JES_UP,R_1,ParUnf);  u_e_JES_UP->SetName("u_e_JES_UP");
 TH1F *u_mu_JES_DN=Unfold(h_mu_JES_DN,R_4,ParUnf);u_mu_JES_DN->SetName("u_mu_JES_DN");
-TH1F *u_e_JES_DN =Unfold(h_e_JES_DN,R_4,ParUnf); u_e_JES_DN->SetName("u_e_JES_DN");
+TH1F *u_e_JES_DN =Unfold(h_e_JES_DN,R_1,ParUnf); u_e_JES_DN->SetName("u_e_JES_DN");
 
 //-------------------COMBINATION----------------------------
 TH1F*u_l=(TH1F*)u_mu->Clone("llPt_l");

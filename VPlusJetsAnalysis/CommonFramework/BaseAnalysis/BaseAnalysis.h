@@ -24,7 +24,7 @@ public:
 	virtual int CreateHistos();
 	int Write(string outputFile="");
 	int Sumw2();
-	//virtual int SetActive(); //read list of active Branches from a configuration file
+	virtual int SetActive(){return 0;}; //read list of active Branches from a configuration file
 	virtual int FillHistos(){};
 	virtual int FillHistosGEN(){};
 	virtual int OpenFiles();
@@ -64,14 +64,17 @@ protected:
         vector<float> *jetE        ;
         vector<float> *jetUNC      ;
         vector<float> *jetQGL      ;
+        vector<float> *jetQGMLP      ;
         vector<float> *jetBtag     ;
         vector<float> *jetBeta     ;
         vector<int>   *jetVeto     ;
+        vector<int>   *jetPdgId     ;
         vector<float> *photonPt;
         vector<float> *photonEta;
         vector<float> *photonPhi;
         vector<float> *photonE;
         double PUWeight;
+        double eventWeight;
 	
 	///GEN
 	float llMGEN;

@@ -12,6 +12,10 @@ ZAnalysis: BaseAnalysis
 GAnalysis: BaseAnalysis
 	cd GAnalysis && make
 
+.PHONY: QGDumper
+QGDumper: BaseAnalysis
+	cd QGDumper && make
+
 .PHONY: zexe
 zexe:
 	cd ZAnalysis && make zexe

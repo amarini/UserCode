@@ -101,8 +101,10 @@ t->SetBranchAddress("jetPhi",&jetPhi);
 t->SetBranchAddress("jetE",&jetE);
 t->SetBranchAddress("jetUNC",&jetUNC);
 t->SetBranchAddress("jetQGL",&jetQGL);
+t->SetBranchAddress("jetQGMLP",&jetQGMLP);
 t->SetBranchAddress("jetBtag",&jetBtag);
 t->SetBranchAddress("jetBeta",&jetBeta);
+t->SetBranchAddress("jetPdgId",&jetPdgId);
 jetVeto=new vector<int>;
 t->SetBranchAddress("photonPt",&photonPt);
 t->SetBranchAddress("photonEta",&photonEta);
@@ -111,6 +113,7 @@ t->SetBranchAddress("photonE",&photonE);
 if(debug>0) printf("Booking GEN Branches\n");
 
 if(type>0)t->SetBranchAddress("PUWeight",&PUWeight);
+if(type>0)t->SetBranchAddress("eventWeight",&eventWeight);
 if(type>0)t->SetBranchAddress("llMGEN",&llMGEN);
 if(type>0)t->SetBranchAddress("llYGEN",&llYGEN);
 if(type>0)t->SetBranchAddress("llPtGEN",&llPtGEN);
@@ -126,6 +129,8 @@ if(type>0)t->SetBranchAddress("jetEGEN",&jetEGEN); else jetEGEN=NULL;
 
 //t->SetBranchStatus("*",0); 
 //ACTIVATE BRANCHES
+SetActive();
+
 
 if(debug>0)cout<<"Beginning loop "<<endl;
 unsigned long long EntryMin=0;
