@@ -44,6 +44,7 @@ t_->Branch("llPt",		&llPt,		"llPt/F");
 t_->Branch("llPhi",		&llPhi,		"llPhi/F");
 t_->Branch("eventWeight",	&eventWeight,	"eventWeight/F");
 t_->Branch("PUWeight",		&PUWeight,	"PUWeight/F");
+t_->Branch("rhoPF",		&rho,	"rhoPF/F");
 //--- this must be fixed in non vector style
 PUWeight=1;eventWeight=1;
 out_pdgIdPartJet0=0;
