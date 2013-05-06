@@ -61,7 +61,7 @@ if( (Selector & 07000)==03000 ) switch (Selector){
 //type Discr eta rho pt
 
 //QGLHisto: Pt=30_50 Rho=0_15 Eta=0_2
-case 03111:a_q=0.900;b_q=0.150;a_g=0.990;b_g=-0.000;lmin=0.000;lmax=1.000;break;
+case 03111:a_q=0.900;b_q=0.150;a_g=0.990;b_g=-0.000;lmin=0.000;lmax=1.000; break;
 //QGLHisto: Pt=30_50 Rho=15_40 Eta=0_2
 case 03121:a_q=0.930;b_q=0.060;a_g=0.990;b_g=-0.000;lmin=0.000;lmax=1.000;break;
 //QGLHisto: Pt=50_80 Rho=0_15 Eta=0_2
