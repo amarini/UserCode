@@ -51,7 +51,7 @@ process.patJets.addTagInfos = True
 
 # ---- format the message service ---------------------------------------
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 10000
 # ---- load geometry package --------------------------------------------
 #process.load("Configuration.StandardSequences.Geometry_cff")
 # ---- maximum number of events to run over -----------------------------
@@ -61,7 +61,8 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 # ---- define the source ------------------------------------------------
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-#'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+'file:/scratch0/webermat/DYJets_MadGraph_START_53_V7A.root'
+#'file:/scratch0/webermat/QCD_HT1000toInf_8TeV_madgraph_Summer12.root'	
 #'file:pickevents.root'
 #'file:/scratch0/webermat/GJets_HT_200To400_8TeV_madgraph.root'
 #'/store/relval/CMSSW_5_3_6-START53_V14/RelValProdTTbar/AODSIM/v2/00000/76ED0FA6-1E2A-E211-B8F1-001A92971B72.root'
@@ -136,7 +137,7 @@ process.jetExtender = cms.EDProducer("JetExtendedProducer",
 
 # ---- define the output file -------------------------------------------
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string("PATZJetsExpressTest.root"),
+    fileName = cms.string("PATZJetsExpress.root"),
     closeFileFast = cms.untracked.bool(True)
 )
 
@@ -179,8 +180,10 @@ process.accepted = cms.EDAnalyzer('PATZJetsExpress',
     minNjets        = cms.int32(1),
     jetLepIsoRadius = cms.double(0.4),
     jetLepPhoRadius = cms.double(0.4),
-    minJetPt        = cms.double(30),
+    minJetPt        = cms.double(25),
     maxJetEta       = cms.double(2.5),
+    #photons are saved from minPhoPtId if they pass
+    #CaloId in addition, minPhoPt all photons are saved
     minPhoPt        = cms.double(50),
     minPhoPtId      = cms.double(30),
     maxPhoEta       = cms.double(3.0),

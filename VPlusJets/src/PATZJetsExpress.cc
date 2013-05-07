@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.50 2013/03/26 08:44:47 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.51 2013/03/27 14:44:04 amarini Exp $
 //
 //
 
@@ -128,7 +128,10 @@
 #include "PFIsolation/SuperClusterFootprintRemoval/interface/SuperClusterFootprintRemoval.h"
 
 #include "amarini/VPlusJets/interface/CiCPhotonID.h"
-
+//JER
+#include "CondFormats/JetMETObjects/interface/JetResolution.h"
+#include <sys/stat.h>
+#include "CLHEP/Random/RandGauss.h"
 //
 // class declaration
 //
@@ -149,6 +152,7 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       bool checkTriggerName(string,std::vector<string>); //checks if string belongs to any of the vector<string>
       inline double getEffectiveAreaForMuons(const double& eta) const;
       inline double getEffectiveAreaForElectrons(const double& eta) const;
+      inline std::vector<float> getDataMCResFactor(const double& eta) const;
       // ---- method that builds the tree -------------------------------
       void buildTree();
       // ---- method that re-initializes the tree branches --------------
@@ -258,6 +262,11 @@ class PATZJetsExpress : public edm::EDAnalyzer {
         float muf;
         // ---- electron energy fraction --------------------------------
         float elf;
+        // ---- JER corrected pt ---------------------------------------
+	float ptRES;
+	float ptRESdown;
+	float ptRESup;
+
         // ---- qgl ----------------------------------------------------
         float qgl;
         // ---- rms ----------------------------------------------------
@@ -287,6 +296,10 @@ class PATZJetsExpress : public edm::EDAnalyzer {
             int veto;
 	    int id;
 	    int nparton;
+            // ---- JER studies ---------------------------------------
+	    float ptRES;
+	    float ptRESdown;
+	    float ptRESup;
       };
 
       vector<float> *ComputeQGVariables(edm::View<pat::Jet>::const_iterator & jet,const Event& iEvent,int index);
@@ -463,9 +476,9 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       float VBPartonPhi_;
       int VBPartonDM_; // decay mode
       // ---- jet kinematics --------------------------------------------
-      vector<float> *jetPt_,*jetEta_,*jetPhi_,*jetE_,*jetPtGEN_,*jetEtaGEN_,*jetPhiGEN_,*jetEGEN_;
+      vector<float> *jetPt_,*jetPtRES_,*jetPtRESup_,*jetPtRESdown_,*jetEta_,*jetPhi_,*jetE_,*jetPtGEN_,*jetPtRESGEN_,*jetPtRESupGEN_,*jetPtRESdownGEN_,*jetEtaGEN_,*jetPhiGEN_,*jetEGEN_;
       //---- forward jets------  save two leading jets
-      vector<float> *fwjetPt_,*fwjetEta_,*fwjetPhi_,*fwjetE_;
+      vector<float> *fwjetPt_,*fwjetPtRES_,*fwjetPtRESup_,*fwjetPtRESdown_,*fwjetEta_,*fwjetPhi_,*fwjetE_;
       int fwnJets_;
       vector<int> *jetIdGEN_,*jetNpartonsGEN_;
       vector<int> *jetVetoGEN_;
@@ -525,6 +538,13 @@ class PATZJetsExpress : public edm::EDAnalyzer {
 
       CiCPhotonID* cicPhotonId;
 
+      //jet energy resolution implementation
+
+      JetResolution ptResol;
+
+      string filePtResol;
+      bool doGaussian;
+
       // new H/E calculator for photon
       ElectronHcalHelper::Configuration hcalCfg;
       ElectronHcalHelper *hcalHelper;
@@ -582,6 +602,25 @@ PATZJetsExpress::PATZJetsExpress(const ParameterSet& iConfig)
   pfIsoValEleCH03Name= iConfig.getParameter<edm::InputTag>("pfIsoValEleCH03");
   pfIsoValEleNH03Name= iConfig.getParameter<edm::InputTag>("pfIsoValEleNH03");
   pfIsoValEleG03Name = iConfig.getParameter<edm::InputTag>("pfIsoValEleG03");
+
+
+  string cmssw_base(getenv("CMSSW_BASE"));
+  string cmssw_release_base(getenv("CMSSW_RELEASE_BASE"));
+  string path = cmssw_base + "/src/CondFormats/JetMETObjects/data";
+  struct stat stri;
+  if (stat(path.c_str(),&stri)!=0){
+    path = cmssw_release_base + "/src/CondFormats/JetMETObjects/data";
+  }
+  if (stat(path.c_str(),&stri)!=0) {
+    cerr<<"ERROR: tried to set path but failed, abort."<<endl;
+  }
+  
+  filePtResol= path + "/" +"Spring10_PtResolution_AK5PF.txt";
+  cout<<"resolution file name: "<<filePtResol<<endl;
+  doGaussian=false;
+
+  ptResol.initialize(filePtResol, doGaussian);
+
 
   //mGENCrossCleaning  = iConfig.getParameter<int>                       ("GENCrossCleaning"); //0: Nothing 1: Leptons 2: photons (Bit) 4:
 
@@ -1161,23 +1200,23 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       int isVETO=0;
       //if(mGENCrossCleaning&1)
       {
-      for(unsigned l=0;l<myGenLeptons.size();l++) { 
-        // ---- genjet vs 2 leading genlepton cleaning ------------------
-        if (l >= 2) continue; 
-        if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi()) < mJetLepIsoR) {
-          isVETO |= (1<<l);
-	  if (i_genjet->pt()>=mMinJetPt && (fabs(i_genjet->eta()) <= mMaxJetEta)){
-	    //cout<<"DR is in GEN, lep "<<deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi())<<"/"<<l<<" pt gen/lep "<<i_genjet->pt()<<"/"<<myGenLeptons[l].p4.Pt()<<" ID "<<myGenLeptons[l].pdgId<<"/"<<i_genjet->energy()<<"/"<<i_genjet->emEnergy()<<"/"<<i_genjet->hadEnergy()<<endl;
-	    //if(abs(myGenLeptons[l].pdgId)==13){
-	    //for(unsigned int i=0;i<i_genjet->getGenConstituents().size();i++){
-	    //cout<<"particle "<<i<<" ID/pt "<<i_genjet->getGenConstituents()[i]->pdgId()<<"/"<<i_genjet->getGenConstituents()[i]->pt()<<endl;
-	    //}
-	    //}
-	    nJets_lepVetoGEN+=1;
+	for(unsigned l=0;l<myGenLeptons.size();l++) { 
+	  // ---- genjet vs 2 leading genlepton cleaning ------------------
+	  if (l >= 2) continue; 
+	  if (deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi()) < mJetLepIsoR) {
+	    isVETO |= (1<<l);
+	    if (i_genjet->pt()>=mMinJetPt && (fabs(i_genjet->eta()) <= mMaxJetEta)){
+	      //cout<<"DR is in GEN, lep "<<deltaR(i_genjet->eta(),i_genjet->phi(),myGenLeptons[l].p4.Eta(),myGenLeptons[l].p4.Phi())<<"/"<<l<<" pt gen/lep "<<i_genjet->pt()<<"/"<<myGenLeptons[l].p4.Pt()<<" ID "<<myGenLeptons[l].pdgId<<"/"<<i_genjet->energy()<<"/"<<i_genjet->emEnergy()<<"/"<<i_genjet->hadEnergy()<<endl;
+	      //if(abs(myGenLeptons[l].pdgId)==13){
+	      //for(unsigned int i=0;i<i_genjet->getGenConstituents().size();i++){
+	      //cout<<"particle "<<i<<" ID/pt "<<i_genjet->getGenConstituents()[i]->pdgId()<<"/"<<i_genjet->getGenConstituents()[i]->pt()<<endl;
+	      //}
+	      //}
+	      nJets_lepVetoGEN+=1;
+	    }
+	    continue;
 	  }
-          continue;
-        }
-      }
+	}
       }
       //if(mGENCrossCleaning&2)
       {
@@ -1193,9 +1232,30 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	  }
 	}
       }
-      //if (!isISO) continue;
+      //check for reasonable values to start with JER studies
+      float genjetptRES=i_genjet->pt();
+      float genjetptRESdown=i_genjet->pt();
+      float genjetptRESup=i_genjet->pt();
+      if((i_genjet->pt() > 10) && (fabs(i_genjet->eta()) <5.00)){
+	TF1* fPtResolGEN = ptResol.resolutionEtaPt(i_genjet->eta(),i_genjet->pt());
+	float sigmaGEN = fPtResolGEN->GetParameter(2);
+	std::vector<float>scaleFactor=getDataMCResFactor(i_genjet->eta());
+	//if(scaleFactor[0]>scaleFactor[1]){
+	//cout<<"problem gen sf 01: "<<scaleFactor[0]<<"/"<<scaleFactor[1]<<endl;
+	//}
+	//if(scaleFactor[2]>scaleFactor[1]){
+	//cout<<"problem gen sf 21: "<<scaleFactor[2]<<"/"<<scaleFactor[1]<<endl;
+	//}
+	fPtResolGEN->SetParameter(2,scaleFactor[0]*sigmaGEN);
+	genjetptRES=fPtResolGEN->GetRandom()*i_genjet->pt();
+	fPtResolGEN->SetParameter(2,scaleFactor[1]*sigmaGEN);
+	genjetptRESup=fPtResolGEN->GetRandom()*i_genjet->pt();
+	fPtResolGEN->SetParameter(2,scaleFactor[2]*sigmaGEN);
+	genjetptRESdown=fPtResolGEN->GetRandom()*i_genjet->pt();
+      }
       // ---- preselection on genjets -----------------------------------
-      if ((i_genjet->pt() < mMinJetPt) || (fabs(i_genjet->eta()) > mMaxJetEta)) continue;
+      //change selection ->>
+      if( ((genjetptRES<mMinJetPt)&&(genjetptRESup<mMinJetPt)&&(genjetptRESdown<mMinJetPt)&&(i_genjet->pt() < mMinJetPt)) || (fabs(i_genjet->eta()) > mMaxJetEta)) continue;
       //for(unsigned int i=0;i<i_genjet->getGenConstituents().size();i++){
 	    //cout<<"particle "<<i<<" ID/pt "<<i_genjet->getGenConstituents()[i]->pdgId()<<"/"<<i_genjet->getGenConstituents()[i]->pt()<<endl;
 	    //}
@@ -1203,6 +1263,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       GENJET aGenJet(i_genjet->p4().Px(),i_genjet->p4().Py(),i_genjet->p4().Pz(),i_genjet->p4().E());
       aGenJet.veto=isVETO;  
       aGenJet.nparton=0;
+      aGenJet.ptRES=genjetptRES;
+      aGenJet.ptRESdown=genjetptRESdown;
+      aGenJet.ptRESup=genjetptRESup;
       //---- try first B hadron code
 
       //---- gen jet matching
@@ -1914,10 +1977,29 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       //int index = i_jet - jets_->begin();
       //edm::RefToBase<reco::Jet> jetRef(edm::Ref<PFJetCollection>(jets_,index));
       //double jec = mJEC->correction(*i_jet,jetRef,iEvent,iSetup);
+
       // ---- only keep jets within the kinematic acceptance --------------
-      if ((i_jet->pt() < 15) || (fabs(i_jet->eta()) > 5.0)) continue; // apply first a hardcode preselection
-      if ((i_jet->pt() < mMinJetPt) || (fabs(i_jet->eta()) > mMaxJetEta)) jetIsInAcceptance = false;
-      if ((i_jet->pt() < mMinJetPt) || (fabs(i_jet->eta()) < mMaxJetEta)) jetIsInFWAcceptance = false;
+      if ((i_jet->pt() < 10) || (fabs(i_jet->eta()) > 5.0)) continue; // apply first a hardcode preselection - don't do RES studies for these jets
+      float jetptRES=i_jet->pt();
+      float jetptRESdown=i_jet->pt();
+      float jetptRESup=i_jet->pt();
+      TF1* fPtResol = ptResol.resolutionEtaPt(i_jet->eta(),i_jet->pt());
+      float sigma = fPtResol->GetParameter(2);
+      std::vector<float>scaleFactorRECO=getDataMCResFactor(i_jet->eta());
+      jetptRES=CLHEP::RandGauss::shoot(1.,sqrt(pow(scaleFactorRECO[0],2)-1.0)*sigma)*i_jet->pt();
+      jetptRESup=CLHEP::RandGauss::shoot(1.,sqrt(pow(scaleFactorRECO[1],2)-1.0)*sigma)*i_jet->pt();
+      if(scaleFactorRECO[2]>1){
+	jetptRESdown=CLHEP::RandGauss::shoot(1.,sqrt(pow(scaleFactorRECO[2],2)-1.0)*sigma)*i_jet->pt();
+      }
+      //if(scaleFactorRECO[0]>scaleFactorRECO[1]){
+      //cout<<"problem RECO sf 01: "<<scaleFactorRECO[0]<<"/"<<scaleFactorRECO[1]<<endl;
+      //}
+      //if(scaleFactorRECO[2]>scaleFactorRECO[1]){
+      //cout<<"problem RECO sf 21: "<<scaleFactorRECO[2]<<"/"<<scaleFactorRECO[1]<<endl;
+      //}
+
+      if ((i_jet->pt() < mMinJetPt && jetptRES < mMinJetPt && jetptRESup < mMinJetPt && jetptRESdown < mMinJetPt) || (fabs(i_jet->eta()) > mMaxJetEta)) jetIsInAcceptance = false;
+      if ((i_jet->pt() < mMinJetPt && jetptRES < mMinJetPt && jetptRESup < mMinJetPt && jetptRESdown < mMinJetPt) || (fabs(i_jet->eta()) < mMaxJetEta)) jetIsInFWAcceptance = false;
       if(jetIsInFWAcceptance && jetIsInAcceptance){
 	cout<<"jet is FW and not FW, obviously a contradiction"<<endl;
       }
@@ -1999,6 +2081,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       aJet.muf      = muf;
       aJet.id       = 0;
       aJet.veto	    =jetIsDuplicate;
+      aJet.ptRES    =jetptRES;
+      aJet.ptRESup  =jetptRESup;
+      aJet.ptRESdown=jetptRESdown;
       if (id) {
 	aJet.id     = 1;
       }
@@ -2262,6 +2347,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         if(nLeptons_ > 1) jetllDPhi_     ->push_back(fabs(llP4.DeltaPhi(myJets[j].p4)));
         if(nPhotons_ > 0) jetPhotonDPhi_ ->push_back(fabs(myPhotons[0].p4.DeltaPhi(myJets[j].p4)));
         jetPt_       ->push_back(myJets[j].p4.Pt()); 
+	jetPtRES_    ->push_back(myJets[j].ptRES);
+	jetPtRESup_  ->push_back(myJets[j].ptRESup);
+	jetPtRESdown_->push_back(myJets[j].ptRESdown);
         jetEta_      ->push_back(myJets[j].p4.Eta()); 
         jetPhi_      ->push_back(myJets[j].p4.Phi()); 
         jetE_        ->push_back(myJets[j].p4.Energy()); 
@@ -2299,6 +2387,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	//fill only leading fw jets
 	if(j<2){
 	  fwjetPt_       ->push_back(myFwJets[j].p4.Pt()); 
+	  fwjetPtRES_    ->push_back(myFwJets[j].ptRES); 
+	  fwjetPtRESup_  ->push_back(myFwJets[j].ptRESup); 
+	  fwjetPtRESdown_->push_back(myFwJets[j].ptRESdown); 
 	  fwjetEta_      ->push_back(myFwJets[j].p4.Eta()); 
 	  fwjetPhi_      ->push_back(myFwJets[j].p4.Phi()); 
 	  fwjetE_        ->push_back(myFwJets[j].p4.Energy());
@@ -2466,6 +2557,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
         allP4GEN.push_back(myGenJets[j]); 
         jetllDPhiGEN_   ->push_back(fabs(llP4GEN.DeltaPhi(myGenJets[j])));
         jetPtGEN_       ->push_back(myGenJets[j].Pt()); 
+        jetPtRESGEN_    ->push_back(myGenJets[j].ptRES); 
+        jetPtRESupGEN_  ->push_back(myGenJets[j].ptRESup); 
+        jetPtRESdownGEN_->push_back(myGenJets[j].ptRESdown); 
         jetEtaGEN_      ->push_back(myGenJets[j].Eta()); 
         jetPhiGEN_      ->push_back(myGenJets[j].Phi()); 
         jetEGEN_        ->push_back(myGenJets[j].Energy()); 
@@ -2552,31 +2646,37 @@ void PATZJetsExpress::buildTree()
   lepHadronicOverEm_ = new std::vector<float>();
   lepR9orChi2ndof_   = new std::vector<float>();
   fwjetPt_           = new std::vector<float>(); 
+  fwjetPtRES_        = new std::vector<float>(); 
+  fwjetPtRESup_      = new std::vector<float>(); 
+  fwjetPtRESdown_    = new std::vector<float>(); 
   fwjetEta_          = new std::vector<float>();
   fwjetPhi_          = new std::vector<float>();
   fwjetE_            = new std::vector<float>();
   jetPt_             = new std::vector<float>(); 
+  jetPtRES_          = new std::vector<float>(); 
+  jetPtRESup_        = new std::vector<float>(); 
+  jetPtRESdown_      = new std::vector<float>(); 
   jetEta_            = new std::vector<float>();
   jetPhi_            = new std::vector<float>();
   jetE_              = new std::vector<float>();
   jetArea_           = new std::vector<float>();
   jetBeta_           = new std::vector<float>();
   jetQGL_            = new std::vector<float>();
-   jetPdgId_	     = new std::vector<int>();
-   //jetChgQC_         = new std::vector<int>();
-   //jetNeutralPtCut_  = new std::vector<int>();
-   //jetPtDQC_         = new std::vector<float>();
-   //jetAxis1QC_       = new std::vector<float>();
-   //jetAxis2QC_       = new std::vector<float>();
-   jetQGMLP_ 	     = new std::vector<float>();
-   //jetQG_axis1_L_    = new std::vector<float>();
-   jetQG_axis2_L_    = new std::vector<float>();
-   jetQG_ptD_L_    = new std::vector<float>();
-   jetQG_mult_L_    = new std::vector<int>();
-   jetQG_axis1_MLP_    = new std::vector<float>();
-   jetQG_axis2_MLP_    = new std::vector<float>();
-   jetQG_ptD_MLP_    = new std::vector<float>();
-   jetQG_mult_MLP_    = new std::vector<int>();
+  jetPdgId_	     = new std::vector<int>();
+  //jetChgQC_         = new std::vector<int>();
+  //jetNeutralPtCut_  = new std::vector<int>();
+  //jetPtDQC_         = new std::vector<float>();
+  //jetAxis1QC_       = new std::vector<float>();
+  //jetAxis2QC_       = new std::vector<float>();
+  jetQGMLP_ 	     = new std::vector<float>();
+  //jetQG_axis1_L_    = new std::vector<float>();
+  jetQG_axis2_L_     = new std::vector<float>();
+  jetQG_ptD_L_       = new std::vector<float>();
+  jetQG_mult_L_      = new std::vector<int>();
+  jetQG_axis1_MLP_   = new std::vector<float>();
+  jetQG_axis2_MLP_   = new std::vector<float>();
+  jetQG_ptD_MLP_     = new std::vector<float>();
+  jetQG_mult_MLP_    = new std::vector<int>();
   jetRMS_            = new std::vector<float>();
   jetBtag_           = new std::vector<float>();
   jetTagInfoVtxMass_ = new std::vector<float>();
@@ -2596,10 +2696,13 @@ void PATZJetsExpress::buildTree()
   lepMatchedGEN_     = new std::vector<int>();
   lepMatchedDRGEN_   = new std::vector<float>();
   jetPtGEN_          = new std::vector<float>(); 
+  jetPtRESGEN_       = new std::vector<float>(); 
+  jetPtRESupGEN_     = new std::vector<float>(); 
+  jetPtRESdownGEN_   = new std::vector<float>(); 
   jetEtaGEN_         = new std::vector<float>();
   jetPhiGEN_         = new std::vector<float>();
   jetEGEN_           = new std::vector<float>();
-  jetVetoGEN_          = new std::vector<int>(); 
+  jetVetoGEN_        = new std::vector<int>(); 
   jetIdGEN_          = new std::vector<int>(); 
   jetNpartonsGEN_    = new std::vector<int>(); 
   jetllDPhiGEN_      = new std::vector<float>();
@@ -2740,26 +2843,29 @@ void PATZJetsExpress::buildTree()
   // ---- jet variables -------------------------------------------------
   myTree_->Branch("jetVeto"          ,"vector<int>"       ,&jetVeto_);
   myTree_->Branch("jetPt"            ,"vector<float>"     ,&jetPt_);
+  myTree_->Branch("jetPtRES"         ,"vector<float>"     ,&jetPtRES_);
+  myTree_->Branch("jetPtRESup"       ,"vector<float>"     ,&jetPtRESup_);
+  myTree_->Branch("jetPtRESdown"     ,"vector<float>"     ,&jetPtRESdown_);
   myTree_->Branch("jetEta"           ,"vector<float>"     ,&jetEta_);
   myTree_->Branch("jetPhi"           ,"vector<float>"     ,&jetPhi_);
   myTree_->Branch("jetE"             ,"vector<float>"     ,&jetE_);
   myTree_->Branch("jetArea"          ,"vector<float>"     ,&jetArea_);
   myTree_->Branch("jetBeta"          ,"vector<float>"     ,&jetBeta_);
   myTree_->Branch("jetQGL"           ,"vector<float>"     ,&jetQGL_);
-   myTree_->Branch("jetPdgId" 	     ,"vector<int>"       ,&jetPdgId_ 	   ); 
-   //myTree_->Branch("jetChgQC"         ,"vector<int>"       ,&jetChgQC_       );  
-   //myTree_->Branch("jetNeutralPtCut"  ,"vector<int>"       ,&jetNeutralPtCut_);
-   //myTree_->Branch("jetPtDQC" 	     ,"vector<float>"     ,&jetPtDQC_ 	   );
-   //myTree_->Branch("jetAxis1QC"       ,"vector<float>"     ,&jetAxis1QC_     );
-   //myTree_->Branch("jetAxis2QC"       ,"vector<float>"     ,&jetAxis2QC_     );
-   myTree_->Branch("jetQGMLP"	     ,"vector<float>"     ,&jetQGMLP_	   );
-   myTree_->Branch("jetQG_axis2_L"	     ,"vector<float>"     ,&jetQG_axis2_L_	   );
-   myTree_->Branch("jetQG_ptD_L"	     ,"vector<float>"     ,&jetQG_ptD_L_	   );
-   myTree_->Branch("jetQG_mult_L"	     ,"vector<int>"     ,&jetQG_mult_L_	   );
-   myTree_->Branch("jetQG_axis1_MLP"	     ,"vector<float>"     ,&jetQG_axis1_MLP_	   );
-   myTree_->Branch("jetQG_axis2_MLP"	     ,"vector<float>"     ,&jetQG_axis2_MLP_	   );
-   myTree_->Branch("jetQG_ptD_MLP"	     ,"vector<float>"     ,&jetQG_ptD_MLP_	   );
-   myTree_->Branch("jetQG_mult_MLP"	     ,"vector<int>"     ,&jetQG_mult_MLP_	   );
+  myTree_->Branch("jetPdgId" 	     ,"vector<int>"       ,&jetPdgId_ 	   ); 
+  //myTree_->Branch("jetChgQC"         ,"vector<int>"       ,&jetChgQC_       );  
+  //myTree_->Branch("jetNeutralPtCut"  ,"vector<int>"       ,&jetNeutralPtCut_);
+  //myTree_->Branch("jetPtDQC" 	     ,"vector<float>"     ,&jetPtDQC_ 	   );
+  //myTree_->Branch("jetAxis1QC"       ,"vector<float>"     ,&jetAxis1QC_     );
+  //myTree_->Branch("jetAxis2QC"       ,"vector<float>"     ,&jetAxis2QC_     );
+  myTree_->Branch("jetQGMLP"	     ,"vector<float>"     ,&jetQGMLP_	   );
+  myTree_->Branch("jetQG_axis2_L"    ,"vector<float>"     ,&jetQG_axis2_L_	   );
+  myTree_->Branch("jetQG_ptD_L"	     ,"vector<float>"     ,&jetQG_ptD_L_	   );
+  myTree_->Branch("jetQG_mult_L"     ,"vector<int>"       ,&jetQG_mult_L_	   );
+  myTree_->Branch("jetQG_axis1_MLP"  ,"vector<float>"     ,&jetQG_axis1_MLP_	   );
+  myTree_->Branch("jetQG_axis2_MLP"  ,"vector<float>"     ,&jetQG_axis2_MLP_	   );
+  myTree_->Branch("jetQG_ptD_MLP"    ,"vector<float>"     ,&jetQG_ptD_MLP_	   );
+  myTree_->Branch("jetQG_mult_MLP"   ,"vector<int>"       ,&jetQG_mult_MLP_	   );
   myTree_->Branch("jetRMS"           ,"vector<float>"     ,&jetRMS_);
   myTree_->Branch("jetBtag"          ,"vector<float>"     ,&jetBtag_);
   myTree_->Branch("jetTagInfoNVtx"   ,"vector<float>"     ,&jetTagInfoNVtx_);
@@ -2771,6 +2877,9 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("jetllDPhi"        ,"vector<float>"     ,&jetllDPhi_);
   //-----forward jets - two leading forward jets
   myTree_->Branch("fwjetPt"          ,"vector<float>"     ,&fwjetPt_);
+  myTree_->Branch("fwjetPtRES"       ,"vector<float>"     ,&fwjetPtRES_);
+  myTree_->Branch("fwjetPtRESup"     ,"vector<float>"     ,&fwjetPtRESup_);
+  myTree_->Branch("fwjetPtRESdown"   ,"vector<float>"     ,&fwjetPtRESdown_);
   myTree_->Branch("fwjetEta"         ,"vector<float>"     ,&fwjetEta_);
   myTree_->Branch("fwjetPhi"         ,"vector<float>"     ,&fwjetPhi_);
   myTree_->Branch("fwjetE"           ,"vector<float>"     ,&fwjetE_);
@@ -2798,6 +2907,9 @@ void PATZJetsExpress::buildTree()
   myTree_->Branch("lepMatchedDRGEN"  ,"vector<float>"     ,&lepMatchedDRGEN_);
   myTree_->Branch("lepMatchedGEN"    ,"vector<int>"       ,&lepMatchedGEN_);
   myTree_->Branch("jetPtGEN"         ,"vector<float>"     ,&jetPtGEN_);
+  myTree_->Branch("jetPtRESGEN"      ,"vector<float>"     ,&jetPtRESGEN_);
+  myTree_->Branch("jetPtRESupGEN"    ,"vector<float>"     ,&jetPtRESupGEN_);
+  myTree_->Branch("jetPtRESdownGEN"  ,"vector<float>"     ,&jetPtRESdownGEN_);
   myTree_->Branch("jetEtaGEN"        ,"vector<float>"     ,&jetEtaGEN_);
   myTree_->Branch("jetPhiGEN"        ,"vector<float>"     ,&jetPhiGEN_);
   myTree_->Branch("jetEGEN"          ,"vector<float>"     ,&jetEGEN_);
@@ -2943,27 +3055,30 @@ void PATZJetsExpress::clearTree()
   lepMatchedGEN_     ->clear();
   lepId_             ->clear();
   jetPt_             ->clear();
+  jetPtRES_          ->clear();
+  jetPtRESup_        ->clear();
+  jetPtRESdown_      ->clear();
   jetEta_            ->clear();
   jetPhi_            ->clear();
   jetE_              ->clear();
   jetArea_           ->clear();
   jetBeta_           ->clear();
   jetQGL_            ->clear();
-   jetPdgId_ 	     ->clear();
-   //jetChgQC_         ->clear();
-   //jetNeutralPtCut_  ->clear();
-   //jetPtDQC_ 	     ->clear();
-   //jetAxis1QC_       ->clear();
-   //jetAxis2QC_       ->clear();
-   jetQGMLP_	     ->clear();
-   //jetQG_axis1_L_ 	->clear();
-   jetQG_axis2_L_ 	->clear();
-   jetQG_ptD_L_ 	->clear();
-   jetQG_mult_L_ 	->clear();
-   jetQG_axis1_MLP_ 	->clear();
-   jetQG_axis2_MLP_ 	->clear();
-   jetQG_ptD_MLP_ 	->clear();
-   jetQG_mult_MLP_ 	->clear();
+  jetPdgId_ 	     ->clear();
+  //jetChgQC_        ->clear();
+  //jetNeutralPtCut_  ->clear();
+  //jetPtDQC_ 	     ->clear();
+  //jetAxis1QC_       ->clear();
+  //jetAxis2QC_       ->clear();
+  jetQGMLP_	     ->clear();
+  //jetQG_axis1_L_ 	->clear();
+  jetQG_axis2_L_     ->clear();
+  jetQG_ptD_L_ 	     ->clear();
+  jetQG_mult_L_      ->clear();
+  jetQG_axis1_MLP_   ->clear();
+  jetQG_axis2_MLP_   ->clear();
+  jetQG_ptD_MLP_     ->clear();
+  jetQG_mult_MLP_    ->clear();
   jetRMS_            ->clear();
   jetBtag_           ->clear();
   jetTagInfoVtxMass_ ->clear();
@@ -2975,6 +3090,9 @@ void PATZJetsExpress::clearTree()
   jetllDPhi_         ->clear();
   jetVeto_           ->clear();
   fwjetPt_           ->clear();
+  fwjetPtRES_        ->clear();
+  fwjetPtRESup_      ->clear();
+  fwjetPtRESdown_    ->clear();
   fwjetEta_          ->clear();
   fwjetPhi_          ->clear();
   fwjetE_            ->clear();
@@ -2999,6 +3117,9 @@ void PATZJetsExpress::clearTree()
   lepEGEN_           ->clear();
   lepChIdGEN_        ->clear();
   jetPtGEN_          ->clear();
+  jetPtRESGEN_       ->clear();
+  jetPtRESupGEN_     ->clear();
+  jetPtRESdownGEN_   ->clear();
   jetEtaGEN_         ->clear();
   jetPhiGEN_         ->clear();
   jetEGEN_           ->clear();
@@ -3049,6 +3170,40 @@ double PATZJetsExpress::getEffectiveAreaForMuons(const double& eta) const {
   else if(abseta > 2.2 && abseta <=  2.3) return 0.821;
   else if(abseta > 2.3 && abseta <= 2.4)  return 0.660;
   else                                    return 9999;
+}
+
+std::vector<float> PATZJetsExpress::getDataMCResFactor(const double& eta) const {
+  std::vector<float> result(3,0);
+  //0: factor default
+  //1: factor up
+  //2: factor down
+  float abseta = fabs(eta);
+  if(abseta<=0.5){
+    result[0]=1.052;
+    result[1]=1.052+sqrt(pow(0.012,2)+pow(0.062,2));
+    result[2]=1.052-sqrt(pow(0.012,2)+pow(0.061,2));
+  }else if (abseta>0.5 && abseta<=1.1){
+    result[0]=1.057;
+    result[1]=1.057+sqrt(pow(0.012,2)+pow(0.056,2));
+    result[2]=1.057-sqrt(pow(0.012,2)+pow(0.055,2));
+  }else if (abseta>1.1 && abseta<=1.7){
+    result[0]=1.096;
+    result[1]=1.096+sqrt(pow(0.017,2)+pow(0.063,2));
+    result[2]=1.096-sqrt(pow(0.017,2)+pow(0.062,2));
+  }else if (abseta>1.7 && abseta<=2.3){
+    result[0]=1.134;
+    result[1]=1.134+sqrt(pow(0.035,2)+pow(0.087,2));
+    result[2]=1.134-sqrt(pow(0.035,2)+pow(0.085,2));
+  }else if (abseta>2.3 && abseta<=5.0){
+    result[0]=1.288;
+    result[1]=1.288+sqrt(pow(0.127,2)+pow(0.155,2));
+    result[2]=1.288-sqrt(pow(0.127,2)+pow(0.153,2));
+  }else{
+    result[0]=1.;
+    result[1]=1.;
+    result[2]=1.;
+  }
+  return result;
 }
 
 double PATZJetsExpress::getEffectiveAreaForElectrons(const double& eta) const {
