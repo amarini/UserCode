@@ -516,10 +516,11 @@ void Analyzer::ComputeDoubleMinFast(){
 	Loop(t_mc,32);
 
 	pair<float,float> R_q,R_g;
-	R_q=SmearDoubleMinFast(1,0,1,0,0); //
-	R_g=SmearDoubleMinFast(R_q.first,R_q.second,1,0,1); //
-	R_q=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,0,1); //
-	R_g=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,1,1); //
+	//R_q=SmearDoubleMinFast(1,0,1,0,0); //
+	//R_g=SmearDoubleMinFast(R_q.first,R_q.second,1,0,1); //
+	//R_q=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,0,1); //
+	//R_g=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,1,1); //
+	R_g=SmearDoubleMinFast(1,0,1,0,1); //
 
 	printf("a_q=%.3f;b_q=%.3f;a_g=%.3f;b_g=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R_q.first,R_q.second,R_g.first,R_g.second,lmin,lmax);
 	}
@@ -622,6 +623,7 @@ int ComputeDoubleMin(){
 
 		mc  ->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet/ZJet_DYJetsToLL_M-50*.root");
 	Analyzer A;
+	A.stp0=.002;A.stp1=0.002;
 	A.nstep=20;
 	A.varName="QGLHisto";
 //	A.varName="QGLMLP";

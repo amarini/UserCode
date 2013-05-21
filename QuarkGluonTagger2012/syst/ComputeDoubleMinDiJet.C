@@ -4,6 +4,7 @@
 #include "TTree.h"
 #include "TChain.h"
 #include "TH1F.h"
+#include "TH2F.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
 #include "TMath.h"
@@ -14,13 +15,45 @@
 #include <cstdio>
 #include <cstdlib>
 #include "TROOT.h"
+#include "TDirectory.h"
+#include "TCanvas.h"
+
+//---compute QGL & QGLMPL on the fly
+#include "/afs/cern.ch/user/a/amarini/work/CMSSW_5_3_6/src/QuarkGluonTagger/EightTeV/src/QGMLPCalculator.cc"
+#include "/afs/cern.ch/user/a/amarini/work/CMSSW_5_3_6/src/QuarkGluonTagger/EightTeV/src/parameters.cc"
+#include "/afs/cern.ch/user/a/amarini/work/CMSSW_5_3_6/src/QuarkGluonTagger/EightTeV/src/QGLikelihoodCalculator.cc"
+#include "/afs/cern.ch/user/a/amarini/work/CMSSW_5_3_6/src/QuarkGluonTagger/EightTeV/src/Bins.cc"
 
 using namespace std;
+
+double deltaPhi(double phi1,double phi2){
+	double result= phi1-phi2;
+	while (result> M_PI) result -=2*M_PI;
+	while (result < -M_PI) result+=2*M_PI;
+	return result;
+	}
+double deltaR(double eta1,double phi1, double eta2, double phi2){
+	double deta=eta1-eta2;
+	double dphi=deltaPhi(phi1,phi2);
+	return sqrt(deta*deta+ dphi*dphi);
+	}
+
+class TRIO {
+public:
+	TRIO(){};
+	~TRIO(){};
+	TRIO(int id,float x,float w){pdgId=id;value=x;weight=w;};
+	int pdgId;
+	float value;
+	float weight;
+};
+
+const inline bool operator<(TRIO&x,TRIO&y){return x.value<y.value;}
 
 class Analyzer{
 public:
 	Analyzer(){
-		PtMin=30;PtMax=80;RhoMin=0;RhoMax=15;EtaMin=0;EtaMax=2.0;
+		PtMin=40;PtMax=60;RhoMin=0;RhoMax=15;EtaMin=0;EtaMax=2.0;
 		t_mc=NULL;t_data=NULL;
 		varName="QGLHisto";
 		nBins=30;xMin=0;xMax=1.000001;
@@ -28,6 +61,12 @@ public:
 		lmin=0;lmax=1.0;
 		opt="CHI2 WW";
 		aMin=0.5;aMax=1.3;bMin=0.5;bMax=1.5;
+		TFile *Fpuw=TFile::Open("/afs/cern.ch/work/s/sunil/public/forTom/PU_rewt_flatP6.root");
+		TFile *Fptetaw=TFile::Open("/afs/cern.ch/work/s/sunil/public/forTom/Jetpteta_rewt2D_flatP6.root ");
+		puw=(TH1F*)Fpuw->Get("hist_WT")->Clone("hPU_wt");
+		ptetaw=(TH2F*)Fptetaw->Get("hist_WT")->Clone("hPtEta_wt");
+		qgl=new QGLikelihoodCalculator("/afs/cern.ch/user/a/amarini/work/CMSSW_5_3_6/src/QuarkGluonTagger/EightTeV/data/");//ReducedHisto_2012.root");
+		qgmlp=new QGMLPCalculator("MLP","/afs/cern.ch/user/a/amarini/work/CMSSW_5_3_6/src/QuarkGluonTagger/EightTeV/data/",true); //prob
 		}
 	string varName;//QGL HISTO
 	int nstep;
@@ -52,6 +91,9 @@ public:
 	void ComputeDoubleMinFast();
 	void LoopFast();
 //private:
+	//histo reweight
+		TH1F* puw;
+		TH2F* ptetaw;
 	TChain *t_mc;
 	TChain *t_data;
 	float PtMin;
@@ -86,7 +128,11 @@ public:
 	map<string,float> treeVar;
 	map<string,int> treeVarInt;
 //----- vector with all the likelihood /MLP results - for a given selection /pdgId/value
-	vector<pair<int,float> > varAll;
+	//vector<pair<int,float> > varAll;
+	vector<TRIO> varAll;
+//--- QGL QGMLP
+	QGLikelihoodCalculator *qgl;
+	QGMLPCalculator *qgmlp;
 };
 
 
@@ -104,61 +150,152 @@ return x1*(max-min)+min;
 
 void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 data type |=2 mc
 
-		//treeVar["betaStarJet0"]		=-999;t->SetBranchAddress("betaStarJet0",	&treeVar["betaStarJet0"]	);
-		//treeVarInt["nvertex"]		=-999;t->SetBranchAddress("nvertex",		&treeVarInt["nvertex"]		);
-	//	treeVar["deltaPhi_jet"]		=-999;t->SetBranchAddress("deltaPhi_jet",	&treeVar["deltaPhi_jet"]	);
-	//	treeVar["mZ"]			=-999;t->SetBranchAddress("mZ",			&treeVar["mZ"]			);
-	//	treeVarInt["nPFCand_QC_ptCutJet"]=-999;t->SetBranchAddress("nPFCand_QC_ptCutJet",&treeVarInt["nPFCand_QC_ptCutJet"]			);
-	//	treeVar["ptD_QCJet0"]			=-999;t->SetBranchAddress("ptD_QCJet0",			&treeVar["ptD_QCJet0"]			);
-	//	treeVar["axis1_QCJet0"]			=-999;t->SetBranchAddress("axis1_QCJet0",			&treeVar["axis1_QCJet0"]			);
-	//	treeVar["axis2_QCJet0"]			=-999;t->SetBranchAddress("axis2_QCJet0",			&treeVar["axis2_QCJet0"]			);
-		treeVar["llPt"]			=-999;t->SetBranchAddress("llPt",		&treeVar["llPt"]			);
-		treeVar["ptJet0"]		=-999;t->SetBranchAddress("ptJet0",		&treeVar["ptJet0"]		);
-		treeVar["rhoPF"]		=-999;t->SetBranchAddress("rhoPF",		&treeVar["rhoPF"]		);
-		treeVar["etaJet0"]		=-999;t->SetBranchAddress("etaJet0",		&treeVar["etaJet0"]		);
-		treeVarInt["pdgIdPartJet0"]	=-999;if(type!=1)t->SetBranchAddress("pdgIdPartJet0",	&treeVarInt["pdgIdPartJet0"]); //only mc 
-
-		treeVar["QGLHisto"]		=-999;t->SetBranchAddress("QGLHisto",		&treeVar["QGLHisto"]		);
-		treeVar["QGLMLP"]		=-999;t->SetBranchAddress("QGLMLP",		&treeVar["QGLMLP"]		);
-	//	treeVar["QGLHistoFwd"]		=-999;if(type==1)t->SetBranchAddress("QGLHistoFwd",	&treeVar["QGLHistoFwd"]		); //only data
-	//	treeVar["QGLMLPFwd"]		=-999;if(type==1)t->SetBranchAddress("QGLMLPFwd",	&treeVar["QGLMLPFwd"]		); //only data
 		
-		treeVar["PUReWeight"]		=1   ;if(type!=1)t->SetBranchAddress("PUReWeight",	&treeVar["PUReWeight"]		); //only mc
-		treeVar["eventWeight"]		=1   ;if(type!=1)t->SetBranchAddress("eventWeight",	&treeVar["eventWeight"]		); //only mc
+		treeVarInt["nvtx"] = -999; t->SetBranchAddress("nvtx",&treeVarInt["nvtx"]);
+		treeVar["rho"] = -999; t->SetBranchAddress("rho",&treeVar["rho"]);
+		Float_t jetPt[4]; t->SetBranchAddress("jetPt",&jetPt);
+		Float_t jetEnergy[4]; t->SetBranchAddress("jetEnergy",&jetEnergy);
+		Float_t jetBtag[4]; t->SetBranchAddress("jetBtag",&jetBtag);
+		Float_t jetBeta[4]; t->SetBranchAddress("jetBeta",&jetBeta);
+		Float_t jetEta[4]; t->SetBranchAddress("jetEta",&jetEta);
+		Float_t jetPhi[4]; t->SetBranchAddress("jetPhi",&jetPhi);
+		Float_t jetAxis_QC[2][4]; t->SetBranchAddress("jetAxis_QC",&jetAxis_QC);
+		Float_t jetAxis[2][4]; t->SetBranchAddress("jetAxis",&jetAxis);
+		Float_t jetPtD[4]; t->SetBranchAddress("jetPtD",&jetPtD);
+		Float_t jetPtD_QC[4]; t->SetBranchAddress("jetPtD_QC",&jetPtD_QC);
+		Int_t jetChgPart_ptcut[4]; t->SetBranchAddress("jetChgPart_ptcut",&jetChgPart_ptcut);
+		Int_t jetChgPart_QC[4]; t->SetBranchAddress("jetChgPart_QC",&jetChgPart_QC);
+		Int_t jetNeutralPart_ptcut[4]; t->SetBranchAddress("jetNeutralPart_ptcut",&jetNeutralPart_ptcut);
+		vector<int> *partonId=0;if(type >1)t->SetBranchAddress("partonId",&partonId);
+		vector<int> *partonSt=0;if(type >1)t->SetBranchAddress("partonSt",&partonSt);
+		vector<float> *partonPt=0;if(type >1)t->SetBranchAddress("partonPt",&partonPt);
+		vector<float> *partonEta=0;if(type >1)t->SetBranchAddress("partonEta",&partonEta);
+		vector<float> *partonPhi=0;if(type >1)t->SetBranchAddress("partonPhi",&partonPhi);
+		vector<float> *partonE=0;if(type >1)t->SetBranchAddress("partonE",&partonE);
+		
+		vector<bool> *triggerResult=0;if(type ==1)t->SetBranchAddress("triggerResult",&triggerResult);
+		
 		
 		if(type&4) {lmin=1.0;lmax=0;} //reset lmin-lmax
 		if(type&1) {delete h_data; CreateHisto(1);}
 		if(type&10) {delete h_mc; CreateHisto(2);} //8+2
 		if(type&32) {varAll.clear();} //reset varAll
 
-		for(int i=0;i<t->GetEntries();i++)
+		for(int i=0;i<t->GetEntries() ;i++)
 			{
 			t->GetEntry(i);
-			//printf("Count -1: %f %f %f\n",treeVar["ptJet0"],treeVar["etaJet0"],treeVar["rhoPF"]);
+			treeVar["ptJet0"]=jetPt[0];
+			treeVar["etaJet0"]=jetEta[0];
+			treeVar["rhoPF"]=treeVar["rho"];
+			
+			//fprintf(stderr,"A: Pt: %f<%f<%f - Eta: %f<%f<%f: Rho: %f<%f<%f\n",PtMin,treeVar["ptJet0"],PtMax,EtaMin,treeVar["etaJet0"],EtaMax,RhoMin,treeVar["rhoPF"],RhoMax);
 			if((treeVar["ptJet0"]<PtMin)||(treeVar["ptJet0"]>PtMax)||(fabs(treeVar["etaJet0"])<EtaMin)||(fabs(treeVar["etaJet0"])>EtaMax)|| (treeVar["rhoPF"]<RhoMin)||(treeVar["rhoPF"]>RhoMax))continue;
-			//printf("Count 0\n");
-			//Z
-			if( (treeVar["llPt"]<50)) continue;
-			//if( (treeVar["mZ"]<70) || (treeVar["mZ"]>110)|| ( fabs(treeVar["deltaPhi_jet"])<3.1415-0.5) ) continue;
-			////printf("Count 1 -- Z\n");
-			//if( (EtaMin<2.5) && (treeVar["betaStarJet0"] > 0.2 * TMath::Log( treeVarInt["nvertex"] - 0.67))  ) continue;
-			////printf("Count 2 -- beta*\n");
-			//if(( (treeVar["axis1_QCJet0"] <=0 ) || (treeVar["axis2_QCJet0"] <=0) ))continue;
-			////printf("Count 3 -- axis\n");
-			//if( treeVarInt["nPFCand_QC_ptCutJet"] <=0 )continue;
-			//if( treeVar["ptD_QCJet0"] <=0 )continue;
-			//printf("Count 4 -- mult\n");
+			//fprintf(stderr,"-B\n");
+			//selection
+			double muJet_dphi=deltaPhi(jetPhi[0],jetPhi[1]);
+			if(fabs(muJet_dphi)<2.5) continue;
+			//fprintf(stderr,"--C\n");
+			if( ! (2.0 *jetPt[2]/ (jetPt[0]+jetPt[1])<.3) )continue; 
+			//fprintf(stderr,"---D\n");
+			if( jetBtag[0] >0.244)continue;
+			//fprintf(stderr,"----E\n");
+			//trigger --only on data
+			if( type==1 && !( triggerResult != NULL && triggerResult->size()>1 && triggerResult->at(1) )) continue;
+			
+			//parton Matching
+			double dR_min=999;
+			int pos_min=999;
+			//int part_min=5;
+			
+			//fprintf(stderr,"_______not NULL: %ld = %ld = %ld\n",partonPt,partonEta,partonPhi);
+			if(type>1){ //only on MC
+			for(int iPart=0;iPart<partonPt->size();iPart++)
+				{
+				double dR_ipart= deltaR(partonEta->at(iPart),partonPhi->at(iPart),jetEta[0],jetPhi[0]);
+				if(dR_ipart< dR_min){dR_min=dR_ipart;pos_min=iPart;}
+				}
+			}
+			if(dR_min<.3){
+				//fprintf(stderr,"_______%f<%f\n",pos_min,partonId->size());
+				treeVarInt["pdgIdPartJet0"]=partonId->at(pos_min);
+				} else treeVarInt["pdgIdPartJet0"]=0;
+			
+			//fprintf(stderr,"_______E2:pos_min=%d dR=%f\n",pos_min,dR_min);
+			map<TString,float> variables_MLP;	
+			map<TString,float> variables_corr_MLP;	
+			//map<TString,float> variables_QGL;	
+			
+//			variables_QGL["axis1"]= jetAxis_QC[0][0];
+//			variables_QGL["axis2"]= jetAxis_QC[1][0];
+//			variables_QGL["ptd"] = jetPtD_QC[0];
+//			variables_QGL["mult"] = jetChgPart_QC[0]+jetNeutralPart_ptcut[0];
+//			variables_QGL["pt"] = jetPt[0];
+//			variables_QGL["eta"] = jetEta[0];
+//			variables_QGL["rho"] = rho;
+	
+			//fprintf(stderr,"_______E3:nvtx: %d\n",treeVarInt["nvtx"]);
+			if(fabs(jetEta[0])<2.5 && (jetBeta[0]<(1.0 -0.2*TMath::Log(treeVarInt["nvtx"]-0.67)))) continue;	
+			//fprintf(stderr,"-----F\n");
+			float sub_data=0.0;
+			if(fabs(jetEta[0])>2.5 && type==1)sub_data=1.0;
+			//Variables as general variables
+			treeVar["mult"]=float(jetChgPart_QC[0]+jetNeutralPart_ptcut[0])-sub_data;
+			treeVar["axis1"]=jetAxis_QC[0][0];
+			treeVar["axis2"]=jetAxis_QC[1][0];
+			treeVar["ptD"]=jetPtD_QC[0];
+			//Discriminators - only if needed -  save time
+			if(varName=="QGLHisto")treeVar["QGLHisto"] = qgl->computeQGLikelihood2012(jetPt[0],jetEta[0],treeVar["rho"],jetChgPart_QC[0]+jetNeutralPart_ptcut[0]-sub_data,jetPtD_QC[0],jetAxis_QC[1][0]);
+			if(varName=="QGLMLP"){	
+				variables_MLP["axis1"]=jetAxis_QC[0][0];
+				variables_MLP["axis2"]=jetAxis_QC[1][0];
+				variables_MLP["ptD"]=jetPtD_QC[0];
+				variables_MLP["mult"]=jetChgPart_QC[0];
+				
+				variables_MLP["pt"]=jetPt[0];
+				variables_MLP["eta"]=jetEta[0];
+				variables_MLP["rho"]=treeVar["rho"];
+				
+				if(fabs(jetEta[0])>2.5){
+					variables_MLP["axis1"]=jetAxis[0][0];
+					variables_MLP["axis2"]=jetAxis[1][0];
+					variables_MLP["ptD"]=jetPtD[0];
+					variables_MLP["mult"]=jetChgPart_QC[0]+jetNeutralPart_ptcut[0]-sub_data;
+					
+					}
+				
+				variables_corr_MLP["axis1"] = variables_MLP["axis1"];
+				variables_corr_MLP["axis2"] = variables_MLP["axis2"];
+				variables_corr_MLP["ptD"] = variables_MLP["ptD"];
+				variables_corr_MLP["mult"] = variables_MLP["mult"];
+			
+				//variables_corr_MLP=qgmlp->TEST(variables_MLP,variables_corr_MLP);
+				
+				treeVar["QGLMLP"]=qgmlp->QGvalue(variables_MLP);
+			}
+			//treeVar["pdgIdPartJet0"];
 			//---------------------------
 		
+			//fprintf(stderr,"------G\n");
 			if(type&1){
 				//printf("passed selection - type 1 --> %.3f - %.3f\n",treeVar[varName],treeVar[varName+"Fwd"]);
 				string var=varName;
-				if(EtaMin>2.5)var+="Fwd"; //only in data fwd
+			//	if(EtaMin>2.5)var+="Fwd"; //only in data fwd
 				alpha=1; beta=0;
+					//int bin=puw->FindBin(treeVar["rho"]);
+					//int bin2=ptetaw->FindBin(jetPt[0],fabs(jetEta[0]) );
+					//float weight=puw->GetBinContent(bin) *  ptetaw->GetBinContent(bin2);
+					treeVar["eventWeight"]=1.; //data
+					treeVar["PUReWeight"]=1;
 				FillHisto(h_data,var);
 				}	
 			if(type&2){
 				//mc
+			//fprintf(stderr,"________notNull:%ld %ld %f\n",puw,ptetaw,treeVar["rho"]);
+					int bin = puw->FindBin(treeVar["rho"]);
+					int bin2 = ptetaw->FindBin(jetPt[0],fabs(jetEta[0]) );
+					float weight=puw->GetBinContent(bin) *  ptetaw->GetBinContent(bin2);
+			//fprintf(stderr,"________bin:%d,%d, w=%f\n",bin,bin2,weight);
+					treeVar["eventWeight"]=weight;treeVar["PUReWeight"]=1;
 				FillHisto(h_mc,varName);
 				}
 			if(type&4){
@@ -183,7 +320,10 @@ void Analyzer::Loop(TChain *t,int type){ //type|=4 : compute lmin,lmax; type|=1 
 					}
 				}
 			if(type&32){ 
-					varAll.push_back(pair<int,float>(treeVarInt["pdgIdPartJet0"],treeVar[varName]));
+					int bin=puw->FindBin(treeVar["rho"]);
+					int bin2=ptetaw->FindBin(jetPt[0],fabs(jetEta[0]) );
+					float weight=puw->GetBinContent(bin) *  ptetaw->GetBinContent(bin2);
+					varAll.push_back(TRIO(treeVarInt["pdgIdPartJet0"],treeVar[varName],weight)); //w=-1 default
 				}
 			}
 }
@@ -515,10 +655,10 @@ void Analyzer::ComputeDoubleMinFast(){
 	Loop(t_mc,32);
 
 	pair<float,float> R_q,R_g;
-	R_q=SmearDoubleMinFast(1,0,1,0,0); //
-	R_g=SmearDoubleMinFast(R_q.first,R_q.second,1,0,1); //
-	R_q=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,0,1); //
+	R_g=SmearDoubleMinFast(1,0,1,0,1); //
+	R_q=SmearDoubleMinFast(R_q.first,R_q.second,1,0,0); //
 	R_g=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,1,1); //
+	R_q=SmearDoubleMinFast(R_q.first,R_q.second,R_g.first,R_g.second,0,1); //
 
 	printf("a_q=%.3f;b_q=%.3f;a_g=%.3f;b_g=%.3f;lmin=%.3f;lmax=%.3f;break;\n",R_q.first,R_q.second,R_g.first,R_g.second,lmin,lmax);
 	}
@@ -530,11 +670,12 @@ delete  h_mc;
 CreateHisto(2); 
 for(int z=0;z<int(varAll.size());++z){ 
 	{alpha=1;beta=0;}
-	if(varAll[z].first == 21){alpha=a_g; beta=b_g; } 
-	if(fabs(varAll[z].first) <5 ) {alpha=a_q;beta = b_q;}if( fabs(treeVarInt["pdgIdPartJet0"])== 0) {alpha=1;beta=0;}
-	if(fabs(varAll[z].first) == 0) {alpha=1;beta=0;}
+	if(varAll[z].pdgId == 21){alpha=a_g; beta=b_g; } 
+	if(fabs(varAll[z].pdgId) <5 ) {alpha=a_q;beta = b_q;}if( fabs(treeVarInt["pdgIdPartJet0"])== 0) {alpha=1;beta=0;}
+	if(fabs(varAll[z].pdgId) == 0) {alpha=1;beta=0;}
 
-	treeVar[varName]=varAll[z].second;
+	treeVar[varName]=varAll[z].value;
+	if(varAll[z].weight>=0) {treeVar["eventWeight"]=varAll[z].weight;treeVar["PUReweight"]=1;}
 	FillHisto(h_mc,varName);
 	}
 
@@ -613,14 +754,13 @@ pair<float,float> Analyzer::SmearDoubleMinFast(float a0_q,float b0_q , float a0_
 
 
 
-int ComputeDoubleMinZJet2(){
+int ComputeDoubleMinDiJet(){
 	system("[ -f output.root ] && rm output.root");
-	TChain *mc=new TChain("tree_passedEvents");
-	TChain *data=new TChain("tree_passedEvents");
-		data->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet2/ZJet_DoubleMu*.root");
-		data->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet2/ZJet_DoubleE*.root");
+	TChain *mc=new TChain("Hbb/events");
+	TChain *data=new TChain("Hbb/events");
+		mc->Add("/afs/cern.ch/work/s/sunil/public/forTom/analysis_flatQCD_P6_Dijets.root");
 
-		mc  ->Add("/afs/cern.ch/user/a/amarini/work/GluonTag/ZJet2/ZJet_DY*.root");
+		data  ->Add("/afs/cern.ch/work/s/sunil/public/forTom/analysis_data2012_JetMon_Dijets.root");
 	Analyzer A;
 	A.nstep=20;
 	A.varName="QGLHisto";
@@ -637,9 +777,65 @@ int ComputeDoubleMinZJet2(){
 		A.Loop(data,1)
 		*/
 	fprintf(stderr,"Going to do Span\n");
-	//A.SpanMin();
+	A.SpanMin();
 	A.varName="QGLMLP";
 	A.SpanMin();
 	return 0;
 	}
+/*
+.L ComputeDoubleMinDiJet.C+
+TChain *mc=new TChain("Hbb/events");
+TChain *data=new TChain("Hbb/events");
+mc->Add("/afs/cern.ch/work/s/sunil/public/forTom/analysis_flatQCD_P6_Dijets.root");
+data  ->Add("/afs/cern.ch/work/s/sunil/public/forTom/analysis_data2012_JetMon_Dijets.root");
+
+Analyzer A;
+A.nstep=20;
+A.varName="QGLHisto";
+//A.varName="mult";A.nBins=50;A.xMin=0;A.xMax=50;A.lmin=0;A.lmax=100;
+//A.varName="axis1";A.nBins=50;A.xMin=0;A.xMax=.5;
+//A.varName="axis2";A.nBins=50;A.xMin=0;A.xMax=.5;
+//A.varName="ptD";A.nBins=50;A.xMin=0;A.xMax=1.0001;
+A.varName="rho";A.nBins=50;A.xMin=0;A.xMax=50;A.lmin=0;A.lmax=100;
+A.RhoMin=0; A.RhoMax=100;A.PtMin=40;A.PtMax=60; A.EtaMin=0;A.EtaMax=2.0;
+A.CreateHisto();
+A.SetTrees(mc,data);
+A.alpha=1;
+A.beta=0;
+A.Loop(mc,2);
+A.Loop(data,1);
+A.h_data->SetMarkerStyle(20);
+A.h_data->DrawNormalized("P");
+A.h_mc->DrawNormalized("HIST SAME");
+
+*/
+
+Analyzer *Check(){
+Analyzer *A=new Analyzer();
+TChain *mc=new TChain("Hbb/events");
+TChain *data=new TChain("Hbb/events");
+mc->Add("/afs/cern.ch/work/s/sunil/public/forTom/analysis_flatQCD_P6_Dijets.root");
+data  ->Add("/afs/cern.ch/work/s/sunil/public/forTom/analysis_data2012_JetMon_Dijets.root");
+A->nstep=20; A->varName="QGLHisto";
+A->RhoMin=0; A->RhoMax=15;A->PtMin=50;A->PtMax=80; A->EtaMin=0;A->EtaMax=2.0;
+A->CreateHisto();
+A->SetTrees(mc,data);
+A->alpha=1;
+A->beta=0;
+A->Loop(mc,2);
+A->Loop(data,1);
+TH1F* h_mc0=(TH1F*)A->h_mc->Clone("h_mc0");h_mc0->SetLineColor(kGreen);
+A->Loop(mc,32);
+A->a_q=0.7;A->b_q=0;A->a_g=0;A->b_g=0;
+A->LoopFast();
+
+TCanvas *c=new TCanvas("c","c",800,800);
+A->h_mc->DrawNormalized("HIST");
+h_mc0->SetLineWidth(2); h_mc0->SetLineStyle(2);
+h_mc0->DrawNormalized("HIST");
+A->h_data->SetMarkerStyle(20);
+A->h_data->DrawNormalized("P SAME");
+
+return A;
+}
 
