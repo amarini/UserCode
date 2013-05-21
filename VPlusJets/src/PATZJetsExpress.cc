@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.51 2013/03/27 14:44:04 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.52 2013/05/07 17:20:19 webermat Exp $
 //
 //
 
@@ -1939,6 +1939,9 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
       bool jetIsInAcceptance(true);
       bool jetIsIDed(true);
       bool jetIsInFWAcceptance(true);
+	
+	//pt -preselection
+	if(i_jet->pt() < 10) continue;
       
       //----- remove the leptons ------------------------------------------
       for(unsigned int i_lep = 0; i_lep < myLeptons.size(); i_lep++) {
