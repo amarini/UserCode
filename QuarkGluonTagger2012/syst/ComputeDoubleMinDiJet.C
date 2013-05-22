@@ -421,8 +421,8 @@ void Analyzer::SpanMin(){
 	vector<pair<float,float> > EtaBins;
 	vector<pair<float,float> > RhoBins;
 	
-		PtBins.push_back(  pair<float,float>(30,50) );
-		PtBins.push_back(  pair<float,float>(50,80) );
+		PtBins.push_back(  pair<float,float>(40,60) );
+		PtBins.push_back(  pair<float,float>(60,80) );
 		PtBins.push_back(  pair<float,float>(80,120) );
 		PtBins.push_back(  pair<float,float>(120,250) );
 		
@@ -430,7 +430,7 @@ void Analyzer::SpanMin(){
 		RhoBins.push_back(  pair<float,float>(15,40) );
 		
 		EtaBins.push_back(  pair<float,float>(0,2) );
-		//EtaBins.push_back(  pair<float,float>(3,4.7) );
+		EtaBins.push_back(  pair<float,float>(3,4.7) );
 	
 	for ( int e=0; e< int(EtaBins.size());e++)
 	for ( int p=0; p< int(PtBins.size()) ;p++)
