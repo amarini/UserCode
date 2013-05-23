@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.53 2013/05/21 15:47:04 amarini Exp $
+// $Id: PATZJetsExpress.cc,v 1.54 2013/05/23 13:00:14 webermat Exp $
 //
 //
 
@@ -355,7 +355,8 @@ class PATZJetsExpress : public edm::EDAnalyzer {
       HLTConfigProvider hltConfig_;
       // ---- configurable parameters -----------------------------------
       bool          mIsMC,mOnlyMC,mReducedPh;
-      int           mMinNjets,mGENType, mDressedRadius;
+      int           mMinNjets,mGENType;
+      float mDressedRadius;
       double        mMinJetPt,mMaxJetEta,mMinLepPt,mMaxLepEta,mMaxCombRelIso03,mMaxCombRelIso04,mJetLepIsoR,mJetPhoIsoR,mMinLLMass,mMinPhoPt,mMinPhoPtId,mMaxPhoEta;
       edm::InputTag pfIsoValEleCH03Name,pfIsoValEleNH03Name,pfIsoValEleG03Name;
       //int      mGENCrossCleaning;
@@ -1088,7 +1089,8 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 			  if(j_gen->status() == 1 && abs(j_gen->pdgId()) ==22){
 			    TLorentzVector phoP4GEN(j_gen->p4().Px(),j_gen->p4().Py(),j_gen->p4().Pz(),j_gen->p4().E());
 			    float DR = phoP4GEN.DeltaR(lepP4BARE);
-			    if(DR<mDressedRadius) lepP4GEN+=phoP4GEN;
+			    if(DR<mDressedRadius){ lepP4GEN+=phoP4GEN;   
+			    }
 			  }//if: st=1, pdgid=22
 			}//for: gen particle (2nd loop)
 			break;
