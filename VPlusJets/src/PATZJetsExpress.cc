@@ -13,7 +13,7 @@
 //
 // Original Author:  A. Marini, K. Kousouris,  K. Theofilatos
 //         Created:  Mon Oct 31 07:52:10 CDT 2011
-// $Id: PATZJetsExpress.cc,v 1.52 2013/05/07 17:20:19 webermat Exp $
+// $Id: PATZJetsExpress.cc,v 1.53 2013/05/21 15:47:04 amarini Exp $
 //
 //
 
@@ -1169,8 +1169,7 @@ void PATZJetsExpress::analyze(const Event& iEvent, const EventSetup& iSetup)
 	      const GenParticle * gen_Moth = static_cast<const GenParticle*>(i_gen->mother(kk)); // find mother
 	      aGenPhoton.motherId = gen_Moth->pdgId();
 	    }
-	    if(aGenPhoton.isoPtDR03/phoP4GEN.Pt()<0.25){
-	      //cout<<"photon pt/eta/iso03/iso04/iso05 "<<phoP4GEN.Pt()<<"/"<<phoP4GEN.Eta()<<"/"<<aGenPhoton.isoPtDR03/phoP4GEN.Pt()<<"/"<<aGenPhoton.isoPtDR04/phoP4GEN.Pt()<<"/"<<aGenPhoton.isoPtDR05/phoP4GEN.Pt()<<endl;
+	    if(aGenPhoton.isoSumPtDR03<10){
 	      myGenPhotons.push_back(aGenPhoton);
 	    }
           }//eta and pt cutoff
